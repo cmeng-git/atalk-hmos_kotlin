@@ -1,0 +1,37 @@
+/*
+ * Copyright @ 2018 - present 8x8, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.atalk.util.concurrent
+
+import java.util.concurrent.Executors
+import java.util.concurrent.ThreadFactory
+
+/**
+ * A thread factory which supports customizing name prefix of created threads
+ * and if produced threads are daemons or not.
+ */
+class CustomizableThreadFactory(private val threadNamePrefix: String?, private val isDaemon: Boolean) : ThreadFactory {
+    private val defaultThreadFactory = Executors.defaultThreadFactory()
+    override fun newThread(r: Runnable): Thread {
+        val thread = defaultThreadFactory.newThread(r)
+        if (threadNamePrefix != null && !threadNamePrefix.isEmpty()) {
+            thread.name = threadNamePrefix + thread.name
+        }
+        if (thread.isDaemon != isDaemon) {
+            thread.isDaemon = isDaemon
+        }
+        return thread
+    }
+}

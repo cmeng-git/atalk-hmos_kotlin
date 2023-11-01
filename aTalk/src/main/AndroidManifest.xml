@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="org.atalk.hmos"
+    android:installLocation="internalOnly">
+
+    <!-- Tell the system this app requires OpenGL ES 2.0. -->
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.microphone"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.wifi"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location.network"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission
+        android:name="android.permission.GET_ACCOUNTS"
+        android:maxSdkVersion="22" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"
+        tools:ignore="ScopedStorage" />
+
+    <queries>
+        <package android:name="android.content.pm" />
+    </queries>
+
+    <application
+        android:name=".aTalkApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:icon="@drawable/ic_logo"
+        android:label="@string/APPLICATION_NAME"
+        android:logo="@drawable/ic_notification"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:preserveLegacyExternalStorage="true"
+        android:requestLegacyExternalStorage="true"
+        android:theme="@style/AppTheme"
+        tools:ignore="DataExtractionRules"
+        tools:replace="android:allowBackup,android:label"
+        tools:targetApi="tiramisu">
+
+        <!-- android:enableOnBackInvokedCallback="true"  required source change
+    https://stackoverflow.com/questions/73782320/onbackinvokedcallback-is-not-enabled-for-the-application-in-set-androidenableo
+        -->
+
+        <!-- Apache HTTP client deprecation: (no effect so far)
+         https://developer.android.com/about/versions/pie/android-9.0-changes-28#apache-p
+        uses-library android:name="org.apache.http.legacy" android:required="false"/-->
+        <!--
+            android:vmSafeMode="true"
+            resolved issue in https://issuetracker.google.com/issues/64425255
+            but failed https://community.igniterealtime.org/message/266176#comment-266176
+         -->
+
+        <activity
+            android:name=".gui.LauncherActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:launchMode="singleTask" />
+        <activity
+            android:name=".gui.ShutdownActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:launchMode="singleTask" />
+        <activity
+            android:name=".gui.aTalk"
+            android:exported="false"
+            android:launchMode="singleTask">
+            <!-- android:uiOptions="splitActionBarWhenNarrow" -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEARCH" />
+                <action android:name="org.atalk.show_contacts" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <!-- meta-data
+                android:name="android.support.UI_OPTIONS"
+                android:value="splitActionBarWhenNarrow" /
+            -->
+            <meta-data
+                android:name="android.app.searchable"
+                android:resource="@xml/searchable" />
+        </activity>
+        <activity
+            android:name=".gui.Splash"
+            android:launchMode="singleTask" />
+
+        <activity
+            android:name=".plugin.permissions.PermissionsActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".gui.share.ShareActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="*/*" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.service.chooser.chooser_target_service"
+                android:value=".services.ContactChooserTargetService" />
+        </activity>
+
+        <!-- Account settings and sub-menu-->
+        <activity
+            android:name=".gui.account.AccountsListActivity"
+            android:parentActivityName=".gui.aTalk" />
+        <activity
+            android:name=".gui.account.AccountInfoPresenceActivity"
+            android:label="@string/plugin_accountinfo_TITLE"
+            android:parentActivityName=".gui.account.AccountsListActivity" />
+        <activity
+            android:name=".gui.account.AccountLoginActivity" />
+        <activity
+            android:name=".plugin.geolocation.GeoLocationActivity" />
+        <activity
+            android:name=".gui.contactlist.AddContactActivity" />
+        <activity
+            android:name=".gui.contactlist.ContactInfoActivity"
+            android:label="@string/plugin_connectioninfo_TITLE" />
+        <!-- Dialog Activity -->
+        <activity
+            android:name=".gui.dialogs.DialogActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+
+        <!-- Verify Certificate Activity -->
+        <activity
+            android:name="org.atalk.impl.androidcertdialog.VerifyCertificateActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+        <!-- Authorization requested dialog -->
+        <activity
+            android:name=".gui.authorization.AuthorizationRequestedDialog"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/service_gui_AUTHORIZATION_REQUEST" />
+        <!-- Authentication window service Activity -->
+        <activity
+            android:name="org.atalk.impl.androidauthwindow.AuthWindowActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize" />
+        <!-- Request authorization dialog -->
+        <activity
+            android:name=".gui.authorization.RequestAuthorizationDialog"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:label="@string/service_gui_REQUEST_AUTHORIZATION" />
+        <activity
+            android:name=".gui.call.CallContactActivity"
+            android:exported="false"
+            android:icon="@drawable/ic_notification"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.CALL" />
+                <action android:name="android.intent.action.CALL_PRIVILEGED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="tel" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".gui.call.VideoCallActivity"
+            android:configChanges="orientation|screenSize|screenLayout"
+            android:hardwareAccelerated="true" />
+        <activity
+            android:name=".gui.call.JingleMessageCallActivity" />
+        <activity
+            android:name=".gui.call.ReceivedCallActivity" />
+        <activity
+            android:name=".gui.chat.ChatActivity"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:launchMode="singleTask" />
+
+        <!-- OMEMO activities -->
+        <activity
+            android:name="org.atalk.crypto.omemo.OmemoAuthenticateDialog" />
+        <activity
+            android:name="org.atalk.crypto.omemo.OmemoRegenerateDialog"
+            android:exported="false"
+            android:label="@string/service_gui_settings_OMEMO_REGENERATE_TITLE">
+            <intent-filter>
+                <action android:name=".crypto.omemo.OmemoRegenerateDialog" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="org.atalk.crypto.omemo.OmemoDeviceDeleteDialog"
+            android:exported="false"
+            android:label="@string/service_gui_settings_OMEMO_PURGE_DEVICE_TITLE">
+            <intent-filter>
+                <action android:name=".crypto.omemo.OmemoDeviceDeleteDialog" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Key & FingerPrint activities -->
+        <activity
+            android:name="org.atalk.crypto.CryptoPrivateKeys"
+            android:exported="false"
+            android:label="@string/service_gui_settings_CRYPTO_PRIV_KEYS_TITLE">
+            <intent-filter>
+                <action android:name=".crypto.CryptoPrivateKeys" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name="org.atalk.crypto.CryptoDeviceFingerPrints"
+            android:exported="false"
+            android:label="@string/service_gui_settings_CRYPTO_FINGERPRINTS_TITLE">
+            <intent-filter>
+                <action android:name=".crypto.CryptoDeviceFingerPrints" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- OTR activities -->
+        <activity
+            android:name="org.atalk.crypto.otr.OtrAuthenticateDialog" />
+
+        <activity
+            android:name=".gui.chat.aTalkProtocolReceiver"
+            android:exported="true"
+            android:theme="@android:style/Theme.NoDisplay">
+            <intent-filter>
+                <category android:name="android.intent.category.DEFAULT" />
+                <action android:name="android.intent.action.VIEW" />
+                <data android:scheme="atalk" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".gui.settings.SettingsActivity" />
+
+        <activity
+            android:name=".gui.settings.EncodingSettings" />
+
+        <!-- MediaCodec list -->
+        <activity
+            android:name=".gui.settings.MediaCodecList" />
+
+        <!-- Chat Security and SSL Certificate -->
+        <activity
+            android:name=".gui.settings.ChatSecuritySettings"
+            android:label="@string/service_gui_settings_MESSAGING_SECURITY_TITLE" />
+        <activity
+            android:name="org.atalk.impl.androidcertdialog.ConnectionInfo"
+            android:label="@string/service_gui_settings_SSL_CERTIFICATE" />
+        <activity
+            android:name=".gui.settings.notification.NotificationSettings"
+            android:label="@string/service_gui_settings_EVENTS_TITLE" />
+        <activity android:name=".gui.settings.notification.NotificationDetails" />
+        <!-- Basic settings -->
+        <activity
+            android:name=".gui.settings.CodecSettingsActivity" />
+        <!-- Opus settings -->
+        <activity-alias
+            android:name=".gui.settings.OpusSettings"
+            android:targetActivity=".gui.settings.CodecSettingsActivity">
+            <meta-data
+                android:name="android.preference"
+                android:resource="@xml/opus_preferences" />
+        </activity-alias>
+        <!-- Silk settings -->
+        <activity-alias
+            android:name=".gui.settings.SilkSettings"
+            android:targetActivity=".gui.settings.CodecSettingsActivity">
+            <meta-data
+                android:name="android.preference"
+                android:resource="@xml/silk_preferences" />
+        </activity-alias>
+        <!-- Sip settings -->
+        <activity
+            android:name=".gui.settings.SipSettings" />
+        <!-- Provisioning settings -->
+        <activity
+            android:name=".gui.settings.ProvisioningSettings" />
+
+        <!-- Do not define android:parentActivityName for the following 4 preference activities;
+          the actual preference menus shown are fragments, then will have problem if defined.
+          Override to execute onBackKeyPress for Up navigator -->
+        <activity
+            android:name=".gui.account.settings.AccountPreferenceActivity" />
+        <activity
+            android:name=".gui.account.settings.SecurityActivity" />
+        <activity
+            android:name=".gui.account.settings.ServerListActivity" />
+        <activity
+            android:name=".gui.account.settings.MediaEncodingActivity" />
+
+        <activity
+            android:name="com.yalantis.ucrop.UCropActivity"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
+
+        <activity
+            android:name=".gui.About"
+            android:label="@string/About_action" />
+
+        <!--Text Speech Features -->
+        <activity
+            android:name=".plugin.textspeech.TTSActivity" />
+
+        <activity
+            android:name=".plugin.geolocation.OsmActivity"
+            android:exported="true"
+            android:icon="@drawable/ic_logo"
+            android:label="OSM Map">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <meta-data
+            android:name="BING_KEY"
+            android:value="" />
+        <meta-data
+            android:name="MAPQUEST_ACCESS_TOKEN"
+            android:value="" />
+        <meta-data
+            android:name="MAPBOX_MAPID"
+            android:value="" />
+        <meta-data
+            android:name="MAPBOX_ACCESS_TOKEN"
+            android:value="" />
+        <meta-data
+            android:name="HEREWEGO_MAPID"
+            android:value="hybrid.day" />
+        <meta-data
+            android:name="HEREWEGO_APPID"
+            android:value="" />
+        <meta-data
+            android:name="HEREWEGO_APPCODE"
+            android:value="" />
+        <uses-library
+            android:name="com.google.android.maps"
+            android:required="false" />
+
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <service android:name="org.atalk.service.osgi.OSGiService" />
+        <service
+            android:name=".gui.account.AccountAuthenticatorService"
+            android:exported="false"
+            android:process=":auth">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/authenticator" />
+        </service>
+        <service
+            android:name=".plugin.audioservice.AudioBgService"
+            android:exported="false" />
+        <service
+            android:name=".plugin.textspeech.TTSService"
+            android:exported="false" />
+        <service
+            android:name=".plugin.geolocation.LocationBgService"
+            android:exported="false" />
+
+        <receiver
+            android:name="org.atalk.service.SystemEventReceiver"
+            android:directBootAware="true"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED">
+
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".gui.share.ShareUtil$ShareBroadcastReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.android.c2dm.intent.RECEIVE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>

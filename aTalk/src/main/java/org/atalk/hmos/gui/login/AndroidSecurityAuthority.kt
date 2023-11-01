@@ -1,0 +1,229 @@
+/*
+ * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
+ *
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+package org.atalk.hmos.gui.login
+
+import android.os.Bundle
+import android.os.Looper
+import android.text.TextUtils
+import android.view.View
+import android.widget.Spinner
+import net.java.sip.communicator.impl.msghistory.MessageHistoryActivator
+import net.java.sip.communicator.service.protocol.AccountID
+import net.java.sip.communicator.service.protocol.SecurityAuthority
+import net.java.sip.communicator.service.protocol.UserCredentials
+import org.atalk.hmos.R
+import org.atalk.hmos.R.id
+import org.atalk.hmos.aTalkApp
+import org.atalk.hmos.gui.dialogs.DialogActivity
+import org.atalk.hmos.gui.dialogs.DialogActivity.DialogListener
+import org.atalk.hmos.gui.util.ViewUtil
+import timber.log.Timber
+
+/**
+ * Android `SecurityAuthority` implementation.
+ *
+ * The method checks for valid reason based on given reasonCode. Pending on the given reason, it
+ * either launches a user login dialog or displays an error message.
+ * When launching a login dialog, it will waits until the right activity is in view before
+ * displaying the dialog to the user. Otherwise the dialog may be obscured by other activity display
+ * windows. The login dialog menu allows user to change certain account settings before signing in.
+ *
+ * @author Pawel Domas
+ * @author Eng Chong Meng
+ */
+class AndroidSecurityAuthority : SecurityAuthority {
+    /**
+     * If user name should be editable when asked for credentials.
+     */
+    private var isUserNameEditable = true
+
+    /**
+     * user last entered userName to check for anymore new changes in userName
+     */
+    private var userNameLastEdited: String? = null
+
+    /**
+     * Returns a UserCredentials object associated with the specified realm (accountID), by
+     * specifying the reason of this operation. Or display an error message.
+     *
+     * @param accountID The realm (accountID) that the credentials are needed for.
+     * @param credentials the values to propose the user by default
+     * @param reasonCode indicates the reason for which we're obtaining the credentials.
+     * @return The credentials associated with the specified realm or null if none could be obtained.
+     */
+    override fun obtainCredentials(accountID: AccountID, credentials: UserCredentials,
+            reasonCode: Int, isShowServerOption: Boolean): UserCredentials {
+        if (reasonCode != SecurityAuthority.REASON_UNKNOWN) {
+            return obtainCredentials(accountID, credentials, isShowServerOption)
+        }
+        val ctx = aTalkApp.globalContext
+        val errorMessage = aTalkApp.getResString(R.string.service_gui_CONNECTION_FAILED_MSG,
+                credentials.userName, credentials.serverAddress)
+        DialogActivity.showDialog(ctx, aTalkApp.getResString(R.string.service_gui_LOGIN_FAILED), errorMessage)
+        return credentials
+    }
+
+    /**
+     * Returns a UserCredentials object associated with the specified realm (AccountID), by
+     * specifying the reason of this operation.
+     *
+     * @param accountID The accountId / realm that the credentials are needed for.
+     * @param credentials the values to propose the user by default
+     * @return The credentials associated with the specified realm or null if none could be obtained.
+     */
+    override fun obtainCredentials(accountID: AccountID,
+            credentials: UserCredentials, isShowServerOption: Boolean): UserCredentials {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            Timber.e("Cannot obtain credentials from the main thread!")
+            return credentials
+        }
+
+        // Insert DialogActivity arguments
+        val args = Bundle()
+        // Login userName and editable state
+        val userName = credentials.userName
+        userNameLastEdited = userName
+        args.putString(CredentialsFragment.ARG_LOGIN, userName)
+        args.putBoolean(CredentialsFragment.ARG_LOGIN_EDITABLE, isUserNameEditable)
+
+        // Password argument
+        val password = credentials.password
+        if (password != null) {
+            args.putString(CredentialsFragment.ARG_PASSWORD, String(credentials.password!!))
+        }
+        val dnssecMode = accountID.dnssMode
+        args.putString(CredentialsFragment.ARG_DNSSEC_MODE, dnssecMode)
+
+        // Persistent password argument
+        args.putBoolean(CredentialsFragment.ARG_STORE_PASSWORD, credentials.isPasswordPersistent)
+
+        // InBand Registration argument
+        args.putBoolean(CredentialsFragment.ARG_IB_REGISTRATION, accountID.isIbRegistration)
+        args.putString(CredentialsFragment.ARG_CERT_ID, accountID.tlsClientCertificate)
+        args.putBoolean(CredentialsFragment.ARG_IS_SHOWN_SERVER_OPTION, isShowServerOption)
+        if (isShowServerOption) {
+            // Server overridden argument
+            args.putBoolean(CredentialsFragment.ARG_IS_SERVER_OVERRIDDEN, accountID.isServerOverridden)
+            args.putString(CredentialsFragment.ARG_SERVER_ADDRESS, accountID.serverAddress)
+            args.putString(CredentialsFragment.ARG_SERVER_PORT, accountID.serverPort)
+        }
+        args.putString(CredentialsFragment.ARG_LOGIN_REASON, credentials.loginReason)
+        aTalkApp.waitForFocus()
+
+        // Obtain credentials lock
+        val credentialsLock = Any()
+
+        // Displays the credentials dialog and waits for it to complete
+        DialogActivity.showCustomDialog(aTalkApp.globalContext,
+                aTalkApp.getResString(R.string.service_gui_LOGIN_CREDENTIAL), CredentialsFragment::class.java.name,
+                args, aTalkApp.getResString(R.string.service_gui_SIGN_IN), object : DialogListener {
+            override fun onConfirmClicked(dialog: DialogActivity): Boolean {
+                val dialogContent = dialog.findViewById<View>(id.alertContent)
+                val userNameEntered = ViewUtil.getTextViewValue(dialogContent, id.username)
+                val password = ViewUtil.getTextViewValue(dialogContent, id.password)
+                val storePassword = ViewUtil.isCompoundChecked(dialogContent, id.store_password)
+                val ibRegistration = ViewUtil.isCompoundChecked(dialogContent, id.ib_registration)
+                if (userNameLastEdited != userNameEntered) {
+                    val msgCount = checkPurgedMsgCount(accountID.accountUniqueID!!, userNameEntered)
+                    if (msgCount < 0) {
+                        userNameLastEdited = userName
+                        ViewUtil.setTextViewValue(dialogContent, id.reason_field,
+                                aTalkApp.getResString(R.string.service_gui_USERNAME_NULL))
+                        return false
+                    }
+                    else if (msgCount > 0) {
+                        val msgReason = aTalkApp.getResString(R.string.service_gui_USERNAME_CHANGE_WARN,
+                                userNameEntered, msgCount, userName)
+                        ViewUtil.setTextViewValue(dialogContent, id.reason_field, msgReason)
+                        ViewUtil.setTextViewColor(dialogContent, id.reason_field, R.color.red)
+                        userNameLastEdited = userNameEntered
+                        return false
+                    }
+                }
+                credentials.userName = userNameEntered
+                credentials.password = password?.toCharArray()
+                credentials.isPasswordPersistent = storePassword
+                credentials.isIbRegistration = ibRegistration
+
+                // Translate dnssecMode label to dnssecMode value
+                val spinnerDM = dialogContent.findViewById<Spinner>(id.dnssecModeSpinner)
+                val dnssecModeValues = aTalkApp.globalContext.resources
+                        .getStringArray(R.array.dnssec_Mode_value)
+                val selectedDnssecMode = dnssecModeValues[spinnerDM.selectedItemPosition]
+                credentials.dnssecMode = selectedDnssecMode
+                if (isShowServerOption) {
+                    val isServerOverridden = ViewUtil.isCompoundChecked(dialogContent, id.serverOverridden)
+                    val serverAddress = ViewUtil.getTextViewValue(dialogContent, id.serverIpField)
+                    val serverPort = ViewUtil.getTextViewValue(dialogContent, id.serverPortField)
+                    if (serverAddress == null || serverPort == null) {
+                        aTalkApp.showToastMessage(R.string.plugin_certconfig_INCOMPLETE)
+                        return false
+                    }
+                    credentials.isServerOverridden = isServerOverridden
+                    credentials.serverAddress = serverAddress
+                    credentials.serverPort = serverPort
+                    credentials.isUserCancel = false
+                }
+                synchronized(credentialsLock) { (credentialsLock as Object).notify() }
+                return true
+            }
+
+            override fun onDialogCancelled(dialog: DialogActivity) {
+                credentials.run { isUserCancel = true }
+                synchronized(credentialsLock) { (credentialsLock as Object).notify() }
+            }
+        }, null)
+        try {
+            synchronized(credentialsLock) {
+                // Wait for the credentials
+                (credentialsLock as Object).wait()
+            }
+        } catch (e: InterruptedException) {
+            throw RuntimeException(e)
+        }
+        return credentials
+    }
+
+    /**
+     * Get the number of messages belong to editedAccUid
+     *
+     * @param editedAccUid current edited account Uid
+     * @param userName new userName
+     * @return count of old messages belong to editedAccUid which are to be purged or -1 if userName entered is invalid
+     */
+    private fun checkPurgedMsgCount(editedAccUid: String, userName: String?): Int {
+        return if (!TextUtils.isEmpty(userName) && userName!!.contains("@")) {
+            if (editedAccUid.split(":")[1] != userName) {
+                val mhs = MessageHistoryActivator.messageHistoryService
+                mhs.getMessageCountForAccountUuid(editedAccUid)
+            }
+            else 0
+        }
+        else {
+            -1
+        }
+    }
+
+    /**
+     * Sets the userNameEditable property, which should indicate to the implementations of
+     * this interface if the user name could be changed by user or not.
+     *
+     * @param isUserNameEditable indicates if the user name could be changed by user in the
+     * implementation of this interface.
+     */
+    override fun setUserNameEditable(isUserNameEditable: Boolean) {
+        this.isUserNameEditable = isUserNameEditable
+    }
+
+    /**
+     * Indicates if the user name is currently editable, i.e. could be changed by user or not.
+     *
+     * @return `true</code> if the user name could be changed, <code>false` - otherwise.
+     */
+    override fun isUserNameEditable(): Boolean {
+        return isUserNameEditable
+    }
+}

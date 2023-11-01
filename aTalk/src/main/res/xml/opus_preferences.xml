@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:custom="http://schemas.android.com/apk/res-auto">
+    <org.atalk.hmos.gui.settings.widget.ConfigListPreference
+        android:entries="@array/pref_opus_bandwidth"
+        android:entryValues="@array/pref_opus_bandwidth_values"
+        android:key="neomedia.codec.audio.opus.encoder.AUDIO_BANDWIDTH"
+        android:title="@string/service_gui_settings_OPUS_AUDIO_BANDWIDTH" />
+
+    <org.atalk.hmos.gui.settings.widget.ConfigEditText
+        android:inputType="number"
+        android:key="neomedia.codec.audio.opus.encoder.BITRATE"
+        android:title="@string/service_gui_settings_OPUS_BITRATE" />
+
+    <org.atalk.hmos.gui.settings.widget.ConfigCheckBox
+        android:key="neomedia.codec.audio.opus.encoder.DTX"
+        android:title="@string/service_gui_settings_OPUS_USE_DTX" />
+
+    <org.atalk.hmos.gui.settings.widget.ConfigCheckBox
+        android:key="neomedia.codec.audio.opus.encoder.FEC"
+        android:title="@string/service_gui_settings_OPUS_USE_FEC" />
+
+    <org.atalk.hmos.gui.settings.widget.ConfigEditText
+        android:inputType="number"
+        android:key="neomedia.codec.audio.opus.encoder.MIN_EXPECTED_PACKET_LOSS"
+        android:title="@string/service_gui_settings_OPUS_MIN_EXPECTED_PACKET_LOSS"
+        custom:intMax="100"
+        custom:intMin="1" />
+
+    <org.atalk.hmos.gui.settings.widget.ConfigListPreference
+        android:entries="@array/pref_opus_complexity"
+        android:entryValues="@array/pref_opus_complexity"
+        android:key="neomedia.codec.audio.opus.encoder.COMPLEXITY"
+        android:title="@string/service_gui_settings_OPUS_COMPLEXITY" />
+</PreferenceScreen>

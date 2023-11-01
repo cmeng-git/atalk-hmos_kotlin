@@ -1,0 +1,265 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        android:key="pref.cat.settings.general"
+        android:title="@string/service_gui_settings_GENERAL">
+
+        <org.atalk.hmos.gui.settings.widget.ConfigCheckBox
+            android:key="org.atalk.hmos.show_icon"
+            android:summaryOff="@string/service_gui_settings_SHOW_ICON_SUMMARY_OFF"
+            android:summaryOn="@string/service_gui_settings_SHOW_ICON_SUMMARY_ON"
+            android:title="@string/service_gui_settings_SHOW_ICON" />
+
+        <!-- aTalk auto start on next system reboot -->
+        <CheckBoxPreference
+            android:key="org.atalk.hmos.auto_start"
+            android:summaryOff="@string/service_gui_settings_AUTO_START_SUMMARY_DISABLE"
+            android:summaryOn="@string/service_gui_settings_AUTO_START_SUMMARY_ENABLE"
+            android:title="@string/service_gui_settings_AUTO_START" />
+
+        <EditTextPreference
+            android:dialogMessage="@string/service_gui_settings_WEBVIEW_DLG_TITLE"
+            android:hint="https://demo.agayon.be/"
+            android:inputType="textWebEditText"
+            android:key="gui.WEB_PAGE_ACCESS"
+            android:summary="@string/service_gui_settings_WEBVIEW_SUMMARY"
+            android:title="@string/service_gui_settings_WEBVIEW_TITLE" />
+
+        <ListPreference
+            android:dialogTitle="@string/service_gui_settings_LOCALE"
+            android:entries="@array/settings_language_entries"
+            android:entryValues="@array/settings_language_values"
+            android:key="pref.key.locale"
+            android:persistent="false"
+            android:title="@string/service_gui_settings_LOCALE" />
+
+        <ListPreference
+            android:dialogTitle="@string/settings_theme_label"
+            android:entries="@array/settings_theme_entries"
+            android:entryValues="@array/settings_theme_values"
+            android:key="pref.key.theme"
+            android:persistent="false"
+            android:title="@string/settings_theme_label" />
+
+    </PreferenceCategory>
+
+    <!-- Chat Security Settings -->
+    <PreferenceCategory
+        android:key="pref.cat.settings.security"
+        android:title="@string/service_gui_settings_SECURITY">
+
+        <!-- Chat Security Setting -->
+        <Preference
+            android:summary="@string/service_gui_settings_MESSAGING_SECURITY_SUMMARY"
+            android:title="@string/service_gui_settings_MESSAGING_SECURITY_TITLE">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetClass="org.atalk.hmos.gui.settings.ChatSecuritySettings"
+                android:targetPackage="org.atalk.hmos" />
+        </Preference>
+
+        <!-- SSL Certificates Management -->
+        <Preference
+            android:summary="@string/service_gui_settings_SSL_CERTIFICATE_SUMMARY"
+            android:title="@string/service_gui_settings_SSL_CERTIFICATE">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetClass="org.atalk.impl.androidcertdialog.ConnectionInfo"
+                android:targetPackage="org.atalk.hmos" />
+        </Preference>
+
+    </PreferenceCategory>
+
+    <!-- Message settings -->
+    <PreferenceCategory
+        android:key="pref.cat.settings.msg"
+        android:title="@string/service_gui_settings_MSG">
+
+        <!-- Group messages in one window -->
+        <!--
+            <CheckBoxPreference
+			android:title="@string/service_gui_settings_MULTICHAT_WINDOW"
+			android:key="pref.key.multichat_window"
+			android:summaryOn="@string/service_gui_settings_MULTICHAT_ON"
+			android:summaryOff="@string/service_gui_settings_MULTICHAT_OFF"
+			/>
+        -->
+        <!-- Log chat history -->
+        <CheckBoxPreference
+            android:key="pref.key.msg.history_logging"
+            android:summaryOff="@string/service_gui_settings_HISTORY_LOG_OFF"
+            android:summaryOn="@string/service_gui_settings_HISTORY_LOG_ON"
+            android:title="@string/service_gui_settings_HISTORY_LOGGING" />
+
+        <!-- Show x recent messages in new chats -->
+        <CheckBoxPreference
+            android:key="pref.key.msg.show_history"
+            android:summaryOff="@string/service_gui_settings_DISABLED_STR"
+            android:summaryOn="@string/service_gui_settings_ENABLED_STR"
+            android:title="@string/service_gui_settings_SHOW_HISTORY" />
+
+        <EditTextPreference
+            android:dependency="pref.key.msg.show_history"
+            android:dialogMessage="@string/service_gui_settings_CHAT_HISTORY_DLG_TITLE"
+            android:inputType="number"
+            android:key="pref.key.msg.chat_history_size"
+            android:title="@string/service_gui_settings_CHAT_HISTORY_SIZE" />
+
+        <!-- Tell others when we have received and read the messages -->
+        <CheckBoxPreference
+            android:key="pref.key.message_delivery_receipt"
+            android:summary="@string/service_gui_settings_MESSAGE_DELIVERY_RECEIPT_SUMMARY"
+            android:title="@string/service_gui_settings_MESSAGE_DELIVERY_RECEIPT" />
+
+        <!-- Tell others when we are writing to them -->
+        <CheckBoxPreference
+            android:key="pref.key.msg.chat_state_notifications"
+            android:summaryOff="@string/service_gui_settings_DISABLED_STR"
+            android:summaryOn="@string/service_gui_settings_ENABLED_STR"
+            android:title="@string/service_gui_settings_TYPING_NOTIFICATIONS" />
+
+        <!-- Send file transfer thumbnail preview -->
+        <CheckBoxPreference
+            android:key="pref.key.send_thumbnail"
+            android:summaryOff="@string/service_gui_settings_DISABLED_STR"
+            android:summaryOn="@string/service_gui_settings_ENABLED_STR"
+            android:title="@string/service_gui_settings_THUMBNAIL_OPTION" />
+
+        <!-- Attachment File Size Auto Accept -->
+        <ListPreference
+            android:entries="@array/filesizes"
+            android:entryValues="@array/filesizes_values"
+            android:key="pref.key.auto_accept_file"
+            android:title="@string/service_gui_settings_ACCEPT_FILE" />
+
+        <!-- Presence Subscription Mode - Auto or Manual -->
+        <CheckBoxPreference
+            android:key="pref.key.presence_subscribe_mode"
+            android:summaryOff="@string/service_gui_settings_PRESENCE_SUBSCRIBE_MANUAL"
+            android:summaryOn="@string/service_gui_settings_PRESENCE_SUBSCRIBE_AUTO"
+            android:title="@string/service_gui_settings_PRESENCE_SUBSCRIBE_APPROVAL_MODE" />
+
+        <!--
+        Use task bar / dock alerts on incoming calls and chats not implemented on Android
+		<CheckBoxPreference
+			android:title="@string/service_gui_settings_CHAT_ALERTS"
+			android:key="pref.key.chat_alerts"
+			android:summaryOn="@string/service_gui_settings_ENABLED_STR"
+			android:summaryOff="@string/service_gui_settings_DISABLED_STR"
+			/>
+        -->
+    </PreferenceCategory>
+
+    <!-- Notifications -->
+    <PreferenceCategory
+        android:key="pref.cat.settings.notifications"
+        android:title="@string/service_gui_settings_NOTIFICATIONS">
+
+        <!-- Popup notifications type -->
+        <ListPreference
+            android:key="pref.key.notification.popup_handler"
+            android:title="@string/service_gui_settings_POPUP_HANDLER" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:key="pref.key.notification.heads_up_enable"
+            android:summary="@string/pref_headsup_notifications_summary"
+            android:title="@string/pref_headsup_notifications" />
+
+        <Preference
+            android:key="quiet_hours"
+            android:summary="@string/pref_quiet_hours_summary"
+            android:title="@string/title_pref_quiet_hours"
+            app:fragment="org.atalk.hmos.gui.settings.QuietTimeFragment" />
+
+        <!-- Events -->
+        <Preference
+            android:summary="@string/service_gui_settings_EVENTS_SUMMARY"
+            android:title="@string/service_gui_settings_EVENTS_TITLE">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetClass="org.atalk.hmos.gui.settings.notification.NotificationSettings"
+                android:targetPackage="org.atalk.hmos" />
+        </Preference>
+
+        <!-- Auto Software Version Check -->
+        <!-- CheckBoxPreference
+            android:key="pref.key.auto_update_check_enable"
+            android:summaryOff="@string/service_gui_settings_DISABLED_STR"
+            android:summaryOn="@string/service_gui_settings_ENABLED_STR"
+            android:title="@string/service_gui_settings_auto_update_check_status" /-->
+    </PreferenceCategory>
+
+    <!-- Media Call Settings -->
+    <PreferenceCategory
+        android:key="pref.cat.settings.media_call"
+        android:title="@string/service_gui_settings_MEDIA_CALL">
+        <!-- Video Sections -->
+        <ListPreference
+            android:key="pref.key.video.camera"
+            android:title="@string/service_gui_settings_CAMERA" />
+
+        <ListPreference
+            android:key="pref.key.video.resolution"
+            android:title="@string/service_gui_settings_VIDEO_RESOLUTION" />
+
+        <Preference
+            android:summary="@string/service_gui_settings_VIDEO_CODECS_SUMMARY"
+            android:title="@string/service_gui_settings_VIDEO_CODECS_TITLE">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetClass="org.atalk.hmos.gui.settings.EncodingSettings"
+                android:targetPackage="org.atalk.hmos">
+                <extra
+                    android:name="media_type"
+                    android:value="media_type.VIDEO" />
+            </intent>
+        </Preference>
+
+        <!-- Audio Sections -->
+        <Preference
+            android:summary="@string/service_gui_settings_AUDIO_CODECS_SUMMARY"
+            android:title="@string/service_gui_settings_AUDIO_CODECS_TITLE">
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:targetClass="org.atalk.hmos.gui.settings.EncodingSettings"
+                android:targetPackage="org.atalk.hmos">
+                <extra
+                    android:name="media_type"
+                    android:value="media_type.AUDIO" />
+            </intent>
+        </Preference>
+    </PreferenceCategory>
+
+    <!-- Phone Call Settings -->
+    <PreferenceCategory
+        android:key="pref.cat.settings.call"
+        android:title="@string/service_gui_settings_CALL">
+
+        <CheckBoxPreference
+            android:key="pref.key.call.remove.special"
+            android:summaryOff="@string/service_gui_settings_NORMALIZE_OFF"
+            android:summaryOn="@string/service_gui_settings_NORMALIZE_ON"
+            android:title="@string/service_gui_settings_NORMALIZE_NUMBER" />
+
+        <CheckBoxPreference
+            android:key="pref.key.call.convert.letters"
+            android:summaryOff="@string/service_gui_settings_ALLOW_ALPHA_OFF"
+            android:summaryOn="@string/service_gui_settings_ALLOW_ALPHA_ON"
+            android:title="@string/service_gui_settings_ALLOW_ALPHA_PNUMBER" />
+    </PreferenceCategory>
+
+    <!-- Advanced Settings -->
+    <PreferenceCategory
+        android:key="pref.cat.settings.advanced"
+        android:title="@string/service_gui_settings_ADVANCED">
+
+        <Preference
+            android:summary="@string/service_gui_settings_EXPERT_SUMMARY"
+            android:title="@string/service_gui_settings_EXPERT"
+            app:fragment="org.atalk.hmos.gui.settings.ExpertSettingsFragment" />
+
+    </PreferenceCategory>
+</PreferenceScreen>

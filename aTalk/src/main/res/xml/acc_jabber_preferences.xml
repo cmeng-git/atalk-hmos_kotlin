@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        android:key="pref_cat_account"
+        android:title="@string/service_gui_JBR_USER_CATEGORY">
+        <EditTextPreference
+            android:enabled="true"
+            android:key="pref_key_user_id"
+            android:title="@string/service_gui_JBR_USER" />
+
+        <EditTextPreference
+            android:inputType="textPassword"
+            android:key="pref_key_password"
+            android:title="@string/service_gui_JBR_PASSWORD" />
+
+        <CheckBoxPreference
+            android:key="pref_key_store_password"
+            android:summary="@string/service_gui_JBR_STORE_PASSWORD_SUMMARY"
+            android:title="@string/service_gui_JBR_STORE_PASSWORD" />
+
+        <ListPreference
+            android:entries="@array/dnssec_Mode_name"
+            android:entryValues="@array/dnssec_Mode_value"
+            android:key="dns.DNSSEC_MODE"
+            android:title="@string/service_gui_settings_DNSSEC_DANE" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="pref.cat.jbr.advanced"
+        android:title="@string/service_gui_JBR_ADVANCED">
+        <Preference
+            android:key="pref_key_enable_encryption"
+            android:title="@string/service_gui_PREF_ENCRYPTION" />
+
+        <Preference
+            android:key="pref.screen.jbr.connection"
+            android:summary="@string/service_gui_JBR_CONN_SUMMARY"
+            android:title="@string/service_gui_JBR_CONNECTION"
+            app:fragment="org.atalk.hmos.gui.account.settings.XmppConnectionFragment" />
+
+        <Preference
+            android:key="Bosh_Configuration"
+            android:summary="@string/service_gui_settings_BOSH_PROXY_SUMMARY"
+            android:title="@string/service_gui_settings_BOSH_PROXY" />
+
+        <Preference
+            android:key="pref.screen.jbr.ice"
+            android:summary="@string/service_gui_JBR_ICE_SUMMARY"
+            android:title="@string/service_gui_JBR_ICE"
+            app:fragment="org.atalk.hmos.gui.account.settings.IceFragment" />
+
+        <Preference
+            android:key="pref.screen.jbr.telephony"
+            android:summary="@string/service_gui_JBR_TELEPHONY_SUMMARY"
+            android:title="@string/service_gui_JBR_TELEPHONY"
+            app:fragment="org.atalk.hmos.gui.account.settings.TelephonyFragment" />
+
+        <Preference
+            android:key="pref_cat_enc_video"
+            android:summary="@string/service_gui_PREF_VIDEO_ENC_SUMMARY"
+            android:title="@string/service_gui_PREF_VIDEO_ENCODING" />
+
+        <Preference
+            android:key="pref_cat_enc_audio"
+            android:summary="@string/service_gui_PREF_AUDIO_ENC_SUMMARY"
+            android:title="@string/service_gui_PREF_AUDIO_ENCODING" />
+    </PreferenceCategory>
+</PreferenceScreen>
+

@@ -1,0 +1,45 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        // maven { url "https://jitpack.io" }
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.2.2'
+
+        // Required by android-youtube-player
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0"
+
+        // classpath 'org.anarres.jarjar:jarjar-gradle:1.0.1'
+        // classpath 'com.github.shevek.jarjar:jarjar-gradle:9a7eca72f9'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+//    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+//        kotlinOptions.allWarningsAsErrors = true
+//    }
+}
+
+project.ext {
+    preDexLibs = !project.hasProperty('disablePreDex')
+    testCoverage = project.hasProperty('testCoverage')
+
+    minSdk = 24
+    compileSdk = 33
+    buildTools = '33.0.2'
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+# aTalk, the OpenSource Java VoIP and Instant Messaging client.
+
+# Distributable under LGPL license.
+# See terms of license at gnu.org.
+#
+# Note to translators:
+# aTalk has migrated to use android resource getString() hence use %1$s, %2$s instead of {0}, {1} used by get18NString()
+# - ensure the number of parameters and their designation are correctly specified.
+#
+# Do Not translate string values containing the patterns below. They are used internally only by code/source as key index etc
+# - with dot joining words xxx.xxx.xxx e.g. pref.cat.settings.notifications
+# - contains underscore e.g. auto_join_on
+# - Words joined without any spaces e.g. connectionProxyAddress
+# - Do not translate any style format string e.g MMM dd, yyyy - otherwise system abort on execution
+# - Omit those require no translation e.g. IP link, OMEMO,  640x480 etc.
+#   Android will always fallback to use the string from main string.xml if not found in other languages files
+#
+# Note: Avoid copy/duplicate the above defined strings in the other languages string.xml files to prevent
+# accidentally values change. Any delta in the parameter will cause system problem when one switch between different languages.
+# string with {0}, {1} means the string is still not being used/implemented in aTalk. They are kept for reference and may use later;
+# you can proceed to translate these string replacing {0}, {1} with %1$s, %2$s etc
+#
+-->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingTranslation" >
+
+    <string name="APPLICATION_NAME">aTalk</string>
+    <string name="account_server_port">5222</string>
+    <string name="chatroom_hint">chatroom@example.com</string>
+    <string name="encryption_choice_omemo">OMEMO</string>
+    <string name="encryption_choice_otr">OTR</string>
+    <string name="otr_session">OTR Sessions</string>
+    <string name="encryption_choice_pgp">OpenPGP</string>
+    <string name="ACCOUNT_TYPE">org.atalk.hmos.account</string>
+    <string name="service_gui_URL_MEDIA_SHARE">&lt;html>&lt;a href=\'%3$s\'>&lt;img src=\'%1$s\' alt=\'url image\'/>&lt;/a>&lt;br/>%2$s&lt;br/>&lt;a href=\'%3$s\'>%3$s&lt;/a>&lt;/html></string>
+
+    <!-- Conference Chat -->
+    <string name="service_gui_CHAT_REPLY">&lt;blockquote>&lt;small>
+        &lt;span style="color:purple">%1$s&lt;/span>&lt;br/>
+        &lt;span style="color:grey">&lt;em>%2$s&lt;/em>&lt;/span>
+        &lt;/small>&lt;/blockquote></string>
+    <string name="service_gui_CHAT_LINK">&lt;a href="%1$s">%2$s&lt;/a></string>
+
+    <!-- About Dialog -->
+    <string name="AboutDialog_Copyright">Copyright@2014, atalk.org\n(GNU General Public License v3.0)\nAll rights reserved.</string>
+    <string name="AboutDialog_Link">https://cmeng-git.github.io/atalk</string>
+    <string name="FAQ_Link">https://cmeng-git.github.io/atalk/faq.html</string>
+
+    <!-- PTT Chat -->
+    <string name="chat_dbZero">00.00dB</string>
+    <string name="chat_timeZero">00:00</string>
+
+    <string name="service_gui_IM">IM</string>
+    <string name="service_gui_INSTANT_MESSAGINGS">IMs</string>
+
+    <!-- account info -->
+    <string name="plugin_accountinfo_URL">URL:</string>
+    <string name="plugin_otr_authbuddydialog_HELP_URI">https://cmeng-git.github.io/atalk</string>
+
+    <!-- Account proxy settings -->
+    <string name="service_gui_PROXY_BOSH_URL_HINT">https://example.org:4443/http-bind</string>
+
+    <!-- Provisioning Plugin-->
+    <string name="plugin_provisioning_DHCP">DHCP</string>
+    <string name="plugin_provisioning_DNS">DNS</string>
+    <string name="plugin_provisioning_URI">URI</string>
+    <string name="plugin_provisioning_UUID">UUID</string>
+
+    <!-- STUN/Jingle Nodes list -->
+    <string name="service_gui_SERVERS_STUN_DESCRIPTOR">%1$s:%2$s %3$s</string>
+
+    <!-- Jabber preferences -->
+    <string name="service_gui_JBR_ICE">ICE</string>
+
+    <!-- WebView default Page -->
+    <string name="service_gui_settings_WEBVIEW_SUMMARY">file:///android_asset/movim/index.html</string>
+
+    <!-- Auto accept downloadable max file size -->
+    <string name="auto_accept_filesize">524288</string>
+
+    <!-- Convert letters in phone numbers -->
+    <string name="service_gui_settings_ALLOW_ALPHA_ON"><![CDATA[*e.g. +1–800–MYPHONE –>+1–800–694663]]></string>
+
+    <!-- Camera used -->
+    <string name="service_gui_settings_CAMERA_BACK">Back</string>
+    <string name="service_gui_settings_CAMERA_FRONT">Front</string>
+
+    <!-- Android Notification Channels -->
+    <string name="noti_channel_MESSAGE_GROUP">Chat Message Notification</string>
+    <string name="noti_channel_FILE_GROUP">File Transfer Notification</string>
+    <string name="noti_channel_CALL_GROUP">Call Notification</string>
+    <string name="noti_channel_DEFAULT_GROUP">General Notification</string>
+    <string name="noti_channel_SILENT_GROUP">Silent Notification</string>
+</resources>

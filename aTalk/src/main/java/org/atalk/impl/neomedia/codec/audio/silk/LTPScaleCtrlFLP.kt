@@ -1,0 +1,70 @@
+/*
+ * Jitsi, the OpenSource Java VoIP and Instant Messaging client.
+ * 
+ * Distributable under LGPL license. See terms of license at gnu.org.
+ */
+package org.atalk.impl.neomedia.codec.audio.silk
+
+object LTPScaleCtrlFLP {
+    const val NB_THRESHOLDS = 11
+
+    /**
+     * Table containing trained thresholds for LTP scaling.
+     */
+    val LTPScaleThresholds = floatArrayOf(0.95f, 0.8f, 0.50f, 0.400f, 0.3f, 0.2f, 0.15f,
+            0.1f, 0.08f, 0.075f, 0.0f)
+
+    /**
+     *
+     * @param psEnc
+     * Encoder state FLP
+     * @param psEncCtrl
+     * Encoder control FLP
+     */
+    fun SKP_Silk_LTP_scale_ctrl_FLP(psEnc: SKP_Silk_encoder_state_FLP?,  /* I/O Encoder state FLP */
+            psEncCtrl: SKP_Silk_encoder_control_FLP /* I/O Encoder control FLP */
+    ) {
+        var round_loss: Int
+        val frames_per_packet: Int
+        val g_out: Float
+        val g_limit: Float
+        val thrld1: Float
+        val thrld2: Float
+
+        /* 1st order high-pass filter */
+        // g_HP(n) = g(n) - g(n-1) + 0.5 * g_HP(n-1); // tune the 0.5: higher means longer impact of
+        // jump
+        psEnc!!.HPLTPredCodGain = (Math.max(psEncCtrl.LTPredCodGain - psEnc.prevLTPredCodGain, 0.0f)
+                + 0.5f * psEnc.HPLTPredCodGain)
+        psEnc.prevLTPredCodGain = psEncCtrl.LTPredCodGain
+
+        /* combine input and filtered input */
+        g_out = 0.5f * psEncCtrl.LTPredCodGain + (1.0f - 0.5f) * psEnc.HPLTPredCodGain
+        g_limit = SigProcFLP.SKP_sigmoid(0.5f * (g_out - 6))
+
+        /* Default is minimum scaling */
+        psEncCtrl.sCmn.LTP_scaleIndex = 0
+
+        /* Round the loss measure to whole pct */
+        round_loss = psEnc.sCmn.PacketLoss_perc
+        round_loss = if (0 > round_loss) 0 else round_loss
+
+        /* Only scale if first frame in packet 0% */
+        if (psEnc.sCmn.nFramesInPayloadBuf == 0) {
+            frames_per_packet = psEnc.sCmn.PacketSize_ms / Define.FRAME_LENGTH_MS
+            round_loss += frames_per_packet - 1
+            // thrld1 = LTPScaleThresholds[ Math.min( round_loss, NB_THRESHOLDS - 1 ) ];
+            // thrld2 = LTPScaleThresholds[ Math.min( round_loss + 1, NB_THRESHOLDS - 1 ) ];
+            thrld1 = LTPScaleThresholds[if (round_loss < NB_THRESHOLDS - 1) round_loss else NB_THRESHOLDS - 1]
+            thrld2 = LTPScaleThresholds[if (round_loss + 1 < NB_THRESHOLDS - 1) round_loss + 1 else NB_THRESHOLDS - 1]
+            if (g_limit > thrld1) {
+                /* High Scaling */
+                psEncCtrl.sCmn.LTP_scaleIndex = 2
+            } else if (g_limit > thrld2) {
+                /* Middle Scaling */
+                psEncCtrl.sCmn.LTP_scaleIndex = 1
+            }
+        }
+        psEncCtrl.LTP_scale = TablesOther.SKP_Silk_LTPScales_table_Q14[psEncCtrl.sCmn.LTP_scaleIndex] / 16384.0f
+    }
+}
