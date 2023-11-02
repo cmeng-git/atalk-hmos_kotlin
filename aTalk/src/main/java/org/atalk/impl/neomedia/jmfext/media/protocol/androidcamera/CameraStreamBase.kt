@@ -137,6 +137,18 @@ abstract class CameraStreamBase internal constructor(  // protected ViewDependen
     private val avg = LongArray(10)
     private var idx = 0
 
+
+    /**
+     * Create a new instance of `CameraStreamBase`.
+     *
+     * parent parent `DataSource`.
+     * formatControl format control used by this stream.
+     */
+    init {
+        mCameraId = AndroidCamera.getCameraId(dataSource.locator)
+        mInstance = this
+    }
+
     /**
      * Method should be called by extending classes in order to start the camera.
      * Obtain optimized dimension from the device supported preview sizes with the given desired size.
@@ -257,17 +269,6 @@ abstract class CameraStreamBase internal constructor(  // protected ViewDependen
     }
 
     /**
-     * Create a new instance of `CameraStreamBase`.
-     *
-     * parent parent `DataSource`.
-     * formatControl format control used by this stream.
-     */
-    init {
-        mCameraId = AndroidCamera.getCameraId(dataSource.locator)
-        instance = this
-    }
-
-    /**
      * Method called before camera preview is started. Extending classes should configure preview at this point.
      */
     protected abstract fun onInitPreview()
@@ -377,7 +378,7 @@ abstract class CameraStreamBase internal constructor(  // protected ViewDependen
     }
 
     private fun reInitCamera() {
-        val videoFragment = VideoCallActivity.getVideoFragment()!!
+        val videoFragment = VideoCallActivity.getVideoFragment()
         closeCamera()
         if (videoFragment.isLocalVideoEnabled()) {
             try {
@@ -454,8 +455,13 @@ abstract class CameraStreamBase internal constructor(  // protected ViewDependen
     }
 
     companion object {
-        lateinit var instance: CameraStreamBase
+        @JvmStatic
+        var mInstance: CameraStreamBase? = null
             private set
+
+        fun getInstance() : CameraStreamBase? {
+            return mInstance
+        }
 
         /**
          * A reference to the opened [CameraDevice].

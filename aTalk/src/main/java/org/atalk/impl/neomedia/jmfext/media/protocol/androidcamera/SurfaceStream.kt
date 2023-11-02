@@ -140,7 +140,7 @@ internal constructor(parent: DataSource?, formatControl: FormatControl) : Camera
          * Note: Do not change the following execution order
          */
         val videoFragment = VideoCallActivity.getVideoFragment()
-        myCtxProvider = videoFragment!!.mLocalPreviewGlCtxProvider
+        myCtxProvider = videoFragment.mLocalPreviewGlCtxProvider
         myCtxProvider!!.videoSize = videoSize
         videoFragment.initLocalPreviewContainer(myCtxProvider)
         mDisplayTV = myCtxProvider!!.obtainObject() // this will create a new TextureView
@@ -167,7 +167,7 @@ internal constructor(parent: DataSource?, formatControl: FormatControl) : Camera
             // Need to do initLocalPreviewContainer here to take care of device orientation change
             // https://developer.android.com/reference/android/hardware/camera2/CameraDevice.html#createCaptureSession(android.hardware.camera2.params.SessionConfiguration)
             myCtxProvider!!.videoSize = optimizedSize
-            VideoCallActivity.getVideoFragment()!!.initLocalPreviewContainer(myCtxProvider)
+            VideoCallActivity.getVideoFragment().initLocalPreviewContainer(myCtxProvider)
             mSurfaceTexture!!.setDefaultBufferSize(optimizedSize.width, optimizedSize.height)
             mCaptureBuilder = mCameraDevice!!.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
             mCaptureBuilder!!.addTarget(mPreviewSurface!!)

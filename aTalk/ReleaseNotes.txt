@@ -1,16 +1,22 @@
 Project aTalk-Android Release Notes
 =========================================================================
 Version:        4.0.x (400000)
-Release Date:   11/01/2023
+Release Date:   11/02/2023
 Author:         cmeng
+- Fixed CallEnded class not call even it was being replaced in VideoCallActivity (Kotlin problem?)
+  Merged with VideoCallActivity
+- Auto return to contactList 3 seconds after call has ended.
+- Fix Media audio call crash on device rotate: CameraStreamBase lateinit property instance has not been initialized
+  Change property to fun call, and check for null before proceed; instance is only init for video call
+
+/* === 11/01/2023 === */
 - Kotlin refactor of aTalk java source
 - Move project name space to org.atalk.hmos
 - Change minimum API support to 24 (android-7)
 - Migrate ice4j to only compatible with API-24
+
 - To fix:
   * Media call received audio is muted.
-  * Media call crash on device rotate: CameraStreamBase lateinit property instance has not been initialized
-  * CallEnded class not call even it was being replaced in VideoCallActivity (Kotlin problem?)
 
 =========================================================================
 Version:        3.2.1 (302010)

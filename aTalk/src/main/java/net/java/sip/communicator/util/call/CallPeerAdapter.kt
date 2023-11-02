@@ -105,8 +105,8 @@ class CallPeerAdapter(
             renderer.getCallRenderer()!!.updateHoldButtonState()
         }
         renderer.setPeerState(oldState, newState, newStateString)
-        val reasonString = evt.getReasonString()
-        if (reasonString != null) renderer.setErrorReason(reasonString)
+        val reason = evt.getReasonString()
+        if (reason != null) renderer.setErrorReason(reason)
     }
 
     /**

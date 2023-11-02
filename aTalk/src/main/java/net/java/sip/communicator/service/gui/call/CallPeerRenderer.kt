@@ -88,7 +88,7 @@ interface CallPeerRenderer {
      *
      * @param reason the reason of the error to set
      */
-    fun setErrorReason(reason: String?)
+    fun setErrorReason(reason: String)
 
     /**
      * Sets the mute property value.

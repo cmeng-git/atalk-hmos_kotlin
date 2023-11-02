@@ -87,7 +87,7 @@ class PreviewStream
              * Note: Do not change the following execution order
              */
             val videoFragment = VideoCallActivity.getVideoFragment()
-            mSurfaceProvider = videoFragment!!.localPreviewSurface
+            mSurfaceProvider = videoFragment.localPreviewSurface
             mSurfaceProvider!!.videoSize = optimizedSize
             Timber.d("Set surfaceSize (PreviewStream): %s", optimizedSize)
             val surfaceHolder = mSurfaceProvider!!.obtainObject() // this will create the surfaceView

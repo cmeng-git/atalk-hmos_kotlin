@@ -14,6 +14,7 @@ import android.content.IntentFilter
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Handler
 import android.view.*
 import android.widget.ImageButton
 import android.widget.ImageView
@@ -73,7 +74,9 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
     /**
      * Call volume control fragment instance.
      */
-    private var callVolumeControl: CallVolumeCtrlFragment? = null
+    private lateinit var callVolumeControl: CallVolumeCtrlFragment
+
+    private lateinit var callTimer: CallTimerFragment
 
     /**
      * Auto-hide controller fragment for call control buttons. It is attached when remote video
@@ -122,6 +125,7 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
     private lateinit var microphoneButton: ImageView
     private lateinit var speakerphoneButton: ImageView
     private lateinit var padlockGroupView: View
+    private lateinit var callEndReason: TextView
 
     /**
      * Called when the activity is starting. Initializes the corresponding call interface.
@@ -181,6 +185,9 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
         sasToastControl = ClickableToastController(toastView, this, R.id.clickable_toast)
         toastView.setOnClickListener(this)
 
+        callEndReason = findViewById(R.id.callEndReason)
+        callEndReason.visibility = View.GONE
+
         peerAvatar = findViewById(R.id.calleeAvatar)
         mBackToChat = false
         padlockGroupView = findViewById(R.id.security_group)
@@ -188,24 +195,29 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
 
         val fragmentManager = supportFragmentManager
         fragmentManager.addFragmentOnAttachListener(this)
+
         if (savedInstanceState == null) {
             videoFragment = VideoHandlerFragment()
             callVolumeControl = CallVolumeCtrlFragment()
+            callTimer = CallTimerFragment()
+
             /*
              * Adds a fragment that turns on and off the screen when proximity sensor detects FAR/NEAR distance.
              */
             fragmentManager.beginTransaction()
-                .add(callVolumeControl!!, VOLUME_CTRL_TAG)
-                .add(ProximitySensorFragment(),
-                    PROXIMITY_FRAGMENT_TAG) /* Adds the fragment that handles video display logic */
-                .add(videoFragment!!, VIDEO_FRAGMENT_TAG) /* Adds the fragment that handles call duration logic */
-                .add(CallTimerFragment(), TIMER_FRAGMENT_TAG)
+                .add(callVolumeControl, VOLUME_CTRL_TAG)
+                .add(ProximitySensorFragment(), PROXIMITY_FRAGMENT_TAG)
+                /* Fragment that handles video display logic */
+                .add(videoFragment!!, VIDEO_FRAGMENT_TAG)
+                /* Fragment that handles call duration logic */
+                .add(callTimer, TIMER_FRAGMENT_TAG)
                 .commit()
         }
         else {
             // Retrieve restored auto hide fragment
-            autoHideControl = fragmentManager.findFragmentByTag(AUTO_HIDE_TAG) as AutoHideController?
-            callVolumeControl = fragmentManager.findFragmentByTag(VOLUME_CTRL_TAG) as CallVolumeCtrlFragment?
+            autoHideControl = fragmentManager.findFragmentByTag(AUTO_HIDE_TAG) as AutoHideController
+            callVolumeControl = fragmentManager.findFragmentByTag(VOLUME_CTRL_TAG) as CallVolumeCtrlFragment
+            callTimer = fragmentManager.findFragmentByTag(TIMER_FRAGMENT_TAG) as CallTimerFragment
         }
     }
 
@@ -217,7 +229,7 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        if (sasToastControl != null) sasToastControl!!.onSaveInstanceState(outState)
+        sasToastControl?.onSaveInstanceState(outState)
         super.onSaveInstanceState(outState)
     }
 
@@ -246,11 +258,12 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
         }
 
         // Call already ended or not found
-        if (mCall == null) return
+        if (mCall == null)
+            return
 
         // To take care when the phone orientation is changed while call is in progress
-        if (videoFragment == null) videoFragment = supportFragmentManager.findFragmentByTag(
-            "video") as VideoHandlerFragment?
+        if (videoFragment == null)
+            videoFragment = supportFragmentManager.findFragmentByTag("video") as VideoHandlerFragment
 
         // Registers as the call state listener
         mCall!!.addCallChangeListener(this)
@@ -284,7 +297,9 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
      */
     override fun onPause() {
         super.onPause()
-        if (mCall == null) return
+        if (mCall == null)
+            return
+
         mCall!!.removeCallChangeListener(this)
         if (callPeerAdapter != null) {
             val callPeerIter = mCall!!.getCallPeers()
@@ -322,15 +337,18 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
      * surface can be hidden effectively.
      */
     private fun doFinishActivity() {
-        if (finishing) return
+        if (finishing)
+            return
+
         finishing = true
         callNotificationControl = null
 
         Thread {
             // Waits for the camera to be stopped
-            videoFragment!!.ensureCameraClosed()
+            videoFragment?.ensureCameraClosed()
+
             runOnUiThread {
-                callState.callDuration = ViewUtil.getTextViewValue(findViewById(android.R.id.content), R.id.callTime)!!
+                // callState.callDuration = ViewUtil.getTextViewValue(findViewById(android.R.id.content), R.id.callTime)!!
                 callState.callEnded = true
 
                 // Remove video fragment
@@ -339,8 +357,15 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
                 }
                 // Remove auto hide fragment
                 ensureAutoHideFragmentDetached()
-                // !!! below is not working in kotlin code
-                supportFragmentManager.beginTransaction().replace(android.R.id.content, CallEnded()).commit()
+                // !!! below is not working in kotlin code; merged with this activity
+                // supportFragmentManager.beginTransaction().replace(android.R.id.content, CallEnded()).commit()
+
+                // auto exit 3 seconds after call ended
+                // !!! below is not working in kotlin code; merged with this activity
+                // getSupportFragmentManager().beginTransaction().replace(android.R.id.content, new CallEnded()).commit();
+
+                // auto exit 3 seconds after call ended
+                Handler().postDelayed({ finish() }, 3000)
             }
         }.start()
     }
@@ -353,17 +378,20 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
     }
 
     override fun onRemoteVideoChange(isRemoteVideoVisible: Boolean) {
-        if (isRemoteVideoVisible) hideSystemUI() else showSystemUI()
+        if (isRemoteVideoVisible) hideSystemUI()
+        else showSystemUI()
     }
 
     private fun hideSystemUI() {
         // Enables regular immersive mode.
         val decorView = window.decorView
-        decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE // Set the content to appear under the system bars so that the
+        decorView.systemUiVisibility = (View.SYSTEM_UI_FLAG_IMMERSIVE
+                // Set the content to appear under the system bars so that the
                 // content doesn't resize when the system bars hide and show.
                 or View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                 or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN // Hide the nav bar and status bar
+                or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                // Hide the nav bar and status bar
                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
                 or View.SYSTEM_UI_FLAG_FULLSCREEN)
     }
@@ -389,11 +417,13 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
             }
 
             R.id.button_call_microphone ->
-                if (micEnabled) CallManager.setMute(mCall, !isMuted())
+                if (micEnabled)
+                    CallManager.setMute(mCall, !isMuted())
 
             // call == null if call setup failed
             R.id.button_call_hold ->
-                if (mCall != null) CallManager.putOnHold(mCall!!, !isOnHold())
+                if (mCall != null)
+                    CallManager.putOnHold(mCall!!, !isOnHold())
 
             // call == null if call setup failed
             R.id.button_call_transfer ->
@@ -406,7 +436,7 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
                 }
                 else {
                     CallManager.hangupCall(mCall)
-                    setErrorReason(callState.errorReason) // Text view not impl
+                    setErrorReason(callState.errorReason)
                 }
 
             R.id.security_group -> showZrtpInfoDialog()
@@ -430,6 +460,8 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
                 return true
             }
             R.id.button_call_microphone -> {
+                // Create and show the mic gain control dialog.
+
                 if (micEnabled) {
                     newFragment = VolumeControlDialog.createInputVolCtrlDialog()
                     newFragment.show(supportFragmentManager, "vol_ctrl_dialog")
@@ -527,13 +559,13 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
         return when (event.keyCode) {
             KeyEvent.KEYCODE_VOLUME_UP -> {
                 if (action == KeyEvent.ACTION_UP) {
-                    callVolumeControl!!.onKeyVolUp()
+                    callVolumeControl.onKeyVolUp()
                 }
                 true
             }
             KeyEvent.KEYCODE_VOLUME_DOWN -> {
                 if (action == KeyEvent.ACTION_DOWN) {
-                    callVolumeControl!!.onKeyVolDown()
+                    callVolumeControl.onKeyVolDown()
                 }
                 true
             }
@@ -590,7 +622,9 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
      * Ensures that auto hide fragment is added and started.
      */
     fun ensureAutoHideFragmentAttached() {
-        if (autoHideControl != null) return
+        if (autoHideControl != null)
+            return
+
         autoHideControl = AutoHideController.getInstance(R.id.button_Container, AUTO_HIDE_DELAY)
         supportFragmentManager.beginTransaction().add(autoHideControl!!, AUTO_HIDE_TAG).commit()
     }
@@ -612,7 +646,7 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
      */
     override fun onUserInteraction() {
         super.onUserInteraction()
-        if (autoHideControl != null) autoHideControl!!.show()
+        autoHideControl?.show()
     }
 
     /**
@@ -620,19 +654,16 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
      *
      * @return `CallVolumeCtrlFragment` if it exists or `null` otherwise.
      */
-    fun getVolCtrlFragment(): CallVolumeCtrlFragment? {
+    fun getVolCtrlFragment(): CallVolumeCtrlFragment {
         return callVolumeControl
     }
 
-    override fun setErrorReason(reason: String?) {
+    override fun setErrorReason(reason: String) {
         Timber.i("End call reason: %s", reason)
         runOnUiThread {
-            callState.errorReason = reason!!
-            val errorReason = findViewById<TextView>(R.id.callErrorReason)
-            if (errorReason != null) {
-                errorReason.text = reason
-                errorReason.visibility = View.VISIBLE
-            }
+            callState.errorReason = reason
+            callEndReason.text = reason
+            callEndReason.visibility = View.VISIBLE
         }
     }
 
@@ -695,11 +726,6 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
         // recording system will crash
     }
 
-    // 	Dynamic get videoFragment can sometimes return null;
-//	private VideoHandlerFragment getVideoFragment() {
-//		return videoFragment;
-//		// return (VideoHandlerFragment) getSupportFragmentManager().findFragmentByTag("video");
-//	}
     override fun isLocalVideoVisible(): Boolean {
         return videoFragment!!.isLocalVideoVisible()
     }
@@ -830,26 +856,17 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
     }
 
     /**
-     * Gets the `CallTimerFragment`.
-     *
-     * @return the `CallTimerFragment`.
-     */
-    private fun getCallTimerFragment(): CallTimerFragment? {
-        return supportFragmentManager.findFragmentByTag(TIMER_FRAGMENT_TAG) as CallTimerFragment?
-    }
-
-    /**
      * Starts the timer that counts call duration.
      */
     override fun startCallTimer() {
-        if (getCallTimerFragment() != null) getCallTimerFragment()!!.startCallTimer()
+        callTimer.startCallTimer()
     }
 
     /**
      * Stops the timer that counts call duration.
      */
     override fun stopCallTimer() {
-        if (getCallTimerFragment() != null) getCallTimerFragment()!!.stopCallTimer()
+        callTimer.stopCallTimer()
     }
 
     /**
@@ -858,7 +875,7 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
      * @return `true` if the call timer has been started, otherwise returns `false`
      */
     override fun isCallTimerStarted(): Boolean {
-        return getCallTimerFragment() != null && getCallTimerFragment()!!.isCallTimerStarted()
+        return callTimer.isCallTimerStarted()
     }
 
     private fun addCallPeerUI(callPeer: CallPeer) {
@@ -869,7 +886,7 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
         setPeerState(null, callPeer.getState(), callPeer.getState()!!.getLocalizedStateString())
         setPeerName(callPeer.getDisplayName())
         setPeerImage(CallUIUtils.getCalleeAvatar(mCall))
-        getCallTimerFragment()!!.callPeerAdded(callPeer)
+        callTimer.callPeerAdded(callPeer)
 
         // set for use by CallEnded
         callState.callPeer = callPeer.getPeerJid()
@@ -1068,7 +1085,7 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
      */
     override fun onAutoHideStateChanged(source: AutoHideController, visibility: Int) {
         // NPE from field report
-        if (videoFragment != null) videoFragment!!.updateCallInfoMargin()
+        videoFragment?.updateCallInfoMargin()
     }
 
     fun isBackToChat(): Boolean {
@@ -1098,8 +1115,8 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
             aTalkApp.isPortrait = newConfig.orientation == Configuration.ORIENTATION_PORTRAIT
             videoFragment!!.initVideoViewOnRotation()
 
-            val instance = CameraStreamBase.instance
-            instance.initPreviewOnRotation(true)
+            val instance = CameraStreamBase.getInstance()
+            instance?.initPreviewOnRotation(true)
         }
     }
 
@@ -1162,8 +1179,8 @@ open class VideoCallActivity : OSGiActivity(), CallPeerRenderer, CallRenderer, C
             return videoCallIntent
         }
 
-        fun getVideoFragment(): VideoHandlerFragment? {
-            return videoFragment
+        fun getVideoFragment(): VideoHandlerFragment {
+            return videoFragment!!
         }
 
         fun setBackToChat(state: Boolean) {

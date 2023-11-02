@@ -156,7 +156,7 @@ class ProximitySensorFragment : Fragment(), SensorEventListener {
         private var volControl: CallVolumeCtrlFragment? = null
         override fun onResume() {
             super.onResume()
-            volControl = (activity as VideoCallActivity?)!!.getVolCtrlFragment()
+            volControl = (activity as VideoCallActivity).getVolCtrlFragment()
         }
 
         override fun onPause() {

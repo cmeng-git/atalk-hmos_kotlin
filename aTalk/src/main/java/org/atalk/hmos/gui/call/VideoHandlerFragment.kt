@@ -366,8 +366,8 @@ class VideoHandlerFragment : OSGiFragment(), View.OnLongClickListener {
         cameraSwitchThread = object : Thread() {
             override fun run() {
                 if (newDevice != null) {
-                    val instance = CameraStreamBase.instance
-                    instance.switchCamera(newDevice.locator, isLocalVideoEnabled())
+                    val instance = CameraStreamBase.getInstance()
+                    instance?.switchCamera(newDevice.locator, isLocalVideoEnabled())
 
                     // Keep track of created threads
                     cameraSwitchThread = null

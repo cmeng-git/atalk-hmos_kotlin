@@ -271,7 +271,7 @@ class DataSource : AbstractPushBufferCaptureDevice {
                  * Note: Do not change the following execution order
                  */
                 val videoFragment = VideoCallActivity.getVideoFragment()
-                mSurfaceProvider = videoFragment!!.localPreviewSurface
+                mSurfaceProvider = videoFragment.localPreviewSurface
                 mSurfaceProvider!!.videoSize = mPreviewSize!!
                 // Need to init for AndroidDecoder when hardware decode is enabled
                 // AndroidDecoder.renderSurfaceProvider.setSurfaceSize(mPreviewSize);

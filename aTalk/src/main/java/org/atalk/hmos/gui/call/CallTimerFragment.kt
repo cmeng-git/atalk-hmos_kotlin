@@ -79,7 +79,9 @@ class CallTimerFragment : OSGiFragment() {
      * Updates the call duration string.
      */
     private fun doUpdateCallDuration() {
-        if (callStartDate == null || activity == null) return
+        if (callStartDate == null || activity == null)
+            return
+
         val timeStr = GuiUtils.formatTime(callStartDate!!.time, System.currentTimeMillis())
         val callTime = activity!!.findViewById<TextView>(R.id.callTime)
         callTime.text = timeStr

@@ -325,6 +325,8 @@ class AudioTrackRenderer @JvmOverloads constructor(
      * @return one or a combination of the constants defined in [PlugIn]
      * @see Renderer.process
      */
+
+    private var no: Int = 0
     override fun process(buffer: Buffer): Int {
         /*
          * We do not have early access to the Thread which runs the #process(Buffer) method of this
@@ -493,6 +495,8 @@ class AudioTrackRenderer @JvmOverloads constructor(
              */
             processed = BUFFER_PROCESSED_FAILED
         }
+
+//        if (no++ % 50 == 0) Timber.w("Process data status: %s : %S", buffer.length, processed)
         return processed
     }
 
