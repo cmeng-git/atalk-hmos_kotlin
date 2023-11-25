@@ -19,31 +19,20 @@ package org.atalk.crypto
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.database.Cursor
-import android.database.sqlite.SQLiteDatabase
 import android.os.Bundle
 import android.view.ContextMenu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
-import android.widget.AdapterView.*
+import android.widget.AdapterView.AdapterContextMenuInfo
 import android.widget.BaseAdapter
 import android.widget.ListView
 import android.widget.Toast
-import net.java.sip.communicator.plugin.otr.OtrActivator
-import net.java.sip.communicator.plugin.otr.OtrContactManager
-import net.java.sip.communicator.plugin.otr.ScOtrKeyManager
-import net.java.sip.communicator.service.contactlist.MetaContact
-import net.java.sip.communicator.service.contactlist.MetaContactListService
 import net.java.sip.communicator.service.protocol.Contact
-import net.java.sip.communicator.service.protocol.ProtocolProviderService
 import net.java.sip.communicator.util.account.AccountUtils
 import org.atalk.crypto.omemo.FingerprintStatus
 import org.atalk.crypto.omemo.SQLiteOmemoStore
 import org.atalk.hmos.R
-import org.atalk.hmos.gui.AndroidGUIActivator
 import org.atalk.hmos.gui.util.ThemeHelper
 import org.atalk.hmos.gui.util.ViewUtil
 import org.atalk.hmos.gui.util.ViewUtil.setTextViewValue
@@ -65,7 +54,6 @@ import java.util.*
 class CryptoDeviceFingerPrints : OSGiActivity() {
     private var mDB = DatabaseBackend.readableDB
     private var mOmemoStore: SQLiteOmemoStore? = null
-    private val keyManager = OtrActivator.scOtrKeyManager
 
     /* Fingerprints adapter instance. */
     private var fpListAdapter: FingerprintListAdapter? = null
@@ -82,7 +70,7 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
     /* Map contains bareJid and its associated Contact */
     private val contactList = HashMap<String, Contact?>()
     private var contact: Contact? = null
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mOmemoStore = SignalOmemoService.getInstance().omemoStoreBackend as SQLiteOmemoStore
@@ -94,15 +82,13 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
     }
 
     /**
-     * Gets the list of all known fingerPrints for both OMEMO and OTR.
+     * Gets the list of all known fingerPrints for OMEMO.
      *
      * @return a map of all known Map<bareJid></bareJid>, fingerPrints>.
      */
     private fun getDeviceFingerPrints(): Map<String, String> {
         // Get the protocol providers and meta-contactList service
         val providers = AccountUtils.registeredProviders
-        val mclService = AndroidGUIActivator.contactListService
-        var fpList: List<String?>?
 
         // Get all the omemoDevices' fingerPrints from database
         getOmemoDeviceFingerprintStatus()
@@ -114,25 +100,6 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
             val userDevice = OMEMO + omemoManager.ownDevice
             ownOmemoDevice.add(userDevice)
 
-            // Get OTR contacts' fingerPrints
-            val metaContacts = mclService.findAllMetaContactsForProvider(pps)
-            while (metaContacts.hasNext()) {
-                val metaContact = metaContacts.next()!!
-                val contacts = metaContact.getContacts()
-                while (contacts.hasNext()) {
-                    contact = contacts.next()
-                    val bareJid = OTR + contact!!.address
-                    if (!contactList.containsKey(bareJid)) {
-                        contactList[bareJid] = contact
-                        fpList = keyManager.getAllRemoteFingerprints(contact)
-                        if ((fpList != null) && fpList.isNotEmpty()) {
-                            for (fp in fpList) {
-                                deviceFingerprints[bareJid] = fp!!
-                            }
-                        }
-                    }
-                }
-            }
         }
         return deviceFingerprints
     }
@@ -142,7 +109,7 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
      */
     override fun onCreateContextMenu(menu: ContextMenu, v: View?, menuInfo: ContextMenu.ContextMenuInfo) {
         var isVerified = false
-        var keyExists = true
+        val keyExists = true
         super.onCreateContextMenu(menu, v, menuInfo)
         val inflater = menuInflater
         inflater.inflate(R.menu.fingerprint_ctx_menu, menu)
@@ -154,10 +121,6 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
         val bareJid = fpListAdapter!!.getBareJidFromRow(pos)
         if (bareJid.startsWith(OMEMO)) {
             isVerified = isOmemoFPVerified(bareJid, remoteFingerprint)
-        } else if (bareJid.startsWith(OTR)) {
-            contact = contactList[bareJid]
-            isVerified = keyManager.isVerified(contact, remoteFingerprint)
-            keyExists = keyManager.getAllRemoteFingerprints(contact) != null
         }
 
         // set visibility of trust option menu based on fingerPrint state
@@ -179,15 +142,12 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
         val bareJid = fpListAdapter!!.getBareJidFromRow(pos)
         val remoteFingerprint = fpListAdapter!!.getFingerprintFromRow(pos)
         contact = contactList[bareJid]
-        val otrContact = OtrContactManager.getOtrContact(contact, null)
         when (item.itemId) {
             R.id.trust -> {
                 if (bareJid.startsWith(OMEMO)) {
                     trustOmemoFingerPrint(bareJid, remoteFingerprint)
                     val msg = getString(R.string.crypto_toast_OMEMO_TRUST_MESSAGE_RESUME, bareJid)
                     Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-                } else {
-                    keyManager.verify(otrContact, remoteFingerprint)
                 }
                 fpListAdapter!!.notifyDataSetChanged()
                 return true
@@ -197,8 +157,6 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
                     distrustOmemoFingerPrint(bareJid, remoteFingerprint)
                     val msg = getString(R.string.crypto_toast_OMEMO_DISTRUST_MESSAGE_STOP, bareJid)
                     Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
-                } else {
-                    keyManager.unverify(otrContact, remoteFingerprint)
                 }
                 fpListAdapter!!.notifyDataSetChanged()
                 return true
@@ -207,7 +165,7 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
                 val cbManager = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
                 if (cbManager != null) {
                     cbManager.setPrimaryClip(ClipData.newPlainText(null,
-                            CryptoHelper.prettifyFingerprint(remoteFingerprint)))
+                        CryptoHelper.prettifyFingerprint(remoteFingerprint)))
                     Toast.makeText(this, R.string.crypto_toast_FINGERPRINT_COPY, Toast.LENGTH_SHORT).show()
                 }
                 return true
@@ -224,7 +182,7 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
     private fun getOmemoDeviceFingerprintStatus() {
         var fpStatus: FingerprintStatus?
         val cursor = mDB.query(SQLiteOmemoStore.IDENTITIES_TABLE_NAME, null,
-                null, null, null, null, null)
+            null, null, null, null, null)
         while (cursor.moveToNext()) {
             fpStatus = FingerprintStatus.fromCursor(cursor)
             if (fpStatus != null) {
@@ -301,7 +259,7 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
         /**
          * Creates new instance of `FingerprintListAdapter`.
          *
-         * linkedHashMap list of `device` for which OMEMO/OTR fingerprints will be displayed.
+         * linkedHashMap list of `device` for which OMEMO fingerprints will be displayed.
          */
         init {
             deviceJid = ArrayList(linkedHashMap.keys)
@@ -346,17 +304,17 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
 
             // Color for active fingerPrints
             ViewUtil.setTextViewColor(iRowView, R.id.fingerprint,
-                    if (ThemeHelper.isAppTheme(ThemeHelper.Theme.DARK)) R.color.textColorWhite else R.color.textColorBlack)
+                if (ThemeHelper.isAppTheme(ThemeHelper.Theme.DARK)) R.color.textColorWhite else R.color.textColorBlack)
             if (bareJid.startsWith(OMEMO)) {
                 when {
-                    isOwnOmemoDevice(bareJid) -> ViewUtil.setTextViewColor(iRowView, R.id.fingerprint, R.color.blue)
-                    !isOmemoDeviceActive(bareJid) -> ViewUtil.setTextViewColor(iRowView, R.id.fingerprint, R.color.grey500)
+                    isOwnOmemoDevice(bareJid) ->
+                        ViewUtil.setTextViewColor(iRowView, R.id.fingerprint, R.color.blue)
+                    !isOmemoDeviceActive(bareJid) ->
+                        ViewUtil.setTextViewColor(iRowView, R.id.fingerprint, R.color.grey500)
                 }
                 isVerified = isOmemoFPVerified(bareJid, remoteFingerprint)
-            } else if (bareJid.startsWith(OTR)) {
-                contact = contactList[bareJid]
-                isVerified = keyManager.isVerified(contact, remoteFingerprint)
             }
+
             val status = if (isVerified) R.string.crypto_FINGERPRINT_VERIFIED else R.string.crypto_FINGERPRINT_NOT_VERIFIED
             val verifyStatus = getString(R.string.crypto_FINGERPRINT_STATUS, getString(status))
             setTextViewValue(iRowView, R.id.fingerprint_status, verifyStatus)
@@ -374,7 +332,6 @@ class CryptoDeviceFingerPrints : OSGiActivity() {
     }
 
     companion object {
-        private const val OTR = "OTR:"
         private const val OMEMO = "OMEMO:"
     }
 }

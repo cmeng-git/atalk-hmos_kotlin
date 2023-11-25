@@ -34,7 +34,6 @@ import org.jivesoftware.smackx.muc.packet.MUCUser.Decline
 import org.jivesoftware.smackx.muc.packet.MUCUser.Invite
 import org.jivesoftware.smackx.omemo.OmemoManager
 import org.jivesoftware.smackx.omemo.OmemoMessage.Received
-import org.jivesoftware.smackx.omemo.element.OmemoElement
 import org.jivesoftware.smackx.omemo.exceptions.CorruptedOmemoKeyException
 import org.jivesoftware.smackx.omemo.exceptions.CryptoFailedException
 import org.jivesoftware.smackx.omemo.exceptions.NoRawSessionException
@@ -62,7 +61,8 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
         /**
          * The currently valid Jabber protocol provider service implementation.
          */
-        private val mPPS: ProtocolProviderServiceJabberImpl) : AbstractOperationSetMultiUserChat(), SubscriptionListener, OmemoMucMessageListener {
+        private val mPPS: ProtocolProviderServiceJabberImpl,
+) : AbstractOperationSetMultiUserChat(), SubscriptionListener, OmemoMucMessageListener {
     private var mConnection: XMPPConnection? = null
     private var mOmemoManager: OmemoManager? = null
     private val omemoVAxolotlProvider = OmemoVAxolotlProvider()
@@ -87,7 +87,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
 
     // setup message listener to receive captcha challenge message and error message from room
     private val MUC_ROOM_FILTER = AndFilter(FromTypeFilter.ENTITY_BARE_JID,
-            OrFilter(MessageTypeFilter.NORMAL, MessageTypeFilter.ERROR))
+        OrFilter(MessageTypeFilter.NORMAL, MessageTypeFilter.ERROR))
 
     /**
      * Add SmackInvitationRejectionListener to `MultiUserChat` instance which will dispatch all rejection events.
@@ -103,8 +103,8 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
      * Creates a room with the named `roomName` and according to the specified
      * `roomProperties` on the server that this protocol provider is currently connected to.
      *
-     * roomName the name of the `ChatRoom` to create.
-     * roomProperties properties specifying how the room should be created.
+     * @param roomName the name of the `ChatRoom` to create.
+     * @param roomProperties properties specifying how the room should be created.
      *
      * @return ChatRoom the chat room that we've just created.
      * @throws OperationFailedException if the room couldn't be created for some reason (e.g. room already exists; user
@@ -121,8 +121,10 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
             // rooms using google servers needs special name in the form private-chat-UUID@groupchat.google.com
             iRoomName = if (mConnection != null && mConnection!!.host.lowercase().contains("google")) {
                 "private-chat-" + UUID.randomUUID() + "@groupchat.google.com"
-            } else "chatroom-" + StringUtils.randomString(4)
-        } else {
+            }
+            else "chatroom-" + StringUtils.randomString(4)
+        }
+        else {
             // findRoom(roomName) => auto create room without member-only; this does not support OMEMO encryption
             // Do not proceed to create the room if the room is already listed in server room list
             val onServerRoom = roomProperties != null && java.lang.Boolean.TRUE == roomProperties[ChatRoom.ON_SERVER_ROOM]
@@ -203,7 +205,8 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
                             }
                         }
                         muc.sendConfigurationForm(fillableForm)
-                    } else {
+                    }
+                    else {
                         mucFormHandler.makeInstant()
                     }
                     // We are creating the room hence the owner of it at least that's what MultiUserChat.create says
@@ -225,7 +228,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
     /**
      * Creates a `ChatRoom` from the specified smack `MultiUserChat`.
      *
-     * muc the smack MultiUserChat instance that we're going to wrap our chat room around.
+     * @param muc the smack MultiUserChat instance that we're going to wrap our chat room around.
      *
      * @return ChatRoom the chat room that we've just created.
      */
@@ -245,7 +248,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
      * Returns a reference to a chatRoom named `roomName`.
      * If the room doesn't exists in the cache then creates it.
      *
-     * roomName the name of the `ChatRoom` that we're looking for.
+     * @param roomName the name of the `ChatRoom` that we're looking for.
      *
      * @return the `ChatRoom` named `roomName`
      * @throws OperationFailedException if an error occurs while trying to discover the room on the server.
@@ -265,14 +268,16 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
      * If the room doesn't exists in the cache then creates it.
      * Note: actual create on server only happen when user join the room
      *
-     * entityBareJid the EntityBareJid of the `ChatRoom` that we're looking for.
+     * @param entityBareJid the EntityBareJid of the `ChatRoom` that we're looking for.
      *
      * @return the `ChatRoomJabberImpl` named `room`
      */
     @Synchronized
     override fun findRoom(entityBareJid: EntityBareJid?): ChatRoomJabberImpl? {
         var room = chatRoomCache[entityBareJid]
-        if (room != null) return room
+        if (room != null)
+            return room
+
         if (mMucMgr != null) {
             val muc = mMucMgr!!.getMultiUserChat(entityBareJid)
             room = ChatRoomJabberImpl(muc, mPPS)
@@ -341,16 +346,16 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
                 mMucMgr!!.mucServiceDomains
             } catch (ex: XMPPException) {
                 throw OperationFailedException("Failed to retrieve Jabber conference service names",
-                        OperationFailedException.GENERAL_ERROR, ex)
+                    OperationFailedException.GENERAL_ERROR, ex)
             } catch (ex: NoResponseException) {
                 throw OperationFailedException("Failed to retrieve Jabber conference service names",
-                        OperationFailedException.GENERAL_ERROR, ex)
+                    OperationFailedException.GENERAL_ERROR, ex)
             } catch (ex: NotConnectedException) {
                 throw OperationFailedException("Failed to retrieve Jabber conference service names",
-                        OperationFailedException.GENERAL_ERROR, ex)
+                    OperationFailedException.GENERAL_ERROR, ex)
             } catch (ex: InterruptedException) {
                 throw OperationFailedException("Failed to retrieve Jabber conference service names",
-                        OperationFailedException.GENERAL_ERROR, ex)
+                    OperationFailedException.GENERAL_ERROR, ex)
             }
 
             // Now retrieve all hostedRooms available for each service name and
@@ -380,7 +385,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
     /**
      * Returns true if `contact` supports multiUser chat sessions.
      *
-     * contact reference to the contact whose support for chat rooms we are currently querying.
+     * @param contact reference to the contact whose support for chat rooms we are currently querying.
      *
      * @return a boolean indicating whether `contact` supports chatRooms.
      */
@@ -401,24 +406,24 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
     /**
      * Informs the sender of an invitation that we decline their invitation.
      *
-     * invitation the connection to use for sending the rejection.
-     * rejectReason the reason to reject the given invitation
+     * @param invitation the connection to use for sending the rejection.
+     * @param rejectReason the reason to reject the given invitation
      */
     @Throws(OperationFailedException::class)
     override fun rejectInvitation(invitation: ChatRoomInvitation?, rejectReason: String?) {
         if (mMucMgr != null) {
             try {
                 mMucMgr!!.decline(JidCreate.entityBareFrom(invitation!!.getTargetChatRoom().getIdentifier()),
-                        invitation.getInviter().asEntityBareJidIfPossible(), rejectReason)
+                    invitation.getInviter().asEntityBareJidIfPossible(), rejectReason)
             } catch (e: NotConnectedException) {
                 throw OperationFailedException("Could not reject invitation",
-                        OperationFailedException.GENERAL_ERROR, e)
+                    OperationFailedException.GENERAL_ERROR, e)
             } catch (e: InterruptedException) {
                 throw OperationFailedException("Could not reject invitation",
-                        OperationFailedException.GENERAL_ERROR, e)
+                    OperationFailedException.GENERAL_ERROR, e)
             } catch (e: XmppStringprepException) {
                 throw OperationFailedException("Could not reject invitation",
-                        OperationFailedException.GENERAL_ERROR, e)
+                    OperationFailedException.GENERAL_ERROR, e)
             }
         }
     }
@@ -434,7 +439,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
         // throw an exception if the provider is not registered or the xmpp connection not connected.
         if (!mPPS.isRegistered || mConnection == null || !mConnection!!.isConnected) {
             throw OperationFailedException("Provider not connected to jabber server",
-                    OperationFailedException.NETWORK_FAILURE)
+                OperationFailedException.NETWORK_FAILURE)
         }
     }
 
@@ -443,7 +448,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
      * chat room name in the following form: roomName@muc-servicename.jabserver.com. In case `roomName`
      * is already a canonical room name, the method simply returns it without changing it.
      *
-     * roomName the name of the room that we'd like to "canonize".
+     * @param roomName the name of the room that we'd like to "canonize".
      *
      * @return the canonical name of the room (which might be equal to roomName in case it was
      * already in a canonical format).
@@ -489,18 +494,18 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
                 JidCreate.entityBareFrom(Localpart.from(roomName), serviceNames[0])
             } catch (e: XmppStringprepException) {
                 throw OperationFailedException("$roomName is not a valid JID local part",
-                        OperationFailedException.GENERAL_ERROR, e
+                    OperationFailedException.GENERAL_ERROR, e
                 )
             }
         }
         throw OperationFailedException("Failed to retrieve MultiUserChat service names.",
-                OperationFailedException.GENERAL_ERROR)
+            OperationFailedException.GENERAL_ERROR)
     }
 
     /*
      * Returns a reference to the chat room named <code>chatRoomName</code> or null if the room hasn't been cached yet.
      *
-     * chatRoomName the name of the room we're looking for.
+     * @param chatRoomName the name of the room we're looking for.
      * @return the <code>ChatRoomJabberImpl</code> instance that has been cached for
      * <code>chatRoomName</code> or null if no such room has been cached so far.
      */
@@ -511,7 +516,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
     /**
      * Returns the list of currently joined chat rooms for `chatRoomMember`.
      *
-     * chatRoomMember the member we're looking for
+     * @param chatRoomMember the member we're looking for
      *
      * @return a list of all currently joined chat rooms
      * @throws OperationFailedException if the operation fails
@@ -528,19 +533,19 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
                 }
             } catch (e: NoResponseException) {
                 throw OperationFailedException("Could not get list of joined rooms",
-                        OperationFailedException.GENERAL_ERROR, e)
+                    OperationFailedException.GENERAL_ERROR, e)
             } catch (e: XMPPErrorException) {
                 throw OperationFailedException("Could not get list of joined rooms",
-                        OperationFailedException.GENERAL_ERROR, e)
+                    OperationFailedException.GENERAL_ERROR, e)
             } catch (e: NotConnectedException) {
                 throw OperationFailedException("Could not get list of joined rooms",
-                        OperationFailedException.GENERAL_ERROR, e)
+                    OperationFailedException.GENERAL_ERROR, e)
             } catch (e: XmppStringprepException) {
                 throw OperationFailedException("Could not get list of joined rooms",
-                        OperationFailedException.GENERAL_ERROR, e)
+                    OperationFailedException.GENERAL_ERROR, e)
             } catch (e: InterruptedException) {
                 throw OperationFailedException("Could not get list of joined rooms",
-                        OperationFailedException.GENERAL_ERROR, e)
+                    OperationFailedException.GENERAL_ERROR, e)
             }
         }
         return joinedRooms
@@ -550,13 +555,13 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
      * Delivers a `ChatRoomInvitationReceivedEvent` to all registered
      * `ChatRoomInvitationListener`s.
      *
-     * targetChatRoom the room that invitation refers to
-     * inviter the inviter that sent the invitation
-     * reason the reason why the inviter sent the invitation
-     * password the password to use when joining the room
+     * @param targetChatRoom the room that invitation refers to
+     * @param inviter the inviter that sent the invitation
+     * @param reason the reason why the inviter sent the invitation
+     * @param password the password to use when joining the room
      */
-    fun fireInvitationEvent(targetChatRoom: ChatRoom?, inviter: EntityJid?, reason: String?, password: ByteArray?) {
-        val invitation = ChatRoomInvitationJabberImpl(targetChatRoom!!, inviter!!, reason!!, password!!)
+    fun fireInvitationEvent(targetChatRoom: ChatRoom, inviter: EntityJid, reason: String?, password: ByteArray?) {
+        val invitation = ChatRoomInvitationJabberImpl(targetChatRoom, inviter, reason, password)
         fireInvitationReceived(invitation)
     }
 
@@ -570,44 +575,50 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
          * If the room is password-protected, the invitee will receive a password to use to join
          * the room. If the room is members-only, then the invitee may be added to the member list.
          *
-         * conn the XMPPConnection that received the invitation.
-         * muc the multi user chatRoom that invitation refers to.
-         * inviter the inviter that sent the invitation. (e.g. crone1@shakespeare.lit).
-         * reason the reason why the inviter sent the invitation.
-         * password the password to use when joining the room.
-         * message the message used by the inviter to send the invitation.
+         * @param conn the XMPPConnection that received the invitation.
+         * @param muc the multi user chatRoom that invitation refers to.
+         * @param inviter the inviter that sent the invitation. (e.g. crone1@shakespeare.lit).
+         * @param reason the reason why the inviter sent the invitation.
+         * @param password the password to use when joining the room.
+         * @param message the message used by the inviter to send the invitation.
          */
-        override fun invitationReceived(conn: XMPPConnection, muc: MultiUserChat, inviter: EntityJid,
-                reason: String, password: String?, message: Message, invitation: Invite) {
+        override fun invitationReceived(
+                conn: XMPPConnection, muc: MultiUserChat, inviter: EntityJid,
+                reason: String?, password: String?, message: Message, invitation: Invite,
+        ) {
             val room = muc.room
             if (muc.isJoined) {
                 Timber.w("Decline invitation! Already in the chat Room: %s", room)
                 return
             }
-            val chatRoom = findRoom(room)
-            if (password != null) fireInvitationEvent(chatRoom, inviter, reason, password.toByteArray()) else fireInvitationEvent(chatRoom, inviter, reason, null)
+            val chatRoom = findRoom(room)!!
+            if (password != null)
+                fireInvitationEvent(chatRoom, inviter, reason, password.toByteArray())
+            else
+                fireInvitationEvent(chatRoom, inviter, reason, null)
         }
     }
 
     /**
      * A listener that is fired anytime an invitee declines or rejects an invitation.
      */
-    private inner class SmackInvitationRejectionListener
     /**
      * Creates an instance of `SmackInvitationRejectionListener` and passes to it the
      * chat room for which it will listen for rejection events.
      *
      * chatRoom chat room for which this instance will listen for rejection events
-     */(
+     */
+    private inner class SmackInvitationRejectionListener(
             /**
              * The chat room for this listener.
              */
-            private val chatRoom: ChatRoom?) : InvitationRejectionListener {
+            private val chatRoom: ChatRoom?,
+    ) : InvitationRejectionListener {
         /**
          * Called when the invitee declines the invitation.
          *
-         * invitee the invitee that declined the invitation. (e.g. hecate@shakespeare.lit).
-         * reason the reason why the invitee declined the invitation.
+         * @param invitee the invitee that declined the invitation. (e.g. hecate@shakespeare.lit).
+         * @param reason the reason why the invitee declined the invitation.
          */
         override fun invitationDeclined(invitee: EntityBareJid, reason: String, message: Message, rejection: Decline) {
             fireInvitationRejectedEvent(chatRoom!!, invitee, reason)
@@ -623,7 +634,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
          * The method is called by a ProtocolProvider implementation whenever a change in the
          * registration state of the corresponding provider had occurred.
          *
-         * evt ProviderStatusChangeEvent the event describing the status change.
+         * @param evt ProviderStatusChangeEvent the event describing the status change.
          */
         override fun registrationStateChanged(evt: RegistrationStateChangeEvent) {
             if (evt.getNewState() === RegistrationState.REGISTERED) {
@@ -633,12 +644,14 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
                 mInvitationListener = SmackInvitationListener()
                 mMucMgr!!.addInvitationListener(mInvitationListener)
                 mConnection!!.addAsyncStanzaListener(chatRoomMessageListener, MUC_ROOM_FILTER)
-            } else if (evt.getNewState() === RegistrationState.UNREGISTERED
+            }
+            else if (evt.getNewState() === RegistrationState.UNREGISTERED
                     || evt.getNewState() === RegistrationState.CONNECTION_FAILED) {
                 // clear cached chatRooms as there are no longer valid
                 if (mConnection != null) mConnection!!.removeAsyncStanzaListener(chatRoomMessageListener)
                 chatRoomCache.clear()
-            } else if (evt.getNewState() === RegistrationState.UNREGISTERING) {
+            }
+            else if (evt.getNewState() === RegistrationState.UNREGISTERING) {
                 if (mMucMgr != null) {
                     mMucMgr!!.removeInvitationListener(mInvitationListener)
                     mInvitationListener = null
@@ -663,7 +676,8 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
         val chatRoom = findRoom(entityBareJid)
         if (message.getExtension(CaptchaExtension::class.java) != null) {
             chatRoom!!.initCaptchaProcess(message)
-        } else if (Message.Type.error == message.type) {
+        }
+        else if (Message.Type.error == message.type) {
             // Timber.d("ChatRoom Message: %s", sMessage.toXML());
             chatRoom!!.processMessage(message)
         }
@@ -686,7 +700,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
     /**
      * Updates corresponding chat room members when a contact has been modified in our contact list.
      *
-     * evt the `SubscriptionEvent` that notified us
+     * @param evt the `SubscriptionEvent` that notified us
      */
     override fun contactModified(evt: ContactPropertyChangeEvent?) {
         val modifiedContact = evt!!.getSourceContact()
@@ -696,7 +710,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
     /**
      * Updates corresponding chat room members when a contact has been created in our contact list.
      *
-     * evt the `SubscriptionEvent` that notified us
+     * @param evt the `SubscriptionEvent` that notified us
      */
     override fun subscriptionCreated(evt: SubscriptionEvent?) {
         val createdContact = evt!!.getSourceContact()
@@ -706,14 +720,14 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
     /**
      * Not interested in this event for our member update purposes.
      *
-     * evt the `SubscriptionEvent` that notified us
+     * @param evt the `SubscriptionEvent` that notified us
      */
     override fun subscriptionFailed(evt: SubscriptionEvent?) {}
 
     /**
      * Not interested in this event for our member update purposes.
      *
-     * evt the `SubscriptionEvent` that notified us
+     * @param evt the `SubscriptionEvent` that notified us
      */
     override fun subscriptionMoved(evt: SubscriptionMovedEvent?) {}
 
@@ -727,7 +741,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
     /**
      * Not interested in this event for our member update purposes.
      *
-     * evt the `SubscriptionEvent` that notified us
+     * @paramevt the `SubscriptionEvent` that notified us
      */
     override fun subscriptionResolved(evt: SubscriptionEvent?) {}
 
@@ -735,7 +749,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
      * Finds all chat room members, which name corresponds to the name of the given contact and
      * updates their contact references.
      *
-     * contact the contact we're looking correspondences for.
+     * @param contact the contact we're looking correspondences for.
      */
     private fun updateChatRoomMembers(contact: Contact) {
         // ConcurrentModificationException happens during test
@@ -758,7 +772,7 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
     /**
      * Return XEP-0203 time-stamp of the message if present or current time;
      *
-     * msg Message
+     * @param msg Message
      *
      * @return the correct message timeStamp
      */
@@ -767,7 +781,8 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
         val delayInfo = msg.getExtension(DelayInformation::class.java)
         timeStamp = if (delayInfo != null) {
             delayInfo.stamp
-        } else {
+        }
+        else {
             Date()
         }
         return timeStamp
@@ -787,12 +802,14 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
     /**
      * Gets called whenever an OMEMO message has been received in a MultiUserChat and successfully decrypted.
      *
-     * muc MultiUserChat the message was sent in
-     * stanza Original Stanza
-     * decryptedOmemoMessage decrypted Omemo message
+     * @param muc MultiUserChat the message was sent in
+     * @param stanza Original Stanza
+     * @param decryptedOmemoMessage decrypted Omemo message
      */
-    override fun onOmemoMucMessageReceived(muc: MultiUserChat, stanza: Stanza,
-            decryptedOmemoMessage: Received) {
+    override fun onOmemoMucMessageReceived(
+            muc: MultiUserChat, stanza: Stanza,
+            decryptedOmemoMessage: Received,
+    ) {
         // Do not process if decryptedMessage isKeyTransportMessage i.e. msgBody == null
         if (decryptedOmemoMessage.isKeyTransportMessage) return
         val message = stanza as Message
@@ -807,7 +824,8 @@ class OperationSetMultiUserChatJabberImpl internal constructor(
         // aTalk OMEMO msgBody may contains markup text then set as ENCODE_HTML mode
         encType = if (msgBody.matches(ChatMessage.HTML_MARKUP)) {
             encType or IMessage.ENCODE_HTML
-        } else {
+        }
+        else {
             encType or IMessage.ENCODE_PLAIN
         }
         var newMessage = MessageJabberImpl(msgBody, encType, null, msgID)

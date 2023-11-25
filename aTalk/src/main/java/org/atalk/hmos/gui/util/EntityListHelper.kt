@@ -22,10 +22,8 @@ import android.os.Bundle
 import android.widget.CheckBox
 import net.java.sip.communicator.impl.callhistory.CallHistoryActivator
 import net.java.sip.communicator.impl.msghistory.MessageHistoryActivator
-import net.java.sip.communicator.service.callhistory.CallHistoryService
 import net.java.sip.communicator.service.contactlist.MetaContact
 import net.java.sip.communicator.service.contactlist.MetaContactGroup
-import net.java.sip.communicator.service.msghistory.MessageHistoryService
 import net.java.sip.communicator.service.muc.ChatRoomWrapper
 import org.atalk.hmos.R
 import org.atalk.hmos.aTalkApp
@@ -67,7 +65,7 @@ object EntityListHelper {
         val message: String
         val title = context.getString(R.string.service_gui_REMOVE_CONTACT)
         val contact = metaContact.getDefaultContact()
-        val contactJid = contact!!.contactJid
+        val contactJid = contact.contactJid
         message = if (contactJid !is DomainBareJid) {
             val userJid = contact.protocolProvider.accountID.bareJid
             context.getString(R.string.service_gui_REMOVE_CONTACT_TEXT, userJid, contactJid)

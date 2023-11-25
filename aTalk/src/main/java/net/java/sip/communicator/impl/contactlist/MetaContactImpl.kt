@@ -298,7 +298,7 @@ class MetaContactImpl : DataObject, MetaContact {
      *
      * @return the default `Contact` to use when communicating with this `MetaContact`
      */
-    override fun getDefaultContact(): Contact? {
+    override fun getDefaultContact(): Contact {
         if (defaultContact == null) {
             var currentStatus: PresenceStatus? = null
             for (protoContact in protoContacts) {
@@ -314,7 +314,7 @@ class MetaContactImpl : DataObject, MetaContact {
                 }
             }
         }
-        return defaultContact
+        return defaultContact!!
     }
 
     /**

@@ -74,7 +74,7 @@
         tools:targetApi="tiramisu">
 
         <!-- android:enableOnBackInvokedCallback="true"  required source change
-    https://stackoverflow.com/questions/73782320/onbackinvokedcallback-is-not-enabled-for-the-application-in-set-androidenableo
+        https://stackoverflow.com/questions/73782320/onbackinvokedcallback-is-not-enabled-for-the-application-in-set-androidenableo
         -->
 
         <!-- Apache HTTP client deprecation: (no effect so far)
@@ -261,10 +261,6 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
-        <!-- OTR activities -->
-        <activity
-            android:name="org.atalk.crypto.otr.OtrAuthenticateDialog" />
 
         <activity
             android:name=".gui.chat.aTalkProtocolReceiver"

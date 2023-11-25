@@ -20,21 +20,24 @@ import org.atalk.hmos.gui.chat.ChatActivity
  * @author Eng Chong Meng
  */
 class AttachOptionDialog(context: Context) : Dialog(context) {
+    private val mParent: ChatActivity
+
     init {
+        mParent = context as ChatActivity
         setTitle(R.string.service_gui_FILE_ATTACHMENT)
     }
 
-    public override fun onCreate(savedInstanceState: Bundle) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_attach_option_dialog)
         val mListView = findViewById<ListView>(R.id.attach_optionlist)
         val items = ArrayList(listOf(*AttachOptionItem.values()))
-        val mAttachOptionAdapter = AttachOptionModeAdapter(R.layout.attach_option_child_row, items)
-        mListView.adapter = mAttachOptionAdapter
+        val attachOptionAdapter = AttachOptionModeAdapter(R.layout.attach_option_child_row, items)
+        mListView.adapter = attachOptionAdapter
 
         mListView.onItemClickListener = OnItemClickListener { parent: AdapterView<*>?, view: View?, position: Int, id: Long ->
-            val mSelectedItem = mAttachOptionAdapter.getItem(id.toInt())
-            (context as ChatActivity).sendAttachment(mSelectedItem)
+            val selectedItem = attachOptionAdapter.getItem(id.toInt())
+            mParent.sendAttachment(selectedItem)
             closeDialog()
         }
     }

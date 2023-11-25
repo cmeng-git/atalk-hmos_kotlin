@@ -150,7 +150,7 @@ class ConferenceCallInviteDialog @JvmOverloads constructor(mContext: Context?, c
             isJitsiVideobridge: Boolean) : this(mContext, null, selectedConfProvider, null, isJitsiVideobridge) {
     }
 
-    public override fun onCreate(savedInstanceState: Bundle) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTitle(R.string.service_gui_INVITE_CONTACT_TO_VIDEO_BRIDGE)
         this.setContentView(R.layout.videobridge_invite_dialog)

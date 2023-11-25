@@ -5,8 +5,6 @@
  */
 package net.java.sip.communicator.service.protocol
 
-import net.java.sip.communicator.service.protocol.OperationFailedException
-
 import java.io.File
 
 /**
@@ -24,7 +22,7 @@ interface IncomingFileTransferRequest {
      * @param file the file to accept
      * @return the `FileTransfer` object managing the transfer
      */
-    fun onPrepare(file: File?): FileTransfer?
+    fun onPrepare(file: File?): FileTransfer
 
     /**
      * Unique ID that is identifying the request and then the FileTransfer if the request has been accepted.

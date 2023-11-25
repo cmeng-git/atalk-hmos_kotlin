@@ -9,7 +9,7 @@ package net.java.sip.communicator.service.protocol
  * The Instant Message Transform operation set allows, when \ supported to insert message transform
  * layers that could change incoming messages before they are delivered to the user and outgoing
  * ones before they reach the protocol stack and get sent. One use case of this operation set is
- * support of upper layer encryption mechanisms like OTR. Other cases may include hyperlink
+ * support of upper layer encryption mechanisms like Omemo. Other cases may include hyperlink
  * presentation, support for wiki words etc.
  *
  *

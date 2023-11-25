@@ -93,7 +93,7 @@ class ChatRoomBookmarksDialog(context: Context) : Dialog(context), AdapterView.O
     private val mucRoomWrapperList = LinkedHashMap<String, ChatRoomProviderWrapper>()
     private var mChatRoomList = ArrayList<String>()
 
-    public override fun onCreate(savedInstanceState: Bundle) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         ThemeHelper.setTheme(mParent)
         super.onCreate(savedInstanceState)
         setTitle(R.string.service_gui_CHATROOM_BOOKMARK_TITLE)

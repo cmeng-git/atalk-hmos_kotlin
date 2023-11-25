@@ -5,7 +5,6 @@
  */
 package net.java.sip.communicator.impl.protocol.jabber
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.text.Html
@@ -23,7 +22,6 @@ import net.java.sip.communicator.service.protocol.OperationFailedException
 import net.java.sip.communicator.service.protocol.OperationSetBasicTelephony
 import net.java.sip.communicator.service.protocol.OperationSetMultiUserChat
 import net.java.sip.communicator.service.protocol.OperationSetPersistentPresence
-import net.java.sip.communicator.service.protocol.PresenceStatus
 import net.java.sip.communicator.service.protocol.ProtocolProviderService
 import net.java.sip.communicator.service.protocol.event.ChatRoomConferencePublishedEvent
 import net.java.sip.communicator.service.protocol.event.ChatRoomLocalUserRoleChangeEvent
@@ -623,7 +621,7 @@ class ChatRoomJabberImpl(
      */
     @Throws(OperationFailedException::class)
     override fun join(): Boolean {
-        return joinAs(JabberActivator.globalDisplayDetailsService!!.getDisplayName(mPPS)!!)
+        return joinAs(JabberActivator.globalDisplayDetailsService!!.getDisplayName(mPPS))
     }
 
     /**
@@ -635,7 +633,7 @@ class ChatRoomJabberImpl(
      */
     @Throws(OperationFailedException::class)
     override fun join(password: ByteArray): Boolean {
-        return joinAs(JabberActivator.globalDisplayDetailsService!!.getDisplayName(mPPS)!!, password)
+        return joinAs(JabberActivator.globalDisplayDetailsService!!.getDisplayName(mPPS), password)
     }
 
     /**
@@ -647,7 +645,7 @@ class ChatRoomJabberImpl(
      * @throws OperationFailedException with the corresponding code if an error occurs while joining the room.
      */
     @Throws(OperationFailedException::class)
-    override fun joinAs(nickname: String): Boolean {
+    override fun joinAs(nickname: String?): Boolean {
         return joinAs(nickname, null)
     }
 
@@ -661,20 +659,27 @@ class ChatRoomJabberImpl(
      * @throws OperationFailedException with the corresponding code if an error occurs while joining the room.
      */
     @Throws(OperationFailedException::class)
-    override fun joinAs(nickname: String, password: ByteArray?): Boolean {
+    override fun joinAs(nickname: String?, password: ByteArray?): Boolean {
         assertConnected()
         var retry = true
         var errorMessage = aTalkApp.getResString(R.string.service_gui_CHATROOM_JOIN_FAILED, nickname, getName())
         mPassword = password
+
+        if (TextUtils.isEmpty(nickname)) {
+            throw OperationFailedException(errorMessage, OperationFailedException.GENERAL_ERROR)
+        }
+
         // parseLocalPart or take nickname as it to join chatRoom
-        val sNickname = nickname.split("@")[0]
+        val sNickname = nickname!!.split("@")[0]
         try {
             mNickName = Resourcepart.from(sNickname)
             if (mMultiUserChat.isJoined) {
-                if (mMultiUserChat.nickname != mNickName) mMultiUserChat.changeNickname(mNickName)
+                if (mMultiUserChat.nickname != mNickName)
+                    mMultiUserChat.changeNickname(mNickName)
             }
             else {
-                if (password == null) mMultiUserChat.join(mNickName) else mMultiUserChat.join(mNickName, String(password))
+                if (password == null) mMultiUserChat.join(mNickName)
+                else mMultiUserChat.join(mNickName, String(password))
             }
             onJoinSuccess()
             retry = false
@@ -1106,7 +1111,7 @@ class ChatRoomJabberImpl(
             }
         }
         // Timber.d("ChatRoom user role: %s", mUserRole)
-        return mUserRole!!
+        return mUserRole
     }
 
     /**
@@ -1567,8 +1572,9 @@ class ChatRoomJabberImpl(
      * eventReason the reason of the event
      */
     private fun fireMemberPresenceEvent(member: ChatRoomMember?, eventID: String, eventReason: String?) {
-        val evt = ChatRoomMemberPresenceChangeEvent(this, member!!, eventID, eventReason!!)
+        val evt = ChatRoomMemberPresenceChangeEvent(this, member!!, eventID, eventReason)
         Timber.log(TimberLog.FINER, "Will dispatch the following ChatRoom event: %s", evt)
+
         var listeners: Iterable<ChatRoomMemberPresenceListener>
         synchronized(memberListeners) { listeners = ArrayList(memberListeners) }
         for (listener in listeners) {
@@ -1983,10 +1989,10 @@ class ChatRoomJabberImpl(
         /**
          * Notification that subject has changed
          *
-         * subject the new subject
-         * from the sender from room participants
+         * @param subject the new subject
+         * @param from the sender from room participants
          */
-        override fun subjectUpdated(subject: String, from: EntityFullJid) {
+        override fun subjectUpdated(subject: String?, from: EntityFullJid?) {
             // only fire event if subject has really changed, not for new one
             if (subject != oldSubject) {
                 Timber.d("ChatRoom subject updated to '%s'", subject)
@@ -2736,8 +2742,8 @@ class ChatRoomJabberImpl(
      * chatRoomMember the chatRoomMember of the contact.
      */
     override fun updatePrivateContactPresenceStatus(chatRoomMember: ChatRoomMember) {
-        val presenceOpSet = mPPS.getOperationSet(OperationSetPersistentPresence::class.java) as OperationSetPersistentPresenceJabberImpl?
-        val contact = presenceOpSet!!.findContactByID(getName() + "/" + chatRoomMember.getNickName()) as ContactJabberImpl
+        val presenceOpSet = mPPS.getOperationSet(OperationSetPersistentPresence::class.java)
+        val contact = presenceOpSet!!.findContactByID(getName() + "/" + chatRoomMember.getNickName())
         updatePrivateContactPresenceStatus(contact)
     }
 
@@ -2747,8 +2753,10 @@ class ChatRoomJabberImpl(
      * contact the contact.
      */
     override fun updatePrivateContactPresenceStatus(contact: Contact?) {
-        if (contact == null) return
-        val presenceOpSet = mPPS.getOperationSet(OperationSetPersistentPresence::class.java) as OperationSetPersistentPresenceJabberImpl?
+        if (contact == null)
+            return
+
+        val presenceOpSet = mPPS.getOperationSet(OperationSetPersistentPresence::class.java) as OperationSetPersistentPresenceJabberImpl
         val oldContactStatus = contact.presenceStatus
         val nickname = try {
             JidCreate.from(contact.address).resourceOrEmpty
@@ -2765,7 +2773,7 @@ class ChatRoomJabberImpl(
 
         // When status changes this may be related to a change in the available resources.
         (contact as ContactJabberImpl).presenceStatus = offlineStatus
-        presenceOpSet!!.fireContactPresenceStatusChangeEvent(contact, contact.contactJid!!, contact.parentContactGroup!!,
+        presenceOpSet.fireContactPresenceStatusChangeEvent(contact, contact.contactJid!!, contact.parentContactGroup!!,
             oldContactStatus, offlineStatus)
     }
 

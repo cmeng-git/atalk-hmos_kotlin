@@ -226,7 +226,7 @@ class PreviewStream
      * @param width final output stream image width.
      * @param height final output stream image height.
      */
-    protected fun YUV420PlanarRotate(image: Image, output: ByteArray, width: Int, height: Int) {
+    private fun YUV420PlanarRotate(image: Image, output: ByteArray, width: Int, height: Int) {
         // Init w * h parameters: Assuming input preview buffer dimension is always in landscape mode
         val wi = width - 1
         val hi = height - 1

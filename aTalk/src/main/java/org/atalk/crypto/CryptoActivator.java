@@ -16,10 +16,7 @@
  */
 package org.atalk.crypto;
 
-import net.java.sip.communicator.plugin.otr.OtrActionHandler;
-
 import org.atalk.crypto.omemo.SQLiteOmemoStore;
-import org.atalk.crypto.otr.AndroidOtrActionHandler;
 import org.jivesoftware.smackx.omemo.OmemoConfiguration;
 import org.jivesoftware.smackx.omemo.OmemoStore;
 import org.jivesoftware.smackx.omemo.signal.SignalOmemoService;
@@ -27,7 +24,7 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 /**
- * Android OTR activator which registers <code>OtrActionHandler</code> specific to this system.
+ * Android Crypto Activator which registers <code>Omemo ActionHandler</code> specific to this system.
  *
  * @author Eng Chong Meng
  */
@@ -35,7 +32,6 @@ public class CryptoActivator implements BundleActivator {
     @Override
     public void start(BundleContext bundleContext)
             throws Exception {
-        bundleContext.registerService(OtrActionHandler.class, new AndroidOtrActionHandler(), null);
         setupOmemoConfigStore();
     }
 

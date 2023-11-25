@@ -308,14 +308,13 @@ object FileBackend {
      * @param uri content:// or file:// or whatever suitable Uri you want.
      * @return mime type of the given uri
      */
-    fun getMimeType(ctx: Context, uri: Uri): String? {
+    fun getMimeType(ctx: Context?, uri: Uri): String? {
         var mimeType: String? = null
         if (ContentResolver.SCHEME_CONTENT == uri.scheme) {
-            val cr = ctx.contentResolver
-            mimeType = cr.getType(uri)
+            val cr = ctx?.contentResolver
+            mimeType = cr?.getType(uri)
         } else {
-            val fileExtension: String?
-            fileExtension = try {
+            val fileExtension: String? = try {
                 // Need to encode unicode uri before proceed; revert all "%3A", "%2F" and "+" to ":", "/" and "%20"
                 val uriEncoded = URLEncoder.encode(uri.toString(), "UTF-8")
                         .replace("%3A".toRegex(), ":")

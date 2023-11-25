@@ -458,7 +458,11 @@ open class HttpFileDownloadJabberImpl(private val mSender: Contact, id: String?,
         }
         mUri = Uri.parse(url)
         mFileName = mUri.lastPathSegment
-        mFile = if (mFileName != null) File(mFileName) else null
+        mFile = if (mFileName != null)
+            File(mFileName)
+        else
+            null
+
         mFileSize = if (dnLinkInfos.size > 1 && "fileSize".matches(Regex(dnLinkInfos[1]))) {
             dnLinkInfos[1].split("[:=]".toRegex())[1].toLong()
         } else -1

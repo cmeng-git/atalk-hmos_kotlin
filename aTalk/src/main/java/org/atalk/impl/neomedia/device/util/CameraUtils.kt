@@ -15,6 +15,7 @@ import org.atalk.hmos.aTalkApp
 import org.atalk.impl.neomedia.device.DeviceConfiguration
 import timber.log.Timber
 import java.awt.Dimension
+import kotlin.math.abs
 
 /**
  * Utility methods for operations on `Camera` objects. Also shares preview surface provider
@@ -35,7 +36,7 @@ object CameraUtils {
     private var surfaceProvider: PreviewSurfaceProvider? = null
 
     /**
-     * The list of sizes from which the first supported by the respective [Camera] is to be
+     * The list of sizes from which the first supported by the respective Camera is to be
      * chosen as the size of the one and only `Format` supported by the associated
      * `MediaRecorder` `CaptureDevice`.
      *
@@ -58,7 +59,7 @@ object CameraUtils {
      * @param size the size to check.
      * @return `true` if given `size` is on the list of preferred sizes.
      */
-    fun isPreferredSize(size: Dimension): Boolean {
+    private fun isPreferredSize(size: Dimension): Boolean {
         for (s in PREFERRED_SIZES) {
             if (s.width == size.width && s.height == size.height) {
                 return true
@@ -88,10 +89,10 @@ object CameraUtils {
      * human-readable `String`
      * @return the human-readable `String` representation of the specified `sizes`
      */
-    fun cameraSizesToString(sizes: Iterable<Size>): String {
+    private fun cameraSizesToString(sizes: Iterable<Size>): String {
         val s = StringBuilder()
         for (size in sizes) {
-            if (s.length != 0) s.append(", ")
+            if (s.isNotEmpty()) s.append(", ")
             s.append(size.toString())
         }
         return s.toString()
@@ -101,7 +102,7 @@ object CameraUtils {
     fun cameraSizesToString(sizes: Array<Size>): String {
         val s = StringBuilder()
         for (size in sizes) {
-            if (s.length != 0) s.append(", ")
+            if (s.isNotEmpty()) s.append(", ")
             s.append(size.toString())
         }
         return s.toString()
@@ -120,7 +121,7 @@ object CameraUtils {
     fun dimensionsToString(sizes: Iterable<Dimension>): String {
         val s = StringBuilder()
         for (size in sizes) {
-            if (s.length != 0) s.append(", ")
+            if (s.isNotEmpty()) s.append(", ")
             s.append(size.width).append('x').append(size.height)
         }
         return s.toString()
@@ -136,7 +137,7 @@ object CameraUtils {
     fun cameraImgFormatsToString(formats: List<Int>): String {
         val s = StringBuilder()
         for (format in formats) {
-            if (s.length != 0) s.append(FORMAT_SEPARATOR)
+            if (s.isNotEmpty()) s.append(FORMAT_SEPARATOR)
             when (format) {
                 ImageFormat.YV12 -> s.append("YV12")
                 ImageFormat.NV21 -> s.append("NV21")
@@ -250,7 +251,7 @@ object CameraUtils {
             if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue
             if (Math.abs(size.height - h) < minDiff) {
                 optimalSize = size
-                minDiff = Math.abs(size.height - h).toDouble()
+                minDiff = abs(size.height - h).toDouble()
             }
         }
         if (optimalSize == null) {
@@ -259,7 +260,7 @@ object CameraUtils {
             for (size in sizes) {
                 if (Math.abs(size.height - h) < minDiff) {
                     optimalSize = size
-                    minDiff = Math.abs(size.height - h).toDouble()
+                    minDiff = abs(size.height - h).toDouble()
                 }
             }
         }

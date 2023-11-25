@@ -218,6 +218,13 @@ interface ChatTransport {
     fun sendChatStateNotification(chatState: ChatState)
 
     /**
+     * Returns `true` if this chat transport supports file transfer, otherwise returns `false`.
+     *
+     * @return `true` if this chat transport supports file transfer, otherwise returns `false`.
+     */
+    fun allowsFileTransfer(): Boolean
+
+    /**
      * Returns the maximum file length supported by the protocol in bytes.
      *
      * @return the file length that is supported.

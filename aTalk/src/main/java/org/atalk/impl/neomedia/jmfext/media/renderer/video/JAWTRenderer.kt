@@ -104,23 +104,22 @@ class JAWTRenderer
                 "org.atalk.impl.neomedia.jmfext.media.renderer.video.JAWTRenderer")
             if (OSUtils.IS_ANDROID) componentClassName.append("Android")
             componentClassName.append("VideoComponent")
-            var reflectiveOperationException: Throwable? = null
             try {
                 val componentClass = Class.forName(componentClassName.toString())
                 val componentConstructor = componentClass.getConstructor(JAWTRenderer::class.java)
                 component = componentConstructor.newInstance(this) as Component
-            } catch (cnfe: ClassNotFoundException) {
-                reflectiveOperationException = cnfe
-            } catch (cnfe: NoSuchMethodException) {
-                reflectiveOperationException = cnfe
-            } catch (cnfe: InvocationTargetException) {
-                reflectiveOperationException = cnfe
-            } catch (cnfe: InstantiationException) {
-                reflectiveOperationException = cnfe
-            } catch (cnfe: IllegalAccessException) {
-                reflectiveOperationException = cnfe
+            } catch (cnfe: Exception) {
+                when (cnfe) {
+                    is ClassNotFoundException,
+                    is NoSuchMethodException,
+                    is InvocationTargetException,
+                    is InstantiationException,
+                    is IllegalAccessException,
+                    -> {
+                        throw RuntimeException(cnfe)
+                    }
+                }
             }
-            if (reflectiveOperationException != null) throw RuntimeException(reflectiveOperationException)
 
             // Make sure to have non-zero height and width because actual video
             // frames may have not been processed yet.

@@ -41,7 +41,7 @@ interface MetaContact : Comparable<MetaContact?> {
      *
      * @return the default `Contact` to use when communicating with this `MetaContact`
      */
-    fun getDefaultContact(): Contact?
+    fun getDefaultContact(): Contact
 
     /**
      * Returns the default protocol specific `Contact` to use with this

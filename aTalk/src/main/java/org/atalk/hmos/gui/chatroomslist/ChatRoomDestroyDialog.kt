@@ -23,7 +23,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import net.java.sip.communicator.impl.msghistory.MessageHistoryActivator
-import net.java.sip.communicator.impl.msghistory.MessageHistoryServiceImpl
 import net.java.sip.communicator.impl.muc.MUCActivator
 import net.java.sip.communicator.service.muc.ChatRoomWrapper
 import org.atalk.hmos.R

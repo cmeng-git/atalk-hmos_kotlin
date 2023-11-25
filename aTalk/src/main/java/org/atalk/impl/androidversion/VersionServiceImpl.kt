@@ -46,7 +46,7 @@ class VersionServiceImpl : AbstractVersionService() {
 
             // cmeng - version must all be digits, otherwise no online update
             CURRENT_VERSION = parseVersionString(versionName) as VersionImpl?
-            Timber.i("Device installed with atalk-hmos version: %s, version code: %s",
+            Timber.i("Device installed with aTalk version: %s, version code: %s",
                 CURRENT_VERSION, versionCode)
         } catch (e: PackageManager.NameNotFoundException) {
             throw RuntimeException(e)
@@ -60,7 +60,7 @@ class VersionServiceImpl : AbstractVersionService() {
      * @return a `Version` object containing version details of the Jitsi version that
      * we're currently running.
      */
-    override fun createVersionImpl(majorVersion: Int, minorVersion: Int, nightlyBuildId: String?): Version? {
+    override fun createVersionImpl(majorVersion: Int, minorVersion: Int, nightlyBuildId: String?): Version {
         return VersionImpl(majorVersion, minorVersion, nightlyBuildId)
     }
 

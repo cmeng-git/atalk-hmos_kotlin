@@ -8,7 +8,6 @@ package org.atalk.hmos.gui.account
 import android.content.Context
 import android.content.DialogInterface
 import androidx.appcompat.app.AlertDialog
-import net.java.sip.communicator.plugin.otr.OtrActivator
 import net.java.sip.communicator.service.protocol.AccountID
 import net.java.sip.communicator.util.account.AccountUtils
 import org.atalk.crypto.omemo.SQLiteOmemoStore
@@ -68,7 +67,6 @@ object RemoveAccountDialog {
     private fun removeAccount(accountId: AccountID) {
         val providerFactory = AccountUtils.getProtocolProviderFactory(accountId.protocolName)
         val accountUuid = accountId.accountUuid!!
-        OtrActivator.configService.setProperty(accountUuid, null)
         val isUninstalled = providerFactory!!.uninstallAccount(accountId)
         if (!isUninstalled) throw RuntimeException("Failed to uninstall account")
     }

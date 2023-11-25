@@ -225,6 +225,7 @@ open class AccountID protected constructor(userID: String?, accountProperties: M
      *
      * @param key property key
      * @param defaultValue default value if the property does not exist
+     * will be over driven by setting in atalk-defaults.properties if property does not exist in DB
      * @return property value corresponding to property key
      */
     fun getAccountPropertyBoolean(key: Any, defaultValue: Boolean): Boolean {

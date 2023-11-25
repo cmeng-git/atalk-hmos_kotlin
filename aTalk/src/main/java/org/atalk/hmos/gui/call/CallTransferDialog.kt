@@ -19,6 +19,7 @@ package org.atalk.hmos.gui.call
 import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
+import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import android.widget.AbsListView
@@ -72,7 +73,7 @@ class CallTransferDialog(mContext: Context?, private val mInitialPeer: CallPeer,
         setOnShowListener(this)
     }
 
-    public override fun onCreate(savedInstanceState: android.os.Bundle?) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTitle(mInitialPeer.getPeerJid()!!.asBareJid())
         this.setContentView(R.layout.call_transfer_dialog)

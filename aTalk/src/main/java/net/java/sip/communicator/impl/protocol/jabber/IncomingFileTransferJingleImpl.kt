@@ -25,6 +25,7 @@ import org.atalk.hmos.R
 import org.atalk.hmos.aTalkApp
 import org.jivesoftware.smackx.jingle.component.JingleSessionImpl
 import org.jivesoftware.smackx.jingle.component.JingleSessionImpl.JingleSessionListener
+import org.jivesoftware.smackx.jingle.component.JingleSessionImpl.SessionState
 import org.jivesoftware.smackx.jingle.element.JingleReason
 import org.jivesoftware.smackx.jingle_filetransfer.listener.ProgressListener
 import timber.log.Timber
@@ -151,16 +152,18 @@ class IncomingFileTransferJingleImpl(inFileOffer: IncomingFileOfferJingleImpl, f
         }
     }
     var jingleSessionListener = object : JingleSessionListener {
-        override fun sessionStateUpdated(oldState: JingleSessionImpl.SessionState, newState: JingleSessionImpl.SessionState) {
+        override fun sessionStateUpdated(oldState: SessionState?, newState: SessionState) {
             val sessionState = newState.toString()
             Timber.d("Jingle session state: %s => %s", oldState, newState)
             when (newState) {
-                JingleSessionImpl.SessionState.fresh -> fireStatusChangeEvent(FileTransferStatusChangeEvent.PREPARING, sessionState)
-                JingleSessionImpl.SessionState.pending ->                     // Currently not use in FileReceiveConversation
+                SessionState.fresh -> fireStatusChangeEvent(FileTransferStatusChangeEvent.PREPARING, sessionState)
+                SessionState.pending -> // Currently not use in FileReceiveConversation
                     fireStatusChangeEvent(FileTransferStatusChangeEvent.WAITING, sessionState)
-                JingleSessionImpl.SessionState.active -> fireStatusChangeEvent(FileTransferStatusChangeEvent.IN_PROGRESS, sessionState)
-                JingleSessionImpl.SessionState.cancelled -> fireStatusChangeEvent(FileTransferStatusChangeEvent.CANCELED, sessionState)
-                JingleSessionImpl.SessionState.ended -> {}
+                SessionState.active ->
+                    fireStatusChangeEvent(FileTransferStatusChangeEvent.IN_PROGRESS, sessionState)
+                SessionState.cancelled ->
+                    fireStatusChangeEvent(FileTransferStatusChangeEvent.CANCELED, sessionState)
+                SessionState.ended -> {}
             }
         }
 

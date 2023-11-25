@@ -21,7 +21,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.graphics.Color
 import android.graphics.drawable.AnimationDrawable
@@ -67,7 +66,6 @@ import org.atalk.persistance.FileBackend.getMimeType
 import org.atalk.persistance.FileBackend.getUriForFile
 import org.atalk.persistance.FileBackend.getaTalkStore
 import org.atalk.service.osgi.OSGiFragment
-import org.jivesoftware.smack.XMPPConnection
 import org.jivesoftware.smack.util.StringUtils
 import org.jivesoftware.smackx.httpfileupload.UploadProgressListener
 import timber.log.Timber
@@ -98,7 +96,7 @@ abstract class FileTransferConversation protected constructor(protected var mCha
     /**
      * The file transfer.
      */
-    protected var mFileTransfer: FileTransfer? = null
+    protected lateinit var mFileTransfer: FileTransfer
 
     /**
      * The size of the file to be transferred.
@@ -144,7 +142,7 @@ abstract class FileTransferConversation protected constructor(protected var mCha
     /**
      * The message Uuid  uniquely identify the record in the message database
      */
-    var msgUuid: String? = null
+    lateinit var msgUuid: String
         protected set
 
     /*
@@ -236,7 +234,7 @@ abstract class FileTransferConversation protected constructor(protected var mCha
                 messageViewHolder.cancelButton.visibility = View.GONE
             FileTransferStatusChangeEvent.IN_PROGRESS -> {
                 messageViewHolder.cancelButton.visibility = View.VISIBLE
-                mConnection.replyTimeout = ProtocolProviderServiceJabberImpl.SMACK_REPLY_EXTENDED_TIMEOUT_10.toLong()
+                mConnection.replyTimeout = ProtocolProviderServiceJabberImpl.SMACK_REPLY_EXTENDED_TIMEOUT_10
             }
 
             FileTransferStatusChangeEvent.COMPLETED -> {
@@ -252,7 +250,7 @@ abstract class FileTransferConversation protected constructor(protected var mCha
                         fileSize = 100
                     }
                     onUploadProgress(fileSize, fileSize)
-                    mConnection.replyTimeout = ProtocolProviderServiceJabberImpl.SMACK_REPLY_TIMEOUT_DEFAULT.toLong()
+                    mConnection.replyTimeout = ProtocolProviderServiceJabberImpl.SMACK_REPLY_TIMEOUT_DEFAULT
                 }
             }
 
@@ -262,11 +260,11 @@ abstract class FileTransferConversation protected constructor(protected var mCha
                     messageViewHolder.retryButton.visibility = View.VISIBLE
                 } // fall through
                 messageViewHolder.fileStatus.setTextColor(Color.RED)
-                mConnection.replyTimeout = ProtocolProviderServiceJabberImpl.SMACK_REPLY_TIMEOUT_DEFAULT.toLong()
+                mConnection.replyTimeout = ProtocolProviderServiceJabberImpl.SMACK_REPLY_TIMEOUT_DEFAULT
             }
             FileTransferStatusChangeEvent.DECLINED -> {
                 messageViewHolder.fileStatus.setTextColor(Color.RED)
-                mConnection.replyTimeout = ProtocolProviderServiceJabberImpl.SMACK_REPLY_TIMEOUT_DEFAULT.toLong()
+                mConnection.replyTimeout = ProtocolProviderServiceJabberImpl.SMACK_REPLY_TIMEOUT_DEFAULT
             }
         }
         if (!TextUtils.isEmpty(statusText)) {
@@ -317,7 +315,9 @@ abstract class FileTransferConversation protected constructor(protected var mCha
      */
     protected fun updateFileViewInfo(file: File?, isHistory: Boolean) {
         // File length = 0 will cause Glade to throw errors
-        if (file == null || !file.exists() || file.length() == 0L) return
+        if (file == null || !file.exists() || file.length() == 0L)
+            return
+
         xferFile = file
         mUri = getUriForFile(mChatActivity, file)
         mimeType = checkMimeType(file)
@@ -405,7 +405,7 @@ abstract class FileTransferConversation protected constructor(protected var mCha
      * Remove file transfer progress listener
      */
     protected fun removeProgressListener() {
-        mFileTransfer!!.removeProgressListener(this)
+        mFileTransfer.removeProgressListener(this)
     }
 
     /**
@@ -506,7 +506,7 @@ abstract class FileTransferConversation protected constructor(protected var mCha
      *
      * @return the name of the given file
      */
-    protected fun getFileLabel(fileName: String, fileSize: Long): String {
+    protected fun getFileLabel(fileName: String?, fileSize: Long): String {
         val text = ByteFormat.format(fileSize)
         return "$fileName ($text)"
     }
@@ -564,14 +564,14 @@ abstract class FileTransferConversation protected constructor(protected var mCha
      */
     override fun onClick(view: View) {
         when (view.id) {
-            R.id.button_file, R.id.sticker -> mChatActivity.openDownloadable(xferFile!!, view)
+            R.id.button_file, R.id.sticker -> mChatActivity.openDownloadable(xferFile, view)
             R.id.playback_play -> playStart()
             R.id.buttonCancel -> {
                 messageViewHolder.retryButton.visibility = View.GONE
                 messageViewHolder.cancelButton.visibility = View.GONE
                 // Let file transport event call back to handle
                 // updateView(FileTransferStatusChangeEvent.CANCELED, null);
-                if (mFileTransfer != null) mFileTransfer!!.cancel()
+                mFileTransfer.cancel()
             }
         }
     }
@@ -850,12 +850,14 @@ abstract class FileTransferConversation protected constructor(protected var mCha
      * @param fileName the incoming xfer fileName
      * @param mimeType the incoming file mimeType
      */
-    protected fun setTransferFilePath(fileName: String, mimeType: String) {
+    protected fun setTransferFilePath(fileName: String, mimeType: String?) {
         var downloadPath = FileBackend.MEDIA_DOCUMENT
-        if (fileName.contains("voice-")) downloadPath = FileBackend.MEDIA_VOICE_RECEIVE
-        else if (StringUtils.isNotEmpty(mimeType) && !mimeType.startsWith("*")) {
+        if (fileName.contains("voice-"))
+            downloadPath = FileBackend.MEDIA_VOICE_RECEIVE
+        else if (StringUtils.isNotEmpty(mimeType) && !mimeType!!.startsWith("*")) {
             downloadPath = FileBackend.MEDIA + File.separator + mimeType.split("/")[0]
         }
+
         val downloadDir = getaTalkStore(downloadPath, true)
         xferFile = File(downloadDir, fileName)
 
@@ -865,7 +867,8 @@ abstract class FileTransferConversation protected constructor(protected var mCha
         if (filenameLength == -1) {
             filenameLength = fileName.length
         }
-        while (xferFile!!.exists()) {
+
+        while (xferFile != null && xferFile!!.exists()) {
             val newFileName = (fileName.substring(0, filenameLength) + "-"
                     + ++index + fileName.substring(filenameLength))
             xferFile = File(downloadDir, newFileName)

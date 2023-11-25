@@ -115,7 +115,7 @@ class InvitationReceivedDialog : Dialog {
     /**
      * {@inheritDoc}
      */
-    public override fun onCreate(savedInstanceState: Bundle) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         setContentView(R.layout.muc_invitation_received_dialog)
         setTitle(mContext.getString(R.string.service_gui_INVITATION_RECEIVED))
         val infoTextArea = findViewById<TextView>(R.id.textMsgView)

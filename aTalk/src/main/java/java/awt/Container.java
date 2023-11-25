@@ -1,7 +1,5 @@
 package java.awt;
 
-import net.java.sip.communicator.plugin.desktoputil.SIPCommCheckBox;
-
 import org.atalk.impl.neomedia.jmfext.media.renderer.video.JAWTRendererVideoComponent;
 
 import java.awt.event.ContainerListener;
@@ -121,11 +119,6 @@ public class Container extends Component {
 	public Component[] getComponents()
 	{
 		return new Component[0];
-	}
-
-	public static void add(SIPCommCheckBox cbEnable) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	public Insets getInsets() {

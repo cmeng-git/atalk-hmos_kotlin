@@ -28,7 +28,6 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.os.Handler
 import android.text.Html
-import android.text.Html.ImageGetter
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -62,7 +61,6 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentManager
 import net.java.sip.communicator.impl.protocol.jabber.HttpFileDownloadJabberImpl
 import net.java.sip.communicator.impl.protocol.jabber.OperationSetPersistentPresenceJabberImpl
 import net.java.sip.communicator.service.contactlist.MetaContact
@@ -549,7 +547,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
         }
     }
 
-    fun updateFTStatus(msgUuid: String?, status: Int, fileName: String?, encType: Int, msgType: Int) {
+    fun updateFTStatus(msgUuid: String, status: Int, fileName: String?, encType: Int, msgType: Int) {
         if (chatListAdapter != null) {
             chatListAdapter!!.updateMessageFTStatus(msgUuid, status, fileName, encType, msgType)
         }
@@ -663,7 +661,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
                             cPos = checkedList!!.keyAt(i) - headerCount
                             chatMsg = chatListAdapter!!.getMessage(cPos)
                             if (chatMsg != null) {
-                                if (i > 0) sBuilder.append("\n").append(chatMsg.contentForClipboard) else sBuilder.append(chatMsg.contentForClipboard)
+                                if (i > 0) sBuilder.append("\n").append(chatMsg.getContentForClipboard()) else sBuilder.append(chatMsg.getContentForClipboard())
                             }
                         }
                         i++
@@ -687,7 +685,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
                             chatMsg = chatListAdapter!!.getMessage(cPos)
                             if (chatMsg != null) {
                                 if (cType == INCOMING_MESSAGE_VIEW || cType == OUTGOING_MESSAGE_VIEW) {
-                                    if (sBuilder.isNotEmpty()) sBuilder.append("\n").append(chatMsg.contentForClipboard) else sBuilder.append(chatMsg.contentForClipboard)
+                                    if (sBuilder.isNotEmpty()) sBuilder.append("\n").append(chatMsg.getContentForClipboard()) else sBuilder.append(chatMsg.getContentForClipboard())
                                 }
                                 else if (cType == FILE_TRANSFER_IN_MESSAGE_VIEW || cType == FILE_TRANSFER_OUT_MESSAGE_VIEW) {
                                     if (chatMsg.fileRecord != null) {
@@ -736,7 +734,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
                                         msgUidDel.addAll(chatMsg.messageUIDs)
                                     }
                                     else {
-                                        msgUidDel.add(chatMsg.messageUID!!)
+                                        msgUidDel.add(chatMsg.getMessageUID())
 
                                         /*
                                          * Include only the incoming received media or aTalk created outgoing tmp files
@@ -1117,13 +1115,13 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
          * @param fileName the downloaded fileName
          * @param msgType File transfer type see ChatMessage MESSAGE_FILE_
          */
-        fun updateMessageFTStatus(msgUuid: String?, status: Int, fileName: String?, encType: Int, msgType: Int) {
+        fun updateMessageFTStatus(msgUuid: String, status: Int, fileName: String?, encType: Int, msgType: Int) {
             // Remove deleted message from display messages; merged messages may return null
             val row = msgUuid2Idx[msgUuid]
             if (row != null) {
                 val chatMessage = messages[row].chatMessage as ChatMessageImpl
-                chatMessage.updateFTStatus(chatPanel!!.descriptor, msgUuid!!, status, fileName!!,
-                    encType, msgType, chatMessage.messageDir!!)
+                chatMessage.updateFTStatus(chatPanel!!.descriptor, msgUuid, status, fileName,
+                    encType, msgType, chatMessage.messageDir)
                 // Timber.e("File record updated for %s => %s", msgUuid, status);
 
                 // Update FT Record in ChatPanel#msgCache as well
@@ -1135,12 +1133,12 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
         }
 
         // Not use currently
-        fun updateMessageFTStatus(msgUuid: String?, status: Int) {
+        fun updateMessageFTStatus(msgUuid: String, status: Int) {
             // Remove deleted message from display messages; merged messages may return null
             val row = msgUuid2Idx[msgUuid]
             if (row != null) {
                 val chatMessage = messages[row].chatMessage as ChatMessageImpl
-                chatMessage.updateFTStatus(msgUuid!!, status)
+                chatMessage.updateFTStatus(msgUuid, status)
             }
         }
 
@@ -1182,7 +1180,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
                 ChatMessage.MESSAGE_IN, ChatMessage.MESSAGE_MUC_IN, ChatMessage.MESSAGE_LOCATION_IN, ChatMessage.MESSAGE_STATUS -> INCOMING_MESSAGE_VIEW
                 ChatMessage.MESSAGE_OUT, ChatMessage.MESSAGE_LOCATION_OUT, ChatMessage.MESSAGE_MUC_OUT -> {
                     val sessionCorrUID = chatPanel!!.correctionUID
-                    val msgCorrUID = chatMessage.uidForCorrection
+                    val msgCorrUID = chatMessage.getUidForCorrection()
                     if (sessionCorrUID != null && sessionCorrUID == msgCorrUID) {
                         CORRECTED_MESSAGE_VIEW
                     }
@@ -1253,7 +1251,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
             var messageViewHolder: MessageViewHolder
             val msgDisplay = getMessageDisplay(position)
             val chatMessage = msgDisplay.chatMessage
-            val msgUuid = chatMessage.messageUID
+            val msgUuid = chatMessage.getMessageUID()
             // Update pos changed due to deletions; must not have any new entry added here => error
             if (msgUuid != null && msgUuid2Idx.put(msgUuid, position) == null) {
                 Timber.e("Failed updating msgUuid2Idx with msgUuid: %s = %s", position, msgUuid)
@@ -1298,11 +1296,11 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
                         viewTemp = fileXferR.receiveFileConversionForm(inflater, messageViewHolder, parent, position, init)
                     }
                     ChatMessage.MESSAGE_FILE_TRANSFER_SEND, ChatMessage.MESSAGE_STICKER_SEND -> {
-                        fileName = chatMessage.message
+                        fileName = chatMessage.message!!
                         sendTo = chatMessage.sender
                         var fileXferS = getFileXfer(position) as FileSendConversation?
                         if (fileXferS == null) {
-                            fileXferS = FileSendConversation.newInstance(currentChatFragment, msgUuid, sendTo, fileName!!,
+                            fileXferS = FileSendConversation.newInstance(currentChatFragment, msgUuid, sendTo, fileName,
                                 mChatType, msgType == ChatMessage.MESSAGE_STICKER_SEND)
                             setFileXfer(position, fileXferS)
                         }
@@ -1364,7 +1362,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
                 // int clickedPos = position + chatListView.getHeaderViewsCount();
                 messageViewHolder.messageView.tag = clickedPos
                 if (messageViewHolder.outgoingMessageHolder != null) {
-                    messageViewHolder.outgoingMessageHolder.tag = clickedPos
+                    messageViewHolder.outgoingMessageHolder!!.tag = clickedPos
                 }
 
                 if (messageViewHolder.viewType == INCOMING_MESSAGE_VIEW || messageViewHolder.viewType == OUTGOING_MESSAGE_VIEW || messageViewHolder.viewType == CORRECTED_MESSAGE_VIEW) {
@@ -1394,7 +1392,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
                 // check and make link clickable if it is not an HTTP file link
                 val body = msgDisplay.getBody(messageViewHolder.messageView) as Spannable?
 
-                // OTR system messages must use setMovementMethod to make the link clickable
+                // System messages must use setMovementMethod to make the link clickable
                 if (messageViewHolder.viewType == SYSTEM_MESSAGE_VIEW) {
                     messageViewHolder.messageView.movementMethod = LinkMovementMethod.getInstance()
                 }
@@ -1591,7 +1589,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
             Timber.log(TimberLog.FINER, "MESSAGE DELIVERED to contact: %s", contact.address)
             if (metaContact != null && metaContact == chatPanel!!.metaContact) {
                 Timber.log(TimberLog.FINER, "MESSAGE DELIVERED: process message to chat for contact: %s MESSAGE: %s",
-                    contact.address, msg.message)
+                    contact.address, msg.mMessage)
                 addMessageImpl(msg)
             }
         }
@@ -1632,7 +1630,6 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
             val sourceContact = evt.getSourceContact()
             Timber.d("Contact presence status changed: %s", sourceContact.address)
             if (chatPanel!!.metaContact != null && chatPanel!!.metaContact!!.containsContact(sourceContact)) {
-                mCryptoFragment!!.onContactPresenceStatusChanged()
                 UpdateStatusTask().execute()
             }
         }
@@ -1726,7 +1723,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
                 encryption = msg.encryptionType
                 serverMsgId = msg.serverMsgId
                 // All system messages do not have UUID i.e. null
-                if (msg.messageUID != null) msgUuid2Idx[msg.messageUID] = id
+                if (msg.getMessageUID() != null) msgUuid2Idx[msg.getMessageUID()] = id
                 checkLatLng()
             }
 
@@ -1936,8 +1933,9 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
 
     class MessageViewHolder {
         var viewType = 0
-        lateinit var outgoingMessageHolder: View
-        lateinit var chatStateView: ImageView
+        var outgoingMessageHolder: View? = null
+        var chatStateView: ImageView? = null
+
         lateinit var avatarView: ImageView
         lateinit var statusView: ImageView
         lateinit var jidView: TextView
@@ -2103,9 +2101,10 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
     private fun setEncState(encStateView: ImageView?, encType: Int) {
         runOnUiThread {
             when (encType) {
-                IMessage.ENCRYPTION_NONE -> encStateView!!.setImageResource(R.drawable.encryption_none)
-                IMessage.ENCRYPTION_OMEMO -> encStateView!!.setImageResource(R.drawable.encryption_omemo)
-                IMessage.ENCRYPTION_OTR -> encStateView!!.setImageResource(R.drawable.encryption_otr)
+                IMessage.ENCRYPTION_NONE ->
+                    encStateView!!.setImageResource(R.drawable.encryption_none)
+                IMessage.ENCRYPTION_OMEMO ->
+                    encStateView!!.setImageResource(R.drawable.encryption_omemo)
             }
         }
     }
@@ -2363,7 +2362,6 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
      * - User launches a chatSession
      * - User scroll the chatFragment pages
      * - User changes cryptoMode for the current chatSession
-     * - Change requests from OTR Listener due to OTR state changes
      */
     override fun onCryptoModeChange(cryptoMode: Int) {
         chatPanel!!.chatType = cryptoMode
@@ -2372,7 +2370,7 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
 
     /**
      * Change chatFragment background in response to initial chat session launch or event
-     * triggered from omemoAuthentication and OTR mode changes in cryptoChatFragment
+     * triggered from omemoAuthentication and omemo mode changes in cryptoChatFragment
      *
      * @param chatType Change chat fragment view background color based on chatType
      */
@@ -2381,13 +2379,20 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
         mChatType = chatType
         runOnUiThread {
             when (chatType) {
-                MSGTYPE_OMEMO -> focusView!!.setBackgroundResource(R.color.chat_background_omemo)
-                MSGTYPE_OMEMO_UA, MSGTYPE_OMEMO_UT -> focusView!!.setBackgroundResource(R.color.chat_background_omemo_ua)
-                MSGTYPE_OTR -> focusView!!.setBackgroundResource(R.color.chat_background_otr)
-                MSGTYPE_OTR_UA -> focusView!!.setBackgroundResource(R.color.chat_background_otr_ua)
-                MSGTYPE_NORMAL -> focusView!!.setBackgroundResource(R.color.chat_background_normal)
-                MSGTYPE_MUC_NORMAL -> focusView!!.setBackgroundResource(R.color.chat_background_muc)
-                else -> focusView!!.setBackgroundResource(R.color.chat_background_normal)
+                MSGTYPE_OMEMO ->
+                    focusView!!.setBackgroundResource(R.color.chat_background_omemo)
+
+                MSGTYPE_OMEMO_UA, MSGTYPE_OMEMO_UT ->
+                    focusView!!.setBackgroundResource(R.color.chat_background_omemo_ua)
+
+                MSGTYPE_NORMAL ->
+                    focusView!!.setBackgroundResource(R.color.chat_background_normal)
+
+                MSGTYPE_MUC_NORMAL ->
+                    focusView!!.setBackgroundResource(R.color.chat_background_muc)
+
+                else ->
+                    focusView!!.setBackgroundResource(R.color.chat_background_normal)
             }
         }
     }
@@ -2439,8 +2444,6 @@ class ChatFragment : OSGiFragment(), CurrentChatListener, FileTransferStatusList
         const val MSGTYPE_OMEMO = 0x02
         const val MSGTYPE_OMEMO_UT = 0x12
         const val MSGTYPE_OMEMO_UA = 0x22
-        const val MSGTYPE_OTR = 0x03
-        const val MSGTYPE_OTR_UA = 0x23
         const val MSGTYPE_MUC_NORMAL = 0x04
 
         /**

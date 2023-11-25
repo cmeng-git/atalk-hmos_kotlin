@@ -5,9 +5,6 @@
  */
 package net.java.sip.communicator.service.gui
 
-import net.java.sip.communicator.plugin.desktoputil.SIPCommButton
-import java.awt.Component
-
 /**
  * The `UIGroup` represents the user interface contact list group.
  *
@@ -23,8 +20,7 @@ abstract class UIGroup {
     /**
      * Sets the preferred height of this group in the contact list.
      *
-     * @param preferredHeight the preferred height of this group in the contact
-     * list
+     * @param preferredHeight the preferred height of this group in the contact list
      */
     /**
      * The preferred height of this group in the contact list.
@@ -81,8 +77,7 @@ abstract class UIGroup {
     /**
      * Indicates if the group is collapsed or expanded.
      *
-     * @return `true` to indicate that the group is collapsed,
-     * `false` to indicate that it's expanded
+     * @return `true` to indicate that the group is collapsed, `false` to indicate that it's expanded
      */
     abstract val isGroupCollapsed: Boolean
 
@@ -106,21 +101,6 @@ abstract class UIGroup {
      * @return the identifier of this group
      */
     abstract val id: String?
-
-    /**
-     * Returns the right button menu for this group.
-     *
-     * @return the right button menu component for this group
-     */
-    abstract val rightButtonMenu: Component?
-
-    /**
-     * Returns all custom action buttons for this group.
-     *
-     * @return a list of all custom action buttons for this group
-     */
-    val customActionButtons: Collection<SIPCommButton>?
-        get() = null
 
     companion object {
         /**

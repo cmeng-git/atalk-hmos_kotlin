@@ -110,8 +110,10 @@ class MUCServiceImpl : MUCService() {
      * @param isFirstAttempt is this the first attempt to join room, used to check whether to show some error messages
      * @param subject the subject which will be set to the room after the user join successful.
      */
-    private fun joinChatRoom(chatRoomWrapper: ChatRoomWrapper, nickName: String?, password: ByteArray,
-            rememberPassword: Boolean, isFirstAttempt: Boolean, subject: String?) {
+    private fun joinChatRoom(
+            chatRoomWrapper: ChatRoomWrapper, nickName: String?, password: ByteArray,
+            rememberPassword: Boolean, isFirstAttempt: Boolean, subject: String?,
+    ) {
         val chatRoom = chatRoomWrapper.chatRoom
         if (chatRoom == null) {
             DialogActivity.showDialog(aTalkApp.globalContext, R.string.service_gui_WARNING,
@@ -240,8 +242,10 @@ class MUCServiceImpl : MUCService() {
      * @param isPrivate whether the room will be private or public.
      * @return the `ChatRoomWrapper` corresponding to the created room
      */
-    fun createChatRoom(chatRoomWrapper: ChatRoomWrapper,
-            reason: String?, join: Boolean, persistent: Boolean, isPrivate: Boolean): ChatRoomWrapper {
+    fun createChatRoom(
+            chatRoomWrapper: ChatRoomWrapper,
+            reason: String?, join: Boolean, persistent: Boolean, isPrivate: Boolean,
+    ): ChatRoomWrapper {
         val onServerRoom = chatRoomWrapper.chatRoom != null
         return createChatRoom(chatRoomWrapper.chatRoomName!!, chatRoomWrapper.protocolProvider!!,
                 ArrayList(), reason, join, persistent, isPrivate, onServerRoom)
@@ -262,9 +266,11 @@ class MUCServiceImpl : MUCService() {
      * @return the `ChatRoomWrapper` corresponding to the created room or `null` if
      * the protocol fails to create the chat room.
      */
-    override fun createChatRoom(roomName: String?, protocolProvider: ProtocolProviderService,
+    override fun createChatRoom(
+            roomName: String?, protocolProvider: ProtocolProviderService,
             contacts: Collection<String?>?, reason: String?, join: Boolean, persistent: Boolean, isPrivate: Boolean,
-            onServerRoom: Boolean): ChatRoomWrapper {
+            onServerRoom: Boolean,
+    ): ChatRoomWrapper {
         // If there's no group chat operation set we have nothing to do here.
         val groupChatOpSet = protocolProvider.getOperationSet(OperationSetMultiUserChat::class.java)!!
         var chatRoomWrapper: ChatRoomWrapper? = null
@@ -301,7 +307,7 @@ class MUCServiceImpl : MUCService() {
         } catch (ex: InterruptedException) {
             Timber.e(ex, "Failed to create chat room.")
             DialogActivity.showDialog(aTalkApp.globalContext, R.string.service_gui_ERROR,
-                    R.string.service_gui_CHATROOM_CREATE_ERROR, protocolProvider.accountID, ex.message)
+                R.string.service_gui_CHATROOM_CREATE_ERROR, "${protocolProvider.accountID}\n${ex.message}")
         }
         if (chatRoom != null) {
             val parentProvider = chatRoomList.findServerWrapperFromProvider(protocolProvider)!!
@@ -327,8 +333,10 @@ class MUCServiceImpl : MUCService() {
      * @param persistent is the room persistent
      * @return the `ChatRoomWrapper` corresponding to the created room
      */
-    override fun createPrivateChatRoom(protocolProvider: ProtocolProviderService,
-            contacts: Collection<String?>?, reason: String?, persistent: Boolean): ChatRoomWrapper {
+    override fun createPrivateChatRoom(
+            protocolProvider: ProtocolProviderService,
+            contacts: Collection<String?>?, reason: String?, persistent: Boolean,
+    ): ChatRoomWrapper {
         return this.createChatRoom(null, protocolProvider, contacts, reason, true, persistent, isPrivate = true, onServerRoom = false)
     }
 
@@ -408,8 +416,10 @@ class MUCServiceImpl : MUCService() {
     /**
      * Joins a chat room in an asynchronous way.
      */
-    private inner class JoinChatRoomTask(private val chatRoomWrapper: ChatRoomWrapperImpl?, nickName: String?, password: ByteArray?,
-            rememberPassword: Boolean, isFirstAttempt: Boolean, subject: String?) : Thread() {
+    private inner class JoinChatRoomTask(
+            private val chatRoomWrapper: ChatRoomWrapperImpl?, nickName: String?, password: ByteArray?,
+            rememberPassword: Boolean, isFirstAttempt: Boolean, subject: String?,
+    ) : Thread() {
         private val chatRoomId = chatRoomWrapper!!.chatRoomName
         private val nickName: String?
         private val password: ByteArray?
@@ -606,8 +616,10 @@ class MUCServiceImpl : MUCService() {
      * @param protocolProvider the protocol provider for the account to synchronize
      * @param opSet the multi user chat operation set, which give us access to chat room server
      */
-    override fun synchronizeOpSetWithLocalContactList(protocolProvider: ProtocolProviderService,
-            opSet: OperationSetMultiUserChat) {
+    override fun synchronizeOpSetWithLocalContactList(
+            protocolProvider: ProtocolProviderService,
+            opSet: OperationSetMultiUserChat,
+    ) {
         var chatRoomProvider = findServerWrapperFromProvider(protocolProvider)
         if (chatRoomProvider == null) {
             chatRoomProvider = chatRoomList.addRegisteredChatProvider(protocolProvider)

@@ -85,7 +85,7 @@ class CaptchaDialog(private val mContext: Context, multiUserChat: MultiUserChat,
         callBack = listener
     }
 
-    public override fun onCreate(savedInstanceState: Bundle) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.captcha_challenge)
         setTitle(R.string.service_gui_CHATROOM_JOIN_CAPTCHA_CHALLENGE)

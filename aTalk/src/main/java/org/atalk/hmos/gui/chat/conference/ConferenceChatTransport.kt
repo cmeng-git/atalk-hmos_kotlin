@@ -36,7 +36,7 @@ class ConferenceChatTransport(chatSession: ChatSession, chatRoom: ChatRoom) : Ch
     private val chatSession: ChatSession
     private val chatRoom: ChatRoom?
     private val mPPS: ProtocolProviderService
-    private var httpFileUploadManager: HttpFileUploadManager? = null
+    private lateinit var httpFileUploadManager: HttpFileUploadManager
 
     /**
      * Creates an instance of `ConferenceChatTransport` by specifying the parent chat
@@ -167,11 +167,12 @@ class ConferenceChatTransport(chatSession: ChatSession, chatRoom: ChatRoom) : Ch
             aTalkApp.showToastMessage(R.string.service_gui_CHATROOM_NOT_JOINED)
             return
         }
-        val iMessage = chatRoom!!.createMessage(message!!, encType, null)
+        val iMessage = chatRoom!!.createMessage(message, encType, null)
         if (IMessage.ENCRYPTION_OMEMO == encType and IMessage.ENCRYPTION_OMEMO) {
             val omemoManager = OmemoManager.getInstanceFor(mPPS.connection)
             chatRoom.sendMessage(iMessage, omemoManager)
-        } else {
+        }
+        else {
             chatRoom.sendMessage(iMessage)
         }
     }
@@ -291,17 +292,17 @@ class ConferenceChatTransport(chatSession: ChatSession, chatRoom: ChatRoom) : Ch
     @Throws(Exception::class)
     private fun httpFileUpload(file: File?, chatType: Int, xferCon: FileSendConversation): Any {
         // check to see if server supports httpFileUpload service if contact is off line or legacy file transfer failed
-        return if (httpFileUploadManager!!.isUploadServiceDiscovered) {
+        return if (allowsFileTransfer()) {
             var encType = IMessage.ENCRYPTION_NONE
             val url: Any
             try {
                 when (ChatFragment.MSGTYPE_OMEMO) {
                     chatType -> {
                         encType = IMessage.ENCRYPTION_OMEMO
-                        url = httpFileUploadManager!!.uploadFileEncrypted(file, xferCon)
+                        url = httpFileUploadManager.uploadFileEncrypted(file, xferCon)
                     }
                     else -> {
-                        url = httpFileUploadManager!!.uploadFile(file, xferCon)
+                        url = httpFileUploadManager.uploadFile(file, xferCon)
                     }
                 }
                 xferCon.setStatus(FileTransferStatusChangeEvent.IN_PROGRESS, chatRoom, encType, "HTTP File Upload")
@@ -315,7 +316,8 @@ class ConferenceChatTransport(chatSession: ChatSession, chatRoom: ChatRoom) : Ch
             } catch (e: IOException) {
                 throw OperationNotSupportedException(e.message)
             }
-        } else throw OperationNotSupportedException(aTalkApp.getResString(R.string.service_gui_FILE_TRANSFER_NOT_SUPPORTED))
+        }
+        else throw OperationNotSupportedException(aTalkApp.getResString(R.string.service_gui_FILE_TRANSFER_NOT_SUPPORTED))
     }
 
     /**
@@ -323,8 +325,8 @@ class ConferenceChatTransport(chatSession: ChatSession, chatRoom: ChatRoom) : Ch
      *
      * @return `true` if this chat transport supports file transfer, otherwise returns `false`.
      */
-    private fun allowsFileTransfer(): Boolean {
-        return httpFileUploadManager != null && httpFileUploadManager!!.isUploadServiceDiscovered()
+    override fun allowsFileTransfer(): Boolean {
+        return httpFileUploadManager.isUploadServiceDiscovered
     }
 
     /**
@@ -333,7 +335,13 @@ class ConferenceChatTransport(chatSession: ChatSession, chatRoom: ChatRoom) : Ch
      * @return the file length that is supported.
      */
     override val maximumFileLength: Long
-        get() = if (httpFileUploadManager == null) 0 else httpFileUploadManager!!.getDefaultUploadService().getMaxFileSize()
+        get() {
+            return if (allowsFileTransfer())
+                httpFileUploadManager.defaultUploadService.maxFileSize
+            else
+                0
+        }
+
 
     /**
      * Invites the given contact in this chat conference.

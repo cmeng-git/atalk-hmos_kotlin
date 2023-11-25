@@ -64,7 +64,7 @@ open class FileSendConversation private constructor(cPanel: ChatFragment, dir: S
      */
     var isStickerMode = false
         private set
-    private var mFHS: FileHistoryServiceImpl? = null
+    private lateinit var mFHS: FileHistoryServiceImpl
     private var mChatType = 0
     var fileThumbnail: ByteArray? = null
         private set
@@ -147,7 +147,7 @@ open class FileSendConversation private constructor(cPanel: ChatFragment, dir: S
     private fun createFileSendRecord() {
         val fileTransfer = OutgoingFileSendEntityImpl(mEntityJid!!, msgUuid, xferFile!!.path)
         val event = FileTransferCreatedEvent(fileTransfer, Date())
-        mFHS!!.fileTransferCreated(event)
+        mFHS.fileTransferCreated(event)
     }
 
     /**
@@ -160,10 +160,10 @@ open class FileSendConversation private constructor(cPanel: ChatFragment, dir: S
      */
     private fun updateFTStatus(status: Int) {
         val fileName = xferFile!!.path
-        if (mUpdateDB) {
-            Timber.e("updateFTStatusToDB on status: %s; row count: %s", status,
-                    mFHS!!.updateFTStatusToDB(msgUuid!!, status, fileName, mEncryption, ChatMessage.MESSAGE_FILE_TRANSFER_HISTORY))
-        }
+//        if (mUpdateDB) {
+//            Timber.e("updateFTStatusToDB on status: %s; row count: %s", status,
+//                    mFHS.updateFTStatusToDB(msgUuid, status, fileName, mEncryption, ChatMessage.MESSAGE_FILE_TRANSFER_HISTORY))
+//        }
         mChatFragment.updateFTStatus(msgUuid, status, fileName, mEncryption, ChatMessage.MESSAGE_FILE_TRANSFER_HISTORY)
     }
 
@@ -285,7 +285,7 @@ open class FileSendConversation private constructor(cPanel: ChatFragment, dir: S
          * @param sendTo the name of the destination contact
          * @param fileName the file to transfer
          */
-        fun newInstance(cPanel: ChatFragment, msgUuid: String?, sendTo: String?,
+        fun newInstance(cPanel: ChatFragment, msgUuid: String, sendTo: String?,
                 fileName: String, chatType: Int, stickerMode: Boolean): FileSendConversation {
             val fragmentSFC = FileSendConversation(cPanel, FileRecord.OUT)
             fragmentSFC.msgUuid = msgUuid

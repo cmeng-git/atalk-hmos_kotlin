@@ -3,16 +3,6 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Message settings -->
     <PreferenceCategory
-        android:title="@string/pref_cat_MESSAGING_SECURITY_OPTIONS">
-
-        <CheckBoxPreference
-            android:key="pref.key.crypto.enable"
-            android:summaryOff="@string/service_gui_settings_CRYPTO_ENABLE_OFF"
-            android:summaryOn="@string/service_gui_settings_CRYPTO_ENABLE_ON"
-            android:title="@string/service_gui_settings_CRYPTO_ENABLE_TITLE" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
         android:title="@string/pref_cat_OMEMO_SECURITY_SETTINGS">
 
         <CheckBoxPreference

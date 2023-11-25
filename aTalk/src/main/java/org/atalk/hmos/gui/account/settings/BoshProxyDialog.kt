@@ -79,7 +79,7 @@ class BoshProxyDialog(private val mContext: Context, private val jbrReg: JabberA
         mAccountUuid = accManager!!.getStoredAccountUUID(factory, editedAccUID!!)!!
     }
 
-    public override fun onCreate(savedInstanceState: Bundle) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTitle(R.string.service_gui_settings_BOSH_PROXY)
         this.setContentView(R.layout.bosh_proxy_dialog)

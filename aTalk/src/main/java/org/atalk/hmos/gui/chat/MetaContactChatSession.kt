@@ -16,7 +16,6 @@ import net.java.sip.communicator.service.contactlist.event.MetaContactMovedEvent
 import net.java.sip.communicator.service.contactlist.event.MetaContactRenamedEvent
 import net.java.sip.communicator.service.contactlist.event.ProtoContactEvent
 import net.java.sip.communicator.service.filehistory.FileRecord
-import net.java.sip.communicator.service.metahistory.MetaHistoryService
 import net.java.sip.communicator.service.protocol.ChatRoomMember
 import net.java.sip.communicator.service.protocol.Contact
 import net.java.sip.communicator.service.protocol.ContactResource
@@ -40,23 +39,23 @@ import java.util.*
  * @author Lubomir Marinov
  * @author Eng Chong Meng
  */
+/**
+ * `ChatSessionRenderer` that provides the connection between this chat session and its UI.
+ */
 class MetaContactChatSession(
         /**
          * The object used for rendering.
          */
         override val chatSessionRenderer: ChatPanel,
+
         private val metaContact: MetaContact,
-        protocolContact: Contact, contactResource: ContactResource?,
+
+        protocolContact: Contact,
+        contactResource: ContactResource?,
 ) : ChatSession(), MetaContactListListener, ContactResourceListener {
 
     private val metaContactListService: MetaContactListService?
 
-    /**
-     * Returns the `ChatSessionRenderer` that provides the connection between
-     * this chat session and its UI.
-     *
-     * @return The `ChatSessionRenderer`.
-     */
 
     /**
      * Creates an instance of `MetaContactChatSession` by specifying the
@@ -87,7 +86,7 @@ class MetaContactChatSession(
      */
     override val chatEntity: String
         get() {
-            var entityJid = metaContact.getDefaultContact()!!.address
+            var entityJid = metaContact.getDefaultContact().address
             if (StringUtils.isEmpty(entityJid)) entityJid = aTalkApp.getResString(R.string.service_gui_UNKNOWN)
             return entityJid
         }
@@ -243,9 +242,8 @@ class MetaContactChatSession(
     private fun initChatTransports(protocolContact: Contact, contactResource: ContactResource?) {
         val protocolContacts = metaContact.getContacts()
         while (protocolContacts.hasNext()) {
-            val contact = protocolContacts.next()
-            addChatTransports(contact,
-                    contactResource?.resourceName, contact == protocolContact)
+            val contact = protocolContacts.next()!!
+            addChatTransports(contact, contactResource?.resourceName, contact == protocolContact)
         }
     }
 
@@ -382,7 +380,9 @@ class MetaContactChatSession(
      */
     override val isDescriptorPersistent: Boolean
         get() {
-            if (metaContact == null) return false
+            if (metaContact == null)
+                return false
+
             val defaultContact = metaContact.getDefaultContact(OperationSetBasicInstantMessaging::class.java)
                     ?: return false
             var isParentPersist = true
@@ -436,9 +436,9 @@ class MetaContactChatSession(
      * contact the `Contact`, which transports to add
      * resourceName the resource to be pre-selected
      */
-    private fun addChatTransports(contact: Contact?, resourceName: String?, isSelectedContact: Boolean) {
+    private fun addChatTransports(contact: Contact, resourceName: String?, isSelectedContact: Boolean) {
         var chatTransport: MetaContactChatTransport? = null
-        val contactResources = contact!!.getResources()
+        val contactResources = contact.getResources()
         if (contact.isSupportResources && contactResources != null && contactResources.isNotEmpty()) {
             if (contactResources.size > 1) {
                 chatTransport = MetaContactChatTransport(this, contact)

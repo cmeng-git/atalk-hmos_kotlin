@@ -136,7 +136,7 @@ class ConferenceChatManager : ChatRoomMessageListener, ChatRoomInvitationListene
             // just return if the delivered message is for remote client consumption only
             if (message.isRemoteOnly()) return
             val messageType = evt.getEventType()
-            chatPanel.addMessage(sourceChatRoom.getUserNickname().toString(), null,
+            chatPanel.addMessage(sourceChatRoom.getUserNickname().toString(), "",
                     evt.getTimestamp(), messageType, message, null)
         }
     }
@@ -261,7 +261,7 @@ class ConferenceChatManager : ChatRoomMessageListener, ChatRoomInvitationListene
         val sender = if (destMember == null || TextUtils.isEmpty(destMember.getNickName())) sourceChatRoom.getName() else destMember.getNickName()!!
         val chatPanel = ChatSessionManager.getMultiChat(sourceChatRoom, true)!!
         if (resendLastMessage) {
-            chatPanel.addMessage(sender, Date(), ChatMessage.MESSAGE_OUT, srcMessage.getMimeType(), srcMessage.getContent())
+            chatPanel.addMessage(sender, Date(), ChatMessage.MESSAGE_OUT, srcMessage.getMimeType(), srcMessage.getContent()!!)
         }
         chatPanel.addMessage(sender, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN, errorMsg)
         ChatSessionManager.setCurrentChatId(chatPanel.chatSession!!.chatId)
@@ -729,7 +729,7 @@ class ConferenceChatManager : ChatRoomMessageListener, ChatRoomInvitationListene
         val sender = destParticipant.displayName
         val chatPanel = ChatSessionManager.getMultiChat(sourceChatRoom, true)!!
         chatPanel.addMessage(sender, Date(), ChatMessage.MESSAGE_OUT,
-                sourceMessage.getMimeType(), sourceMessage.getContent())
+                sourceMessage.getMimeType(), sourceMessage.getContent()!!)
         chatPanel.addMessage(sender, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN, errorMsg)
         ChatSessionManager.setCurrentChatId(chatPanel.chatSession!!.chatId)
     }

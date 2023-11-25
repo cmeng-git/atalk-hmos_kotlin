@@ -97,7 +97,7 @@ class AndroidCameraSystem
                      */
                     val sLevel = characteristics.get(CameraCharacteristics.INFO_SUPPORTED_HARDWARE_LEVEL)
                     if (CameraMetadata.INFO_SUPPORTED_HARDWARE_LEVEL_LEGACY == sLevel) {
-                        Timber.w("Camera API2 is not supported for camera: %s", cameraId)
+                         Timber.w("Camera API2 is not supported for camera, so skip : %s;", cameraId)
                         continue
                     } else {
                         Timber.d("Camera API2 is supported for camera: %s; Level: %s", cameraId, sLevel)

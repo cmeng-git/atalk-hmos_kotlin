@@ -73,6 +73,7 @@ import org.atalk.persistance.FileBackend
 import org.atalk.persistance.FilePathHelper
 import org.atalk.service.osgi.OSGiActivity
 import org.jivesoftware.smack.SmackException
+import org.jivesoftware.smack.XMPPConnection
 import org.jivesoftware.smack.XMPPException
 import org.jivesoftware.smackx.httpfileupload.HttpFileUploadManager
 import org.jivesoftware.smackx.iqlast.LastActivityManager
@@ -123,7 +124,7 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
      * ChatActivity menu & menuItem
      */
     private var mMenu: Menu? = null
-    private var mHistoryErase: MenuItem? = null
+    private lateinit var mHistoryErase: MenuItem
     private var mCallAudioContact: MenuItem? = null
     private var mCallVideoContact: MenuItem? = null
     private var mSendFile: MenuItem? = null
@@ -137,7 +138,6 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
     private var mChatRoomMember: MenuItem? = null
     private var mChatRoomConfig: MenuItem? = null
     private var mChatRoomNickSubject: MenuItem? = null
-    private var mOtrSession: MenuItem? = null
 
     /**
      * Holds chatId that is currently handled by this Activity.
@@ -178,7 +178,7 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
         if (postRestoreIntent()) {
             return
         }
-        // Add fragment for crypto padLock for OTR and OMEMO before start pager
+        // Add fragment for crypto padLock for OMEMO before start pager
         cryptoFragment = CryptoFragment()
         supportFragmentManager.beginTransaction().add(cryptoFragment!!, CRYPTO_FRAGMENT).commit()
 
@@ -201,7 +201,7 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
 
         // Must do this in onCreate cycle else IllegalStateException if do it in onNewIntent->handleIntent:
         // attempting to register while current state is STARTED. LifecycleOwners must call register before they are STARTED.
-        mGetContents = attachments
+        mGetContents = getAttachments()
         mTakePhoto = takePhoto()
         mTakeVideo = takeVideo()
 
@@ -243,7 +243,10 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
         setCurrentChatId(chatId)
         chatPager!!.currentItem = chatPagerAdapter!!.getChatIdx(chatId)
         if (intent.clipData != null) {
-            if (intent.categories != null) onActivityResult(REQUEST_CODE_FORWARD, RESULT_OK, intent) else onActivityResult(REQUEST_CODE_SHARE_WITH, RESULT_OK, intent)
+            if (intent.categories != null)
+                onActivityResult(REQUEST_CODE_FORWARD, RESULT_OK, intent)
+            else
+                onActivityResult(REQUEST_CODE_SHARE_WITH, RESULT_OK, intent)
         }
     }
 
@@ -391,9 +394,17 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
         mChatRoomMember = mMenu!!.findItem(R.id.show_chatroom_occupant)
         mChatRoomConfig = mMenu!!.findItem(R.id.chatroom_config)
         mChatRoomNickSubject = mMenu!!.findItem(R.id.chatroom_info_change)
-        mOtrSession = menu.findItem(R.id.otr_session)
         setOptionItem()
         return true
+    }
+
+    private fun hasUploadService(): Boolean {
+        val connection: XMPPConnection? = selectedChatPanel!!.protocolProvider.connection
+        if (connection != null) {
+            val httpFileUploadManager = HttpFileUploadManager.getInstanceFor(connection)
+            return httpFileUploadManager.isUploadServiceDiscovered
+        }
+        return false
     }
 
     // Enable option items only applicable to the specific chatSession
@@ -403,15 +414,9 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
             val chatSession = selectedChatPanel!!.chatSession
             val contactSession = chatSession is MetaContactChatSession
             if (contactSession) {
-                var hasUploadService = false
-                val connection = selectedChatPanel!!.protocolProvider.connection
-                if (connection != null) {
-                    val httpFileUploadManager = HttpFileUploadManager.getInstanceFor(connection)
-                    hasUploadService = httpFileUploadManager.isUploadServiceDiscovered
-                }
                 mLeaveChatRoom!!.isVisible = false
                 mDestroyChatRoom!!.isVisible = false
-                mHistoryErase!!.setTitle(R.string.service_gui_HISTORY_ERASE_PER_CONTACT)
+                mHistoryErase.setTitle(R.string.service_gui_HISTORY_ERASE_PER_CONTACT)
                 val isDomainJid = mRecipient == null || mRecipient!!.contactJid is DomainBareJid
 
                 // check if to show call buttons.
@@ -422,7 +427,7 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
                 mCallAudioContact!!.isVisible = isShowCall
                 mCallVideoContact!!.isVisible = isShowVideoCall
                 val isShowFileSend = (!isDomainJid
-                        && (contactRenderer.isShowFileSendBtn(metaContact) || hasUploadService))
+                        && (contactRenderer.isShowFileSendBtn(metaContact) || hasUploadService()))
                 mSendFile!!.isVisible = isShowFileSend
                 mSendLocation!!.isVisible = !isDomainJid
                 mTtsEnable!!.isVisible = !isDomainJid
@@ -433,18 +438,12 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
                 mChatRoomMember!!.isVisible = false
                 mChatRoomConfig!!.isVisible = false
                 mChatRoomNickSubject!!.isVisible = false
-                // Also let CryptoFragment handles this to take care Omemo and OTR
-                mOtrSession!!.isVisible = !isDomainJid
             }
             else {
                 setupChatRoomOptionItem()
             }
             // Show the TTS enable option only if global TTS option is enabled.
             mTtsEnable!!.isVisible = ConfigurationUtils.isTtsEnable()
-            val mPadlock = mMenu!!.findItem(R.id.otr_padlock)
-            if (mPadlock != null) {
-                mPadlock.isVisible = contactSession
-            }
         }
     }
 
@@ -452,13 +451,6 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
         if (mMenu != null && selectedChatPanel != null) {
             val chatSession = selectedChatPanel!!.chatSession as? ConferenceChatSession ?: return
             // Proceed only if it is an instance of ConferenceChatSession
-            var hasUploadService = false
-            val connection = selectedChatPanel!!.protocolProvider.connection
-            if (connection != null) {
-                val httpFileUploadManager = HttpFileUploadManager.getInstanceFor(connection)
-                hasUploadService = httpFileUploadManager.isUploadServiceDiscovered
-            }
-
             // Only room owner is allowed to destroy chatRoom - role should not be null for joined room
             val chatRoomWrapper = chatSession.descriptor as ChatRoomWrapper
             val role = chatRoomWrapper.chatRoom!!.getUserRole()
@@ -466,21 +458,20 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
             mChatRoomConfig!!.isVisible = ChatRoomMemberRole.OWNER == role
             val isJoined = chatRoomWrapper.chatRoom!!.isJoined()
             mLeaveChatRoom!!.isVisible = isJoined
-            mSendFile!!.isVisible = isJoined && hasUploadService
+            mSendFile!!.isVisible = isJoined && hasUploadService()
             mSendLocation!!.isVisible = isJoined
             mTtsEnable!!.isVisible = isJoined
             mTtsEnable!!.setTitle(if (chatRoomWrapper.isTtsEnable) R.string.service_gui_TTS_DISABLE else R.string.service_gui_TTS_ENABLE)
             mStatusEnable!!.isVisible = true
             mStatusEnable!!.setTitle(if (chatRoomWrapper.isRoomStatusEnable) R.string.service_gui_CHATROOM_STATUS_OFF else R.string.service_gui_CHATROOM_STATUS_ON)
             mChatRoomNickSubject!!.isVisible = isJoined
-            mHistoryErase!!.setTitle(R.string.service_gui_CHATROOM_HISTORY_ERASE_PER)
+            mHistoryErase.setTitle(R.string.service_gui_CHATROOM_HISTORY_ERASE_PER)
             mChatRoomInfo!!.isVisible = true
             mChatRoomMember!!.isVisible = true
 
             // not available in chatRoom
             mCallAudioContact!!.isVisible = false
             mCallVideoContact!!.isVisible = false
-            mOtrSession!!.isVisible = false
         }
     }
 
@@ -833,10 +824,10 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
     }
 
     /**
-     * Opens a FileChooserDialog to let the user pick attachments
+     * Opens a FileChooserDialog to let the user pick attachments; Add the selected items into the mediaPreviewAdapter
      */
-    private val attachments: ActivityResultLauncher<String>
-        get() = registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris: List<Uri>? ->
+    private fun getAttachments(): ActivityResultLauncher<String> {
+        return registerForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris: List<Uri>? ->
             if (uris != null) {
                 val attachments = Attachment.of(this, uris)
                 mediaPreviewAdapter!!.addMediaPreviews(attachments)
@@ -845,6 +836,7 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
                 aTalkApp.showToastMessage(R.string.service_gui_FILE_DOES_NOT_EXIST)
             }
         }
+    }
 
     /**
      * Callback from camera capture a photo with success status true or false
@@ -888,9 +880,13 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
                     val uri = intent.data
                     if (uri != null) {
                         filePath = FilePathHelper.getFilePath(this, uri)!!
-                        if (StringUtils.isNotEmpty(filePath)) openDownloadable(File(filePath), null) else aTalkApp.showToastMessage(R.string.service_gui_FILE_DOES_NOT_EXIST)
+                        if (StringUtils.isNotEmpty(filePath))
+                            openDownloadable(File(filePath), null)
+                        else
+                            aTalkApp.showToastMessage(R.string.service_gui_FILE_DOES_NOT_EXIST)
                     }
                 }
+
                 REQUEST_CODE_SHARE_WITH -> {
                     Timber.d("Share Intent with: REQUEST_CODE_SHARE_WITH")
                     selectedChatPanel!!.editedText = null
@@ -917,10 +913,15 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
                     chatPagerAdapter!!.notifyDataSetChanged()
                     toggleInputMethod()
                 }
+
                 REQUEST_CODE_FORWARD -> {
                     Timber.d("Share Intent with: REQUEST_CODE_FORWARD")
                     selectedChatPanel!!.editedText = null
-                    val text = if (intent!!.categories == null) null else intent.categories.toString()
+                    val text = if (intent!!.categories == null)
+                        null
+                    else
+                        intent.categories.toString()
+
                     if (!TextUtils.isEmpty(text)) {
                         selectedChatPanel!!.editedText = text
                     }
@@ -954,11 +955,12 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
      *
      * @param file the file to open
      */
-    fun openDownloadable(file: File, view: View?) {
-        if (!file.exists()) {
+    fun openDownloadable(file: File?, view: View?) {
+        if ((file == null) || !file.exists()) {
             showToastMessage(R.string.service_gui_FILE_DOES_NOT_EXIST)
             return
         }
+
         val uri = try {
             FileBackend.getUriForFile(this, file)
         } catch (e: SecurityException) {
@@ -966,6 +968,7 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
             showToastMessage(R.string.service_gui_FILE_OPEN_NO_PERMISSION)
             return
         }
+
         var mimeType = FileBackend.getMimeType(this, uri)
         if (mimeType == null || mimeType.contains("application")) {
             mimeType = "*/*"
@@ -1043,7 +1046,7 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
     /**
      * Release the exoPlayer resource on end
      */
-    fun releasePlayer() {
+    private fun releasePlayer() {
         // remove the existing player view
         val playerView = supportFragmentManager.findFragmentById(R.id.player_container)
         if (playerView != null) supportFragmentManager.beginTransaction().remove(playerView).commit()
@@ -1150,12 +1153,13 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
      */
     private fun showToastMessage(resId: Int) {
         Toast.makeText(this, resId, Toast.LENGTH_SHORT).show()
-    } /*
-     * This method handles the display of Youtube Player when screen orientation is rotated
-     * Set to fullscreen mode when in landscape, else otherwise
-     * Not working weell - disabled
-     */
+    }
 
+    /*
+     * This method handles the display of Youtube Player when screen orientation is rotated
+     * Set to fullscreen mode when in landscape, else otherwise.
+     * Not working well - disabled
+     */
     //    @Override
     //    public void onConfigurationChanged(@NotNull Configuration newConfig)
     //    {
@@ -1169,10 +1173,18 @@ class ChatActivity : OSGiActivity(), OnPageChangeListener, TaskCompleted, GeoLoc
     //            }
     //        }
     //    }
+
     companion object {
         private const val REQUEST_CODE_OPEN_FILE = 105
         private const val REQUEST_CODE_SHARE_WITH = 200
+
+        /*
+        * Share of both text and images in a single intent for local forward only in aTalk;
+        * msgContent is saved intent.categories if both types are required;
+        * Otherwise follow standard share method i.e. REQUEST_CODE_SHARE_WITH
+        */
         private const val REQUEST_CODE_FORWARD = 201
+
         const val CRYPTO_FRAGMENT = "crypto_fragment"
 
         /**

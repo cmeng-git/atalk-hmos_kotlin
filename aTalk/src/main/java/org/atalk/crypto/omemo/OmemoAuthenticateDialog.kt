@@ -199,7 +199,7 @@ open class OmemoAuthenticateDialog : OSGiActivity() {
         /**
          * Creates a new instance of `FingerprintListAdapter`.
          *
-         *linkedHashMap list of `Contact` for which OTR fingerprints will be displayed.
+         * linkedHashMap list of `Contact` for which OMEMO fingerprints will be displayed.
          */
         init {
             buddyFPs = linkedHashMap
@@ -289,8 +289,8 @@ open class OmemoAuthenticateDialog : OSGiActivity() {
         /**
          * Creates parametrized `Intent` of buddy authenticate dialog.
          *
-         * @param omemoManager the UUID of OTR session.
-         * @return buddy authenticate dialog parametrized with given OTR session's UUID.
+         * @param omemoManager the omemo manager of the session.
+         * @return buddy authenticate dialog parametrized with given omemo session's UUID.
          */
         fun createIntent(context: Context?, omemoManager: OmemoManager?, omemoDevices: MutableSet<OmemoDevice>?,
                          listener: AuthenticateListener?): Intent {

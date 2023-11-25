@@ -24,7 +24,6 @@ import android.view.ViewGroup
 import net.java.sip.communicator.impl.filehistory.FileHistoryServiceImpl
 import net.java.sip.communicator.impl.protocol.jabber.HttpFileDownloadJabberImpl
 import net.java.sip.communicator.service.filehistory.FileRecord
-import net.java.sip.communicator.service.protocol.FileTransfer
 import net.java.sip.communicator.service.protocol.event.FileTransferStatusChangeEvent
 import net.java.sip.communicator.service.protocol.event.FileTransferStatusListener
 import net.java.sip.communicator.util.ConfigurationUtils
@@ -44,7 +43,10 @@ import java.util.*
  *
  * @author Eng Chong Meng
  */
-class FileHttpDownloadConversation private constructor(cPanel: ChatFragment, dir: String) : FileTransferConversation(cPanel, dir), FileTransferStatusListener {
+class FileHttpDownloadConversation private constructor(
+        cPanel: ChatFragment,
+        dir: String,
+) : FileTransferConversation(cPanel, dir), FileTransferStatusListener {
 
     private lateinit var httpFileTransferJabber: HttpFileDownloadJabberImpl
     override var xferStatus = 0
@@ -54,21 +56,27 @@ class FileHttpDownloadConversation private constructor(cPanel: ChatFragment, dir
 
     /* previousDownloads <DownloadJobId, DownloadFileMimeType Link> */ // private final Hashtable<Long, String> mimeTypes = new Hashtable<>();
     /* DownloadManager Broadcast Receiver Handler */ // private DownloadReceiver downloadReceiver = null;
-    private var mFHS: FileHistoryServiceImpl? = null
-    fun httpFileDownloadConversionForm(inflater: LayoutInflater, msgViewHolder: ChatFragment.MessageViewHolder,
-            container: ViewGroup?, id: Int, init: Boolean): View? {
+    private lateinit var mFHS: FileHistoryServiceImpl
+
+    fun httpFileDownloadConversionForm(
+            inflater: LayoutInflater, msgViewHolder: ChatFragment.MessageViewHolder,
+            container: ViewGroup?, id: Int, init: Boolean,
+    ): View? {
         val convertView = inflateViewForFileTransfer(inflater, msgViewHolder, container, init)
+
         msgViewId = id
         mFileTransfer = httpFileTransferJabber
-        mFileTransfer!!.addStatusListener(this)
+        mFileTransfer.addStatusListener(this)
+
         val dnLink = httpFileTransferJabber.getDnLink()
         xferFile = createOutFile(httpFileTransferJabber.getLocalFile()!!)
         fileName = httpFileTransferJabber.getFileName()
         fileSize = httpFileTransferJabber.getFileSize()
         mEncryption = httpFileTransferJabber.getEncryptionType()
         setEncState(mEncryption)
+
         messageViewHolder.stickerView.setImageDrawable(null)
-        messageViewHolder.fileLabel.text = getFileLabel(fileName!!, fileSize)
+        messageViewHolder.fileLabel.text = getFileLabel(fileName, fileSize)
 
         /* Must keep track of file transfer status as Android always request view redraw on
 		listView scrolling, new message send or received */
@@ -77,18 +85,26 @@ class FileHttpDownloadConversation private constructor(cPanel: ChatFragment, dir
                 && status != FileTransferStatusChangeEvent.COMPLETED) {
             // Must reset button image to fileIcon on new(); else reused view may contain an old thumbnail image
             messageViewHolder.fileIcon.setImageResource(R.drawable.file_icon)
-            messageViewHolder.acceptButton.setOnClickListener { v: View? -> startDownload() }
-            messageViewHolder.declineButton.setOnClickListener { v: View? -> updateView(FileTransferStatusChangeEvent.DECLINED, null) }
+
+            messageViewHolder.acceptButton.setOnClickListener { v: View? ->
+                startDownload()
+            }
+            messageViewHolder.declineButton.setOnClickListener { v: View? ->
+                updateView(FileTransferStatusChangeEvent.DECLINED, null)
+            }
+
             updateXferFileViewState(FileTransferStatusChangeEvent.WAITING,
-                    aTalkApp.getResString(R.string.xFile_FILE_TRANSFER_REQUEST_RECEIVED, mSender))
+                aTalkApp.getResString(R.string.xFile_FILE_TRANSFER_REQUEST_RECEIVED, mSender))
 
             // Do not auto retry if it had failed previously; otherwise ANR if multiple such items exist
             if (FileRecord.STATUS_FAILED == xferStatus) {
                 updateView(FileTransferStatusChangeEvent.FAILED, dnLink)
-            } else {
+            }
+            else {
                 doInit()
             }
-        } else {
+        }
+        else {
             updateView(status, null)
         }
         return convertView
@@ -103,33 +119,39 @@ class FileHttpDownloadConversation private constructor(cPanel: ChatFragment, dir
         if (FileTransferStatusChangeEvent.COMPLETED != status) {
             updateFTStatus(status, null, ChatMessage.MESSAGE_HTTP_FILE_DOWNLOAD)
         }
+
         when (status) {
             FileTransferStatusChangeEvent.PREPARING -> statusText = aTalkApp.getResString(R.string.xFile_FILE_TRANSFER_PREPARING, mSender)
             FileTransferStatusChangeEvent.IN_PROGRESS -> {
                 statusText = aTalkApp.getResString(R.string.xFile_FILE_RECEIVING_FROM, mSender)
                 mChatFragment.addActiveFileTransfer(httpFileTransferJabber.getID(), httpFileTransferJabber, msgViewId)
             }
+
             FileTransferStatusChangeEvent.COMPLETED -> {
                 statusText = aTalkApp.getResString(R.string.xFile_FILE_RECEIVE_COMPLETED, mSender)
                 if (xferFile == null) { // Android view redraw happen?
-                    xferFile = mChatFragment.chatListAdapter!!.getFileName(msgViewId)
+                    xferFile = mChatFragment.chatListAdapter!!.getFileName(msgViewId)!!
                 }
                 // Update the DB record status
                 updateFTStatus(status, xferFile.toString(), ChatMessage.MESSAGE_FILE_TRANSFER_HISTORY)
             }
+
             FileTransferStatusChangeEvent.FAILED -> {
                 statusText = aTalkApp.getResString(R.string.xFile_FILE_RECEIVE_FAILED, mSender)
                 if (!TextUtils.isEmpty(reason)) {
                     statusText += "\n $reason"
                 }
             }
+
             FileTransferStatusChangeEvent.CANCELED -> {
                 statusText = aTalkApp.getResString(R.string.xFile_FILE_TRANSFER_CANCELED)
                 if (!TextUtils.isEmpty(reason)) {
                     statusText += "\n$reason"
                 }
             }
-            FileTransferStatusChangeEvent.DECLINED -> statusText = aTalkApp.getResString(R.string.xFile_FILE_TRANSFER_DECLINED)
+
+            FileTransferStatusChangeEvent.DECLINED ->
+                statusText = aTalkApp.getResString(R.string.xFile_FILE_TRANSFER_DECLINED)
         }
         updateXferFileViewState(status, statusText)
         mChatFragment.scrollToBottom()
@@ -144,7 +166,7 @@ class FileHttpDownloadConversation private constructor(cPanel: ChatFragment, dir
      * @param msgType File transfer type see ChatMessage MESSAGE_FILE_
      */
     private fun updateFTStatus(status: Int, fileName: String?, msgType: Int) {
-        mFHS!!.updateFTStatusToDB(msgUuid!!, status, fileName, mEncryption, msgType)
+        mFHS.updateFTStatusToDB(msgUuid, status, fileName, mEncryption, msgType)
         mChatFragment.updateFTStatus(msgUuid, status, fileName, mEncryption, msgType)
     }
 
@@ -159,7 +181,10 @@ class FileHttpDownloadConversation private constructor(cPanel: ChatFragment, dir
         // Event thread - Must execute in UiThread to Update UI information
         runOnUiThread {
             updateView(status, reason)
-            if (status == FileTransferStatusChangeEvent.COMPLETED || status == FileTransferStatusChangeEvent.CANCELED || status == FileTransferStatusChangeEvent.FAILED || status == FileTransferStatusChangeEvent.DECLINED) {
+            if (status == FileTransferStatusChangeEvent.COMPLETED
+                    || status == FileTransferStatusChangeEvent.CANCELED
+                    || status == FileTransferStatusChangeEvent.FAILED
+                    || status == FileTransferStatusChangeEvent.DECLINED) {
                 // must update this in UI, otherwise the status is not being updated to FileRecord
                 fileTransfer.removeStatusListener(this)
             }
@@ -173,8 +198,8 @@ class FileHttpDownloadConversation private constructor(cPanel: ChatFragment, dir
      */
     private fun createOutFile(infile: File): File {
         val fileName = infile.name
-        val mimeType = FileBackend.getMimeType(activity!!, Uri.fromFile(infile))
-        setTransferFilePath(fileName, mimeType!!)
+        val mimeType = FileBackend.getMimeType(activity, Uri.fromFile(infile))
+        setTransferFilePath(fileName, mimeType)
 
         // Change the file name to the name we would use on the local file system.
         if (xferFile!!.name != fileName) {
@@ -203,10 +228,12 @@ class FileHttpDownloadConversation private constructor(cPanel: ChatFragment, dir
         httpFileTransferJabber.initHttpFileDownload()
         fileSize = httpFileTransferJabber.getFileSize()
         setFileTransfer(httpFileTransferJabber, fileSize)
-        messageViewHolder.fileLabel.text = getFileLabel(fileName!!, fileSize)
+        messageViewHolder.fileLabel.text = getFileLabel(fileName, fileSize)
+
         if (fileSize <= 0) {
             aTalkApp.showToastMessage(R.string.service_gui_FILE_DOES_NOT_EXIST)
-        } else if (ConfigurationUtils.isAutoAcceptFile(fileSize)) {
+        }
+        else if (ConfigurationUtils.isAutoAcceptFile(fileSize)) {
             startDownload()
         }
     }
@@ -229,8 +256,10 @@ class FileHttpDownloadConversation private constructor(cPanel: ChatFragment, dir
          * @param date the date
          */
         // Constructor used by ChatFragment to start handle ReceiveFileTransferRequest
-        fun newInstance(cPanel: ChatFragment, sender: String?,
-                httpFileTransferJabber: HttpFileDownloadJabberImpl, date: Date?): FileHttpDownloadConversation {
+        fun newInstance(
+                cPanel: ChatFragment, sender: String?,
+                httpFileTransferJabber: HttpFileDownloadJabberImpl, date: Date,
+        ): FileHttpDownloadConversation {
             val fragmentRFC = FileHttpDownloadConversation(cPanel, FileRecord.IN)
             fragmentRFC.mSender = sender
             fragmentRFC.httpFileTransferJabber = httpFileTransferJabber

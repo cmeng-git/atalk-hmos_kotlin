@@ -18,7 +18,6 @@ package org.atalk.hmos.gui.util
 
 import android.content.Context
 import android.content.res.Resources
-import android.os.Build
 import android.text.TextUtils
 import java.util.*
 
@@ -30,6 +29,9 @@ import java.util.*
 object LocaleHelper {
     // Default to system locale language; get init from DB by aTalkApp first call
     var language = ""
+
+    // mLocale will have 'regional preference' value stripped off; mainly use for smack xml:lang
+    var xmlLocale: Locale = Locale.getDefault()
 
     /**
      * Set aTalk Locale to the current mLanguage
@@ -56,21 +58,35 @@ object LocaleHelper {
      *
      * @param context Base Context (ContextImpl)
      * @param language the new UI language
-     * #return The new ContextImpl for use by caller
+     * return The new ContextImpl for use by caller
      */
     fun wrap(context: Context, language: String): Context {
         val config = context.resources.configuration
+        var language = language
         val locale: Locale
-        locale = if (TextUtils.isEmpty(language)) {
-            // System default
-            Resources.getSystem().configuration.locale
-        } else if (language.length == 5 && language[2] == '_') {
-            // language is in the form: en_US
-            Locale(language.substring(0, 2), language.substring(3))
-        } else {
-            Locale(language)
+
+        if (TextUtils.isEmpty(language)) {
+            // System default may contain regional preference i.e. 'en-US-#u-fw-sun-mu-celsius'
+            locale = Resources.getSystem().configuration.locales[0]
+
+            // Strip off any regional preferences in the language
+            language = locale.toString().split("_#".toRegex())[0]
+            val idx = language.indexOf("_")
+            xmlLocale = if (idx == -1) locale
+            else Locale(language.substring(0, idx), language.substring(idx + 1))
         }
-        Locale.setDefault(locale)
+        else {
+            val idx = language.indexOf("_")
+            locale = if (idx != -1) {
+                // language is in the form: en_US
+                Locale(language.substring(0, idx), language.substring(idx + 1))
+            }
+            else {
+                Locale(language)
+            }
+            xmlLocale = locale
+        }
+
         config.setLayoutDirection(locale)
         config.setLocale(locale)
 

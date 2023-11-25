@@ -73,7 +73,7 @@ interface ChatRoom {
      * @throws OperationFailedException with the corresponding code if an error occurs while joining the room.
      */
     @Throws(OperationFailedException::class)
-    fun joinAs(nickname: String): Boolean
+    fun joinAs(nickname: String?): Boolean
 
     /**
      * Joins this chat room with the specified nickname and password so that the user would start
@@ -85,7 +85,7 @@ interface ChatRoom {
      * @throws OperationFailedException with the corresponding code if an error occurs while joining the room.
      */
     @Throws(OperationFailedException::class)
-    fun joinAs(nickname: String, password: ByteArray?): Boolean
+    fun joinAs(nickname: String?, password: ByteArray?): Boolean
 
     /**
      * Returns true if the local user is currently in the multi user chat (after calling one of the

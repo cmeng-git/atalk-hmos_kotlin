@@ -254,7 +254,7 @@ class AdHocConferenceChatTransport(chatSession: ChatSession, chatRoom: AdHocChat
     @Throws(Exception::class)
     private fun httpFileUpload(file: File?, chatType: Int, xferCon: FileSendConversation): Any {
         // check to see if server supports httpFileUpload service if contact is off line or legacy file transfer failed
-        return if (httpFileUploadManager.isUploadServiceDiscovered) {
+        return if (allowsFileTransfer()) {
             var encType = IMessage.ENCRYPTION_NONE
             val url: Any
             try {
@@ -283,8 +283,8 @@ class AdHocConferenceChatTransport(chatSession: ChatSession, chatRoom: AdHocChat
      *
      * @return `true` if this chat transport supports file transfer, otherwise returns `false`.
      */
-    private fun allowsFileTransfer(): Boolean {
-        return httpFileUploadManager.isUploadServiceDiscovered
+    override fun allowsFileTransfer(): Boolean {
+        return httpFileUploadManager.isUploadServiceDiscovered;
     }
 
     /**

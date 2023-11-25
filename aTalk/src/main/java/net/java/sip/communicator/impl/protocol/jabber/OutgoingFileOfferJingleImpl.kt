@@ -24,6 +24,7 @@ import org.jivesoftware.smack.XMPPConnection
 import org.jivesoftware.smack.XMPPException.XMPPErrorException
 import org.jivesoftware.smackx.jingle.component.JingleSessionImpl
 import org.jivesoftware.smackx.jingle.component.JingleSessionImpl.JingleSessionListener
+import org.jivesoftware.smackx.jingle.component.JingleSessionImpl.SessionState
 import org.jivesoftware.smackx.jingle.element.JingleReason
 import org.jivesoftware.smackx.jingle_filetransfer.controller.OutgoingFileOfferController
 import org.jivesoftware.smackx.jingle_filetransfer.listener.ProgressListener
@@ -139,15 +140,15 @@ class OutgoingFileOfferJingleImpl(private val mContact: Contact, private val mFi
         }
     }
     var jingleSessionListener = object : JingleSessionListener {
-        override fun sessionStateUpdated(oldState: JingleSessionImpl.SessionState, newState: JingleSessionImpl.SessionState) {
+        override fun sessionStateUpdated(oldState: SessionState?, newState: SessionState) {
             val sessionState = newState.toString()
             Timber.d("Jingle session state: %s => %s", oldState, newState)
             when (newState) {
-                JingleSessionImpl.SessionState.fresh -> fireStatusChangeEvent(FileTransferStatusChangeEvent.PREPARING, sessionState)
-                JingleSessionImpl.SessionState.pending -> fireStatusChangeEvent(FileTransferStatusChangeEvent.WAITING, sessionState)
-                JingleSessionImpl.SessionState.active -> {}
-                JingleSessionImpl.SessionState.cancelled -> fireStatusChangeEvent(FileTransferStatusChangeEvent.DECLINED, sessionState)
-                JingleSessionImpl.SessionState.ended ->                     // This is triggered only on session terminate; while onFinished() is triggered
+                SessionState.fresh -> fireStatusChangeEvent(FileTransferStatusChangeEvent.PREPARING, sessionState)
+                SessionState.pending -> fireStatusChangeEvent(FileTransferStatusChangeEvent.WAITING, sessionState)
+                SessionState.active -> {}
+                SessionState.cancelled -> fireStatusChangeEvent(FileTransferStatusChangeEvent.DECLINED, sessionState)
+                SessionState.ended ->                     // This is triggered only on session terminate; while onFinished() is triggered
                     // upon end of stream sending. hence superseded the formal event.
                     // So "ended" event is not triggered, rely onFinished() instead.
                     fireStatusChangeEvent(FileTransferStatusChangeEvent.COMPLETED, sessionState)

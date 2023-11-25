@@ -14,7 +14,6 @@ import java.util.*
  * @author Yana Stamcheva
  * @author Eng Chong Meng
  */
-class FileTransferStatusChangeEvent
 /**
  * Creates a `FileTransferStatusChangeEvent` by specifying the source
  * `fileTransfer`, the old transfer status and the new status.
@@ -23,19 +22,24 @@ class FileTransferStatusChangeEvent
  * @param oldStatus the old status
  * @param newStatus the new status
  * @param reason the reason of this status change
- */(fileTransfer: FileTransfer?,
+ */
+class FileTransferStatusChangeEvent(
+        fileTransfer: FileTransfer?,
         /**
          * The state of the file transfer before this event occurred.
          */
         private val oldStatus: Int,
+
         /**
          * The new state of the file transfer.
          */
         private val newStatus: Int,
+
         /**
          * The reason of this status change.
          */
-        private val reason: String) : EventObject(fileTransfer) {
+        private val reason: String?,
+) : EventObject(fileTransfer) {
     /**
      * Returns the source `FileTransfer` that triggered this event.
      *
@@ -68,7 +72,7 @@ class FileTransferStatusChangeEvent
      *
      * @return the reason of the status change
      */
-    fun getReason(): String {
+    fun getReason(): String? {
         return reason
     }
 

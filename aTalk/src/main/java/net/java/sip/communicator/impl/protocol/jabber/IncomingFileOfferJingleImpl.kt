@@ -27,7 +27,6 @@ import org.jivesoftware.smack.SmackException.NotConnectedException
 import org.jivesoftware.smack.XMPPConnection
 import org.jivesoftware.smack.XMPPException.XMPPErrorException
 import org.jivesoftware.smackx.jet.component.JetSecurityImpl
-import org.jivesoftware.smackx.jingle.component.JingleContentImpl
 import org.jivesoftware.smackx.jingle_filetransfer.component.JingleFile
 import org.jivesoftware.smackx.jingle_filetransfer.controller.IncomingFileOfferController
 import timber.log.Timber
@@ -99,10 +98,10 @@ class IncomingFileOfferJingleImpl(pps: ProtocolProviderServiceJabberImpl,
     /**
      * JingleSessionImpl.addJingleSessionListener(this);
      */
-    override fun onPrepare(file: File?): FileTransfer? {
+    override fun onPrepare(file: File?): FileTransfer {
         mFile = file
         mFileTransfer = IncomingFileTransferJingleImpl(this, file)
-        return mFileTransfer
+        return mFileTransfer!!
     }
 
     fun getController(): IncomingFileOfferController {
@@ -187,18 +186,16 @@ class IncomingFileOfferJingleImpl(pps: ProtocolProviderServiceJabberImpl,
             val event = FileTransferCreatedEvent(mFileTransfer, Date())
             fileTransferOpSet.fireFileTransferCreated(event)
             mOffer.accept(mConnection, mFile)
-        } catch (e: IOException) {
-            aTalkApp.showToastMessage(R.string.xFile_FILE_RECEIVE_FAILED, e.message)
-            Timber.e("Receiving file failed; %s", e.message)
-        } catch (e: SmackException) {
-            aTalkApp.showToastMessage(R.string.xFile_FILE_RECEIVE_FAILED, e.message)
-            Timber.e("Receiving file failed; %s", e.message)
-        } catch (e: InterruptedException) {
-            aTalkApp.showToastMessage(R.string.xFile_FILE_RECEIVE_FAILED, e.message)
-            Timber.e("Receiving file failed; %s", e.message)
-        } catch (e: XMPPErrorException) {
-            aTalkApp.showToastMessage(R.string.xFile_FILE_RECEIVE_FAILED, e.message)
-            Timber.e("Receiving file failed; %s", e.message)
+        } catch (ex: Exception) {
+            when (ex) {
+                is IOException,
+                is SmackException,
+                is InterruptedException,
+                is XMPPErrorException -> {
+                    aTalkApp.showToastMessage(R.string.xFile_FILE_RECEIVE_FAILED, ex.message)
+                    Timber.e("Receiving file failed; %s", ex.message)
+                }
+            }
         }
     }
 
@@ -209,15 +206,18 @@ class IncomingFileOfferJingleImpl(pps: ProtocolProviderServiceJabberImpl,
     override fun declineFile() {
         try {
             mOffer.cancel(mConnection)
-            mFileTransfer!!.removeIfoListener()
-        } catch (e: NotConnectedException) {
-            throw OperationFailedException("Could not decline the file offer", OperationFailedException.GENERAL_ERROR, e)
-        } catch (e: InterruptedException) {
-            throw OperationFailedException("Could not decline the file offer", OperationFailedException.GENERAL_ERROR, e)
-        } catch (e: XMPPErrorException) {
-            throw OperationFailedException("Could not decline the file offer", OperationFailedException.GENERAL_ERROR, e)
-        } catch (e: NoResponseException) {
-            throw OperationFailedException("Could not decline the file offer", OperationFailedException.GENERAL_ERROR, e)
+            if (mFileTransfer != null)
+                mFileTransfer!!.removeIfoListener()
+            else throw NullPointerException("Expression 'mFileTransfer' must not be null")
+        } catch (ex: Exception) {
+            when (ex) {
+                is NotConnectedException,
+                is InterruptedException,
+                is XMPPErrorException,
+                is NoResponseException -> {
+                    throw OperationFailedException("Could not decline the file offer", OperationFailedException.GENERAL_ERROR, ex)
+                }
+            }
         }
         fileTransferOpSet.fireFileTransferRequestRejected(
                 FileTransferRequestEvent(fileTransferOpSet, this, Date()))

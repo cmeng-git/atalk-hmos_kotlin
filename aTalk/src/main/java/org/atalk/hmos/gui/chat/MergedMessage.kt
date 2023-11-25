@@ -144,15 +144,14 @@ class MergedMessage(
      *
      * @return the UID of this message.
      */
-    override val messageUID: String?
-        get() = mRootMessage.messageUID
+    override fun getMessageUID(): String = mRootMessage.getMessageUID()
 
     /**
      * Returns the message direction i.e. in/put.
      *
      * @return the direction of this message.
      */
-    override val messageDir: String?
+    override val messageDir: String
         get() = mRootMessage.messageDir
 
     /**
@@ -163,9 +162,9 @@ class MergedMessage(
     val messageUIDs: Collection<String>
         get() {
             val msgUuidList = ArrayList<String>()
-            msgUuidList.add(mRootMessage.messageUID!!)
+            msgUuidList.add(mRootMessage.getMessageUID()!!)
             for (child in children) {
-                msgUuidList.add(child!!.messageUID!!)
+                msgUuidList.add(child!!.getMessageUID()!!)
             }
             return msgUuidList
         }
@@ -248,7 +247,7 @@ class MergedMessage(
         get() {
             if (children.size > 0) {
                 val candidate = children[children.size - 1]
-                if (candidate!!.uidForCorrection != null && candidate.contentForCorrection != null) return candidate
+                if (candidate!!.getUidForCorrection() != null && candidate.getContentForCorrection() != null) return candidate
             }
             return mRootMessage
         }
@@ -256,26 +255,23 @@ class MergedMessage(
     /**
      * {@inheritDoc}
      */
-    override val uidForCorrection: String?
-        get() = messageForCorrection.uidForCorrection
+    override fun getUidForCorrection(): String? = messageForCorrection.getUidForCorrection()
 
     /**
      * {@inheritDoc}
      */
-    override val contentForCorrection: String?
-        get() = messageForCorrection.contentForCorrection
+    override fun getContentForCorrection(): String? = messageForCorrection.getContentForCorrection()
 
     /**
      * {@inheritDoc}
      */
-    override val contentForClipboard: String
-        get() {
-            val output = StringBuilder(mRootMessage.contentForClipboard!!)
-            for (c in children) {
-                output.append("\n").append(c!!.contentForClipboard)
-            }
-            return output.toString()
+    override fun getContentForClipboard(): String {
+        val output = StringBuilder(mRootMessage.getContentForClipboard()!!)
+        for (c in children) {
+            output.append("\n").append(c!!.getContentForClipboard())
         }
+        return output.toString()
+    }
 
     /**
      * Finds the message that should be corrected by given message instance.
@@ -286,7 +282,7 @@ class MergedMessage(
      */
     private fun findCorrectedMessage(newMsg: ChatMessage): ChatMessage? {
         for (msg in children) {
-            val msgUID = msg!!.messageUID ?: continue
+            val msgUID = msg!!.getMessageUID() ?: continue
             if (msgUID == newMsg.correctedMessageUID) {
                 return msg
             }

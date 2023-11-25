@@ -86,7 +86,7 @@ class ChatRoomCreateDialog(mContext: Context) : Dialog(mContext), AdapterView.On
         mucService = MUCActivator.mucService
     }
 
-    public override fun onCreate(savedInstanceState: Bundle) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTitle(R.string.service_gui_CHATROOM_CREATE_JOIN)
         this.setContentView(R.layout.muc_room_create_dialog)

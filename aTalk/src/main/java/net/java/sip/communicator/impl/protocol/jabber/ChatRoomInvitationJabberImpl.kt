@@ -24,7 +24,12 @@ class ChatRoomInvitationJabberImpl
  * @param reason the reason of the invitation
  * @param password the password
  */
-(private val chatRoom: ChatRoom, private val inviter: EntityJid, private val reason: String, private val password: ByteArray) : ChatRoomInvitation {
+    (
+        private val chatRoom: ChatRoom,
+        private val inviter: EntityJid,
+        private val reason: String?,
+        private val password: ByteArray?,
+) : ChatRoomInvitation {
     override fun getTargetChatRoom(): ChatRoom {
         return chatRoom
     }
@@ -33,11 +38,11 @@ class ChatRoomInvitationJabberImpl
         return inviter
     }
 
-    override fun getReason(): String {
+    override fun getReason(): String? {
         return reason
     }
 
-    override fun getChatRoomPassword(): ByteArray {
+    override fun getChatRoomPassword(): ByteArray? {
         return password
     }
 }

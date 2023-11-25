@@ -114,7 +114,7 @@ class IBRCaptchaProcessDialog(private val mContext: Context, private val mPPS: P
     /**
      * {@inheritDoc}
      */
-    public override fun onCreate(savedInstanceState: Bundle) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         this.setContentView(R.layout.ibr_captcha)
         setTitle(mContext.getString(R.string.captcha_registration_request))
         val mUserNameField = findViewById<EditText>(id.username)

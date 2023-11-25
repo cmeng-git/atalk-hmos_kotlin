@@ -72,7 +72,7 @@ class ChatInviteDialog(mContext: Context?, mChatPanel: ChatPanel) : Dialog(mCont
         setOnShowListener(this)
     }
 
-    public override fun onCreate(savedInstanceState: Bundle) {
+    public override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setTitle(R.string.service_gui_INVITE_CONTACT_TO_CHAT)
         this.setContentView(R.layout.muc_invite_dialog)

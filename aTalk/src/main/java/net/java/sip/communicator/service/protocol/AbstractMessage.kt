@@ -25,7 +25,7 @@ abstract class AbstractMessage protected constructor(
         content: String, private val mEncType: Int, subject: String?, messageUID: String?,
         xferStatus: Int = FileRecord.STATUS_UNKNOWN,
         receiptStatus: Int = ChatMessage.MESSAGE_DELIVERY_NONE,
-        serverMessageId: String? = null, remoteMessageId: String? = null
+        serverMessageId: String? = null, remoteMessageId: String? = null,
 ) : IMessage {
     private val mEncryption = mEncType and IMessage.ENCRYPTION_MASK
     private val mMimeType = mEncType and IMessage.ENCODE_MIME_MASK
@@ -41,7 +41,7 @@ abstract class AbstractMessage protected constructor(
      * The content of this message, in raw bytes according to the encoding.
      */
     private val mSubject: String?
-    private lateinit var mContent: String
+    private var mContent: String? = null
     private var rawData: ByteArray? = null
 
     init {
@@ -76,7 +76,7 @@ abstract class AbstractMessage protected constructor(
      * @return a String containing the content of this message or null if the message does not
      * contain data representable in text form.
      */
-    override fun getContent(): String {
+    override fun getContent(): String? {
         return mContent
     }
 
@@ -164,12 +164,12 @@ abstract class AbstractMessage protected constructor(
      *
      * @see net.java.sip.communicator.service.protocol.IMessage#getRawData()
      */
-    override fun getRawData(): ByteArray {
+    override fun getRawData(): ByteArray? {
         if (rawData == null) {
             val content = getContent()
-            rawData = content.toByteArray()
+            rawData = content?.toByteArray()
         }
-        return rawData!!
+        return rawData
     }
 
     /*
@@ -178,7 +178,7 @@ abstract class AbstractMessage protected constructor(
      * @see net.java.sip.communicator.service.protocol.IMessage#getSize()
      */
     override fun getSize(): Int {
-        return getRawData().size
+        return if (rawData != null) rawData!!.size else 0
     }
 
     /*

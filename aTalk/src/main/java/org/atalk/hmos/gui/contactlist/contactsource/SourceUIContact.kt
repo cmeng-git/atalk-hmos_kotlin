@@ -14,7 +14,6 @@
 package org.atalk.hmos.gui.contactlist.contactsource
 
 import android.graphics.drawable.Drawable
-import net.java.sip.communicator.plugin.desktoputil.SIPCommButton
 import net.java.sip.communicator.service.contactsource.ContactDetail
 import net.java.sip.communicator.service.contactsource.ContactDetail.SubCategory
 import net.java.sip.communicator.service.contactsource.PrefixedContactSourceService
@@ -24,7 +23,6 @@ import net.java.sip.communicator.service.gui.UIGroup
 import net.java.sip.communicator.service.protocol.OperationNotSupportedException
 import net.java.sip.communicator.service.protocol.OperationSet
 import net.java.sip.communicator.service.protocol.OperationSetBasicTelephony
-import net.java.sip.communicator.service.protocol.PhoneNumberI18nService
 import net.java.sip.communicator.service.protocol.PresenceStatus
 import net.java.sip.communicator.service.protocol.globalstatus.GlobalStatusEnum
 import net.java.sip.communicator.util.ConfigurationUtils
@@ -201,7 +199,7 @@ open class SourceUIContact(contact: SourceContact) : UIContactImpl() {
             val resultList = LinkedList<UIContactDetail>()
             for (detail in sourceContact.contactDetails!!) {
                 resultList.add(SourceContactDetail(detail, getInternationalizedLabel(detail.category),
-                        getInternationalizedLabels(detail.getSubCategories()), null, sourceContact))
+                    getInternationalizedLabels(detail.getSubCategories()), null, sourceContact))
             }
             return resultList
         }
@@ -218,7 +216,7 @@ open class SourceUIContact(contact: SourceContact) : UIContactImpl() {
         val details = sourceContact.contactDetails!!.iterator()
         val phoneNumberService = AndroidGUIActivator.phoneNumberI18nService
         val filterToNumbers = AndroidGUIActivator.configurationService
-                .getBoolean(FILTER_CALL_DETAILS_TO_NUMBERS_PROP, false)
+            .getBoolean(FILTER_CALL_DETAILS_TO_NUMBERS_PROP, false)
 
         while (details.hasNext()) {
             val detail = details.next()
@@ -228,7 +226,7 @@ open class SourceUIContact(contact: SourceContact) : UIContactImpl() {
                     continue
                 }
                 resultList.add(SourceContactDetail(detail, getInternationalizedLabel(detail.category),
-                        getInternationalizedLabels(detail.getSubCategories()), opSetClass, sourceContact))
+                    getInternationalizedLabels(detail.getSubCategories()), opSetClass, sourceContact))
             }
         }
         return resultList
@@ -258,9 +256,11 @@ open class SourceUIContact(contact: SourceContact) : UIContactImpl() {
          * opSetClass the `OperationSet` class for the preferred protocol provider
          * sourceContact the source contact
          */
-        constructor(detail: ContactDetail, category: String?, subCategories: Collection<String?>?,
-                opSetClass: Class<out OperationSet?>?, sourceContact: SourceContact?) : super(detail.detail!!, detail.detail!!, category, subCategories,
-                null, null, null, detail) {
+        constructor(
+                detail: ContactDetail, category: String?, subCategories: Collection<String?>?,
+                opSetClass: Class<out OperationSet?>?, sourceContact: SourceContact?,
+        ) : super(detail.detail!!, detail.detail!!, category, subCategories,
+            null, null, null, detail) {
             val contactSource = sourceContact!!.contactSource
             if (contactSource is PrefixedContactSourceService) {
                 val prefix = (contactSource as PrefixedContactSourceService).phoneNumberPrefix
@@ -277,7 +277,11 @@ open class SourceUIContact(contact: SourceContact) : UIContactImpl() {
          * displayName the display name
          * sourceContact the source contact
          */
-        constructor(displayName: String, sourceContact: SourceContact?) : super(displayName, displayName, null, null, null, null, null, sourceContact) {}
+        constructor(
+                displayName: String,
+                sourceContact: SourceContact?,
+        ) : super(displayName, displayName, null, null, null, null, null, sourceContact) {
+        }
 
         /**
          * Returns null to indicate that this detail doesn't support presence.
@@ -379,7 +383,8 @@ open class SourceUIContact(contact: SourceContact) : UIContactImpl() {
             if (ConfigurationUtils.isHideAddressInCallHistoryTooltipEnabled) {
                 labelText = contactDetail.displayName
                 if (StringUtils.isEmpty(labelText)) labelText = contactDetail.detail
-            } else {
+            }
+            else {
                 labelText = contactDetail.detail
             }
             jLabels[i] = JLabel(filterAddressDisplay(labelText!!))
@@ -452,15 +457,8 @@ open class SourceUIContact(contact: SourceContact) : UIContactImpl() {
             else -> null
         }
         return label
-    }// uiGroup.getParentUISource().getContactCustomActionButtons(sourceContact);
-
-    /**
-     * Returns all custom action buttons for this notification contact.
-     *
-     * @return a list of all custom action buttons for this notification contact
-     */
-    override val contactCustomActionButtons: Collection<SIPCommButton>?
-        get() = if (sourceContact != null) null else null
+    }
+    // uiGroup.getParentUISource().getContactCustomActionButtons(sourceContact);
 
     /**
      * Returns all custom action menu items for this contact.

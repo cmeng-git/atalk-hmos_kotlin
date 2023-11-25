@@ -5,7 +5,12 @@
  */
 package org.atalk.impl.neomedia.device.util
 
-import android.opengl.*
+import android.opengl.EGL14
+import android.opengl.EGLConfig
+import android.opengl.EGLContext
+import android.opengl.EGLDisplay
+import android.opengl.EGLExt
+import android.opengl.GLUtils
 import timber.log.Timber
 
 /**
@@ -47,8 +52,7 @@ open class OpenGLContext(recorder: Boolean, objSurface: Any?, sharedContext: EGL
 
     private fun chooseEglConfig(eglDisplay: EGLDisplay?, recorder: Boolean): EGLConfig? {
         val configs = arrayOfNulls<EGLConfig>(1)
-        val attribList: IntArray
-        attribList = if (recorder) {
+        val attribList: IntArray = if (recorder) {
             // Configure EGL for recording and OpenGL ES 2.0.
             intArrayOf(EGL14.EGL_RED_SIZE, 8, EGL14.EGL_GREEN_SIZE, 8,
                     EGL14.EGL_BLUE_SIZE, 8, EGL14.EGL_RENDERABLE_TYPE, EGL14.EGL_OPENGL_ES2_BIT,

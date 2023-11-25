@@ -79,6 +79,7 @@ class PreviewSurfaceProvider
      */
     val displayRotation: Int
         get() = mActivity.windowManager.defaultDisplay.rotation
+
     // ============== SurfaceHolder.Callback ================== //
     /**
      * This is called immediately after the surface is first created. Implementations of this should

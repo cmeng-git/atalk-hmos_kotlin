@@ -16,7 +16,6 @@ import org.jivesoftware.smackx.bob.BoBManager
 import org.jivesoftware.smackx.bob.ContentId
 import org.jivesoftware.smackx.filetransfer.FileTransferRequest
 import org.jivesoftware.smackx.filetransfer.IncomingFileTransfer
-import org.jxmpp.jid.Jid
 import timber.log.Timber
 import java.io.File
 import java.io.IOException
@@ -76,11 +75,11 @@ class IncomingFileTransferRequestJabberImpl(private val jabberProvider: Protocol
         id = System.currentTimeMillis().toString() + hashCode()
     }
 
-    override fun onPrepare(file: File?): FileTransfer? {
+    override fun onPrepare(file: File?): FileTransfer {
         mFile = file
         mIncomingFileTransfer = fileTransferRequest.accept()
         mFileTransfer = IncomingFileTransferJabberImpl(id, sender, file, mIncomingFileTransfer)
-        return mFileTransfer
+        return mFileTransfer!!
     }
 
     /**

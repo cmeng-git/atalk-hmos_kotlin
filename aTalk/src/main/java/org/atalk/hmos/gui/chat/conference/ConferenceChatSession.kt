@@ -8,7 +8,6 @@ package org.atalk.hmos.gui.chat.conference
 import android.app.Activity
 import android.os.Handler
 import android.os.Looper
-import net.java.sip.communicator.service.metahistory.MetaHistoryService
 import net.java.sip.communicator.service.muc.ChatRoomWrapper
 import net.java.sip.communicator.service.muc.MUCService
 import net.java.sip.communicator.service.protocol.ChatRoom
@@ -47,7 +46,18 @@ import java.util.*
  * @author Boris Grozev
  * @author Eng Chong Meng
  */
-class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapper) : ChatSession(), ChatRoomMemberPresenceListener, ChatRoomPropertyChangeListener, ChatRoomConferencePublishedListener {
+class ConferenceChatSession(
+        /**
+         * The object used for rendering.
+         */
+        private val sessionRenderer: ChatPanel,
+
+        /**
+         * The chat room wrapper, which is the descriptor of this chat session.
+         */
+        private val chatRoomWrapper: ChatRoomWrapper,
+) : ChatSession(), ChatRoomMemberPresenceListener, ChatRoomPropertyChangeListener, ChatRoomConferencePublishedListener {
+
     /**
      * The current chat transport used for messaging.
      */
@@ -58,30 +68,16 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
         set(chatTransport) {
             field = chatTransport
             fireCurrentChatTransportChange()
-
         }
 
     /**
-     * The chat room wrapper, which is the descriptor of this chat session.
-     */
-    private val chatRoomWrapper: ChatRoomWrapper
-
-    /**
-     * The object used for rendering.
-     */
-    private val sessionRenderer: ChatPanel
-
-    /**
-     * Creates an instance of `ConferenceChatSession`, by specifying the sessionRenderer to
-     * be used for communication with the UI and the chatRoom corresponding to this
-     * conference session.
+     * Creates an instance of `ConferenceChatSession`, by specifying the sessionRenderer to be
+     * used for communication with the UI and the chatRoom corresponding to this conference session.
      *
      * chatPanel the renderer to be used for communication with the UI.
      * chatRoomWrapper the chat room corresponding to this conference session.
      */
     init {
-        sessionRenderer = chatPanel
-        this.chatRoomWrapper = chatRoomWrapper
         currentChatTransport = ConferenceChatTransport(this, chatRoomWrapper.chatRoom!!)
         chatTransports.add(currentChatTransport!!)
         synchronized(this.chatParticipants) { initChatParticipants() }
@@ -105,7 +101,7 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
      * @return the chat identifier
      */
     override val chatId: String
-        get() = chatRoomWrapper.chatRoomID!!
+        get() = chatRoomWrapper.chatRoomID
 
     /**
      * Disposes this chat session.
@@ -133,8 +129,8 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
      *
      * @return the subject of the chat room.
      */
-    val chatSubject: String
-        get() = chatRoomWrapper.chatRoom!!.getSubject()!!
+    val chatSubject: String?
+        get() = chatRoomWrapper.chatRoom!!.getSubject()
 
     /**
      * Returns the configuration form corresponding to the chat room.
@@ -143,23 +139,13 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
      * @throws OperationFailedException if no configuration form is available for the chat room.
      */
     @get:Throws(OperationFailedException::class, InterruptedException::class)
-    val chatConfigurationForm: ChatRoomConfigurationForm
-        get() = chatRoomWrapper.chatRoom!!.getConfigurationForm()!!
+    val chatConfigurationForm: ChatRoomConfigurationForm?
+        get() = chatRoomWrapper.chatRoom!!.getConfigurationForm()
 
     /**
-     * Returns the default mobile number used to send sms-es in this session. In the case of
-     * conference this is for now null.
-     *
-     * @return the default mobile number used to send sms-es in this session.
+     * The default mobile number used to send sms-es in this session.
      */
-    /**
-     * Sets the default mobile number used to send sms-es in this session.
-     *
-     *smsPhoneNumber The default mobile number used to send sms-es in this session.
-     */
-    override var defaultSmsNumber: String?
-        get() = null
-        set(smsPhoneNumber) {}
+    override var defaultSmsNumber: String? = null
 
     /**
      * Returns a collection of the last N number of messages given by count.
@@ -174,7 +160,7 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
         // If the MetaHistoryService is not registered we have nothing to do here. The history
         // could be "disabled" from the user through one of the configuration forms.
         return metaHistory.findLast(chatHistoryFilter, chatRoomWrapper.chatRoom!!,
-                ConfigurationUtils.getChatHistorySize())
+            ConfigurationUtils.getChatHistorySize())
     }
 
     /**
@@ -207,7 +193,7 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
         // If the MetaHistoryService is not registered we have nothing to do here. The history
         // could be "disabled" from the user through one of the configuration forms.
         return metaHistory.findFirstMessagesAfter(chatHistoryFilter, chatRoomWrapper.chatRoom!!,
-                date, ConfigurationUtils.getChatHistorySize())
+            date, ConfigurationUtils.getChatHistorySize())
     }// If the MetaHistoryService is not registered we have nothing to do here. The history
     // could be "disabled" from the user through one of the configuration forms.
     /**
@@ -224,13 +210,14 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
             // could be "disabled" from the user through one of the configuration forms.
             var startHistoryDate = Date(0)
             val firstMessage = metaHistory.findFirstMessagesAfter(chatHistoryFilter,
-                    chatRoomWrapper.chatRoom!!, Date(0), 1)
+                chatRoomWrapper.chatRoom!!, Date(0), 1)
             if (firstMessage.isNotEmpty()) {
                 val i = firstMessage.iterator()
                 val evt = i.next()
                 if (evt is MessageDeliveredEvent) {
                     startHistoryDate = evt.getTimestamp()
-                } else if (evt is MessageReceivedEvent) {
+                }
+                else if (evt is MessageReceivedEvent) {
                     startHistoryDate = evt.getTimestamp()
                 }
             }
@@ -253,13 +240,14 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
             // could be "disabled" from the user through one of the configuration forms.
             var endHistoryDate = Date(0)
             val lastMessage = metaHistory.findLastMessagesBefore(chatHistoryFilter,
-                    chatRoomWrapper.chatRoom!!, Date(Long.MAX_VALUE), 1)
+                chatRoomWrapper.chatRoom!!, Date(Long.MAX_VALUE), 1)
             if (lastMessage.isNotEmpty()) {
                 val i1 = lastMessage.iterator()
                 val evt = i1.next()
                 if (evt is MessageDeliveredEvent) {
                     endHistoryDate = evt.getTimestamp()
-                } else if (evt is MessageReceivedEvent) {
+                }
+                else if (evt is MessageReceivedEvent) {
                     endHistoryDate = evt.getTimestamp()
                 }
             }
@@ -311,17 +299,18 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
                  */
                 if (!evt.isReasonUserList()) {
                     statusMessage = aTalkApp.getResString(
-                            R.string.service_gui_CHATROOM_USER_JOINED, sourceChatRoom.getName())
+                        R.string.service_gui_CHATROOM_USER_JOINED, sourceChatRoom.getName())
                     sessionRenderer.updateChatContactStatus(chatContact, statusMessage)
                 }
-            } else if (eventType == ChatRoomMemberPresenceChangeEvent.MEMBER_LEFT || eventType == ChatRoomMemberPresenceChangeEvent.MEMBER_KICKED || eventType == ChatRoomMemberPresenceChangeEvent.MEMBER_QUIT) {
+            }
+            else if (eventType == ChatRoomMemberPresenceChangeEvent.MEMBER_LEFT || eventType == ChatRoomMemberPresenceChangeEvent.MEMBER_KICKED || eventType == ChatRoomMemberPresenceChangeEvent.MEMBER_QUIT) {
                 when (eventType) {
                     ChatRoomMemberPresenceChangeEvent.MEMBER_LEFT -> statusMessage = aTalkApp.getResString(
-                            R.string.service_gui_CHATROOM_USER_LEFT, sourceChatRoom.getName())
+                        R.string.service_gui_CHATROOM_USER_LEFT, sourceChatRoom.getName())
                     ChatRoomMemberPresenceChangeEvent.MEMBER_KICKED -> statusMessage = aTalkApp.getResString(
-                            R.string.service_gui_CHATROOM_USER_KICKED, sourceChatRoom.getName())
+                        R.string.service_gui_CHATROOM_USER_KICKED, sourceChatRoom.getName())
                     ChatRoomMemberPresenceChangeEvent.MEMBER_QUIT -> statusMessage = aTalkApp.getResString(
-                            R.string.service_gui_CHATROOM_USER_QUIT, sourceChatRoom.getName())
+                        R.string.service_gui_CHATROOM_USER_QUIT, sourceChatRoom.getName())
                 }
                 var contact: ChatContact<*>? = null
                 for (chatContact in chatParticipants) {
@@ -488,7 +477,8 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
             val cd = evt.getConferenceDescription()
             if (evt.getType() == ChatRoomConferencePublishedEvent.CONFERENCE_DESCRIPTION_SENT) {
                 // sessionRenderer.chatConferenceDescriptionSent(cd);
-            } else if (evt.getType() == ChatRoomConferencePublishedEvent.CONFERENCE_DESCRIPTION_RECEIVED) {
+            }
+            else if (evt.getType() == ChatRoomConferencePublishedEvent.CONFERENCE_DESCRIPTION_RECEIVED) {
                 updateChatConferences(room, evt.getMember(), cd, room.getCachedConferenceDescriptionSize())
             }
         })
@@ -513,7 +503,7 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
                  * TODO: i13ze the string, if we decide to keep it at all
                  */
                 sessionRenderer.updateChatContactStatus(chatContact,
-                        (if (isAvailable) "published" else "removed") + " a conference " + cd)
+                    (if (isAvailable) "published" else "removed") + " a conference " + cd)
                 break
             }
         }
@@ -522,7 +512,8 @@ class ConferenceChatSession(chatPanel: ChatPanel, chatRoomWrapper: ChatRoomWrapp
             if (activeConferencesCount == 1) {
                 // sessionRenderer.setConferencesPanelVisible(true);
             }
-        } else {
+        }
+        else {
             // sessionRenderer.removeChatConferenceCall(cd);
             if (activeConferencesCount == 0) {
                 // sessionRenderer.setConferencesPanelVisible(false);

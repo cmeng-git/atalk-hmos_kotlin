@@ -24,11 +24,9 @@ import net.java.sip.communicator.service.protocol.OperationSetSmsMessaging
 import net.java.sip.communicator.service.protocol.ProtocolProviderService
 import org.atalk.hmos.aTalkApp
 import org.atalk.hmos.gui.AndroidGUIActivator
-import org.atalk.hmos.gui.chat.conference.AdHocChatRoomProviderWrapper
 import org.atalk.hmos.gui.chat.conference.AdHocChatRoomWrapper
 import org.atalk.hmos.gui.chat.conference.AdHocConferenceChatSession
 import org.atalk.hmos.gui.chat.conference.ConferenceChatSession
-import org.atalk.hmos.gui.chatroomslist.AdHocChatRoomList
 import timber.log.Timber
 import java.net.URI
 import java.util.*

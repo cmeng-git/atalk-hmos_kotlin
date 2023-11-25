@@ -81,7 +81,7 @@ class ChatPanel(
      */
     /**
      * The chatType for which the message will be send for method not using Transform process
-     * i.e. OTR. This is also the master copy where other will update or refer to.
+     * i.e. OMEMO. This is also the master copy where other will update or refer to.
      * The state may also be change by the under lying signal protocol based on the current
      * signalling condition.
      */
@@ -189,7 +189,8 @@ class ChatPanel(
     init {
         mMetaContact = if (descriptor is MetaContact) {
             descriptor
-        } else {
+        }
+        else {
             null
         }
     }
@@ -242,14 +243,6 @@ class ChatPanel(
         get() = chatType == ChatFragment.MSGTYPE_OMEMO || chatType == ChatFragment.MSGTYPE_OMEMO_UA || chatType == ChatFragment.MSGTYPE_OMEMO_UT
 
     /**
-     * Check if current chat is set to OTR crypto mode
-     *
-     * @return return `true` if OMEMO crypto chat is selected
-     */
-    val isOTRChat: Boolean
-        get() = chatType == ChatFragment.MSGTYPE_OTR || chatType == ChatFragment.MSGTYPE_OTR_UA
-
-    /**
      * Runs clean-up for associated resources which need explicit disposal (e.g.
      * listeners keeping this instance alive because they were added to the
      * model which operationally outlives this instance).
@@ -263,7 +256,7 @@ class ChatPanel(
     /**
      * Adds the given `ChatSessionListener` to listen for message events in this chat session.
      *
-     *msgListener the `ChatSessionListener` to add
+     * @param msgListener the `ChatSessionListener` to add
      */
     fun addMessageListener(msgListener: ChatSessionListener) {
         if (!msgListeners.contains(msgListener)) msgListeners.add(msgListener)
@@ -272,7 +265,7 @@ class ChatPanel(
     /**
      * Removes the given `ChatSessionListener` from this chat session.
      *
-     *msgListener the `ChatSessionListener` to remove
+     * @param msgListener the `ChatSessionListener` to remove
      */
     fun removeMessageListener(msgListener: ChatSessionListener) {
         msgListeners.remove(msgListener)
@@ -282,7 +275,7 @@ class ChatPanel(
      * Adds the given `ChatStateNotificationsListener` to listen for chat state events
      * in this chat session (Contact or ChatRoom).
      *
-     *l the `ChatStateNotificationsListener` to add
+     * @param l the `ChatStateNotificationsListener` to add
      */
     fun addChatStateListener(l: ChatStateNotificationsListener) {
         mCurrentChatTransport.protocolProvider.getOperationSet(OperationSetChatStateNotifications::class.java)?.addChatStateNotificationsListener(l)
@@ -291,7 +284,7 @@ class ChatPanel(
     /**
      * Removes the given `ChatStateNotificationsListener` from this chat session (Contact or ChatRoom)..
      *
-     *l the `ChatStateNotificationsListener` to remove
+     * @param l the `ChatStateNotificationsListener` to remove
      */
     fun removeChatStateListener(l: ChatStateNotificationsListener) {
         mCurrentChatTransport.protocolProvider.getOperationSet(OperationSetChatStateNotifications::class.java)?.removeChatStateNotificationsListener(l)
@@ -301,7 +294,7 @@ class ChatPanel(
      * Adds the given `ContactPresenceStatusListener` to listen for message events
      * in this chat session.
      *
-     *l the `ContactPresenceStatusListener` to add
+     * @param l the `ContactPresenceStatusListener` to add
      */
     fun addContactStatusListener(l: ContactPresenceStatusListener) {
         if (mMetaContact == null) return
@@ -315,7 +308,7 @@ class ChatPanel(
     /**
      * Removes the given `ContactPresenceStatusListener` from this chat session.
      *
-     *l the `ContactPresenceStatusListener` to remove
+     * @param l the `ContactPresenceStatusListener` to remove
      */
     fun removeContactStatusListener(l: ContactPresenceStatusListener) {
         if (mMetaContact == null) return
@@ -354,7 +347,8 @@ class ChatPanel(
         if (msgCache.isEmpty()) {
             mamChecked = mamQuery(descriptor)
             history = metaHistory.findLast(chatHistoryFilter, descriptor, HISTORY_CHUNK_SIZE)
-        } else {
+        }
+        else {
             // Update Message History database if mamRetrieved is fase and user is now registered
             // Note: this only update the DB but not the chat session UI.
             if (!mamChecked) {
@@ -406,7 +400,8 @@ class ChatPanel(
                     // Do this only when we haven't merged it yet (ever).
                     msgCache = mergeMsgLists(msgHistory, msgCache)
                     historyLoaded = true
-                } else {
+                }
+                else {
                     // Otherwise just prepend the history records.
                     msgCache.addAll(0, msgHistory)
                 }
@@ -415,7 +410,8 @@ class ChatPanel(
                 mLastMsgFetchDate = msgCache[0].date
             }
             msgCache
-        } else {
+        }
+        else {
             if (msgHistory.isNotEmpty()) {
                 mLastMsgFetchDate = msgHistory[0].date
             }
@@ -426,8 +422,8 @@ class ChatPanel(
     /**
      * Merges given lists of messages. Output list is ordered by received date.
      *
-     *msgHistory first list to merge.
-     *msgCache the second list to merge.
+     * @param msgHistory first list to merge.
+     * @param msgCache the second list to merge.
      *
      * @return merged list of messages contained in the given lists ordered by the date.
      */
@@ -441,7 +437,8 @@ class ChatPanel(
             if (historyMsg.date.after(cacheMsg.date)) {
                 mergedList.add(0, historyMsg)
                 historyIdx--
-            } else {
+            }
+            else {
                 mergedList.add(0, cacheMsg)
                 cacheIdx--
             }
@@ -459,7 +456,7 @@ class ChatPanel(
      * Fetch the server mam message and merged into the history database if new;
      * This method is accessed only after the user has registered with the network,
      *
-     *descriptor can either be metaContact or chatRoomWrapper=>ChatRoom, from whom the mam are to be loaded
+     * @param descriptor can either be metaContact or chatRoomWrapper=>ChatRoom, from whom the mam are to be loaded
      */
     private fun mamQuery(descriptor: Any): Boolean {
         if (!protocolProvider.isRegistered) {
@@ -472,8 +469,9 @@ class ChatPanel(
         if (descriptor is ChatRoom) {
             jid = descriptor.getIdentifier()
             mamManager = getInstanceFor(descriptor.getMultiUserChat())
-        } else {
-            jid = (descriptor as MetaContact).getDefaultContact()!!.contactJid!!.asBareJid()
+        }
+        else {
+            jid = (descriptor as MetaContact).getDefaultContact().contactJid!!.asBareJid()
             mamManager = getInstanceFor(connection, null)
         }
 
@@ -494,17 +492,18 @@ class ChatPanel(
                     mamDate = c.time
                 }
                 val mamQueryArgs = MamQueryArgs.builder()
-                        .limitResultsToJid(jid)
-                        .limitResultsSince(mamDate)
-                        .setResultPageSizeTo(MAM_PAGE_SIZE)
-                        .build()
+                    .limitResultsToJid(jid)
+                    .limitResultsSince(mamDate)
+                    .setResultPageSizeTo(MAM_PAGE_SIZE)
+                    .build()
                 val query = mamManager.queryArchive(mamQueryArgs)
                 val forwardedList = query.page.forwarded
                 if (forwardedList.isNotEmpty()) {
                     mMHS.saveMamIfNotExit(omemoManager, this, forwardedList)
                 }
                 omemoManager.resumeStanzaAndPEPListeners()
-            } else {
+            }
+            else {
                 if (mamDate == null) {
                     val c = Calendar.getInstance(TimeZone.getDefault())
                     mamDate = c.time
@@ -529,18 +528,18 @@ class ChatPanel(
      * Update the file transfer status in the msgCache; must do this else file transfer will be
      * reactivated onResume chat. Also important if historyLog is disabled.
      *
-     *msgUuid ChatMessage uuid
-     *status File transfer status
-     *fileName the downloaded fileName
-     *recordType File record type see ChatMessage MESSAGE_FILE_
+     * @param msgUuid ChatMessage uuid
+     * @param status File transfer status
+     * @param fileName the downloaded fileName
+     * @param recordType File record type see ChatMessage MESSAGE_FILE_
      */
     fun updateCacheFTRecord(msgUuid: String, status: Int, fileName: String?, encType: Int, recordType: Int) {
         var cacheIdx = msgCache.size - 1
         while (cacheIdx >= 0) {
             val cacheMsg = msgCache[cacheIdx] as ChatMessageImpl
             // 20220709: cacheMsg.getMessageUID() can be null
-            if (msgUuid == cacheMsg.messageUID) {
-                cacheMsg.updateFTStatus(descriptor, msgUuid, status, fileName!!, encType, recordType, cacheMsg.messageDir!!)
+            if (msgUuid == cacheMsg.mMessageUID) {
+                cacheMsg.updateFTStatus(descriptor, msgUuid, status, fileName, encType, recordType, cacheMsg.messageDir)
                 // Timber.d("updateCacheFTRecord msgUid: %s => %s (%s)", msgUuid, status, recordType );
                 break
             }
@@ -552,18 +551,19 @@ class ChatPanel(
      * Remove user deleted messages from msgCache if receiptStatus is null;
      * or update receiptStatus cached message of the given msgUuid
      *
-     *msgUuid ChatMessage uuid
-     *receiptStatus message receipt status to update; null is to delete message
+     * @param msgUuid ChatMessage uuid
+     * @param receiptStatus message receipt status to update; null is to delete message
      */
     fun updateCacheMessage(msgUuid: String, receiptStatus: Int?) {
         var cacheIdx = msgCache.size - 1
         while (cacheIdx >= 0) {
             val cacheMsg = msgCache[cacheIdx] as ChatMessageImpl
-            if (msgUuid == cacheMsg.messageUID) {
+            if (msgUuid == cacheMsg.mMessageUID) {
                 // Timber.d("updateCacheMessage msgUid: %s => %s", msgUuid, receiptStatus);
                 if (receiptStatus == null) {
                     msgCache.removeAt(cacheIdx)
-                } else {
+                }
+                else {
                     cacheMsg.receiptStatus = receiptStatus
                 }
                 break
@@ -602,7 +602,7 @@ class ChatPanel(
     /**
      * Bring this chat to front if `b` is true, hide it otherwise.
      *
-     *isVisible tells if the chat will be made visible or not.
+     * @param isVisible tells if the chat will be made visible or not.
      */
     override fun setChatVisible(isVisible: Boolean) {
         throw RuntimeException("Not supported yet")
@@ -612,13 +612,13 @@ class ChatPanel(
      * Sends the message and blocked message caching for this message; otherwise the single send message
      * will appear twice in the chat fragment i.e. inserted and cached e.g. from share link
      *
-     *message the text string to be sent
-     *encType The encType of the message to be sent: RemoteOnly | 1=text/html or 0=text/plain.
+     * @param message the text string to be sent
+     * @param encType The encType of the message to be sent: RemoteOnly | 1=text/html or 0=text/plain.
      */
     fun sendMessage(message: String, encType: Int) {
         cacheBlocked = true
         var encryption = IMessage.ENCRYPTION_NONE
-        if (isOmemoChat) encryption = IMessage.ENCRYPTION_OMEMO else if (isOTRChat) encryption = IMessage.ENCRYPTION_OTR
+        if (isOmemoChat) encryption = IMessage.ENCRYPTION_OMEMO
         try {
             mCurrentChatTransport.sendInstantMessage(message, encryption or encType)
         } catch (ex: Exception) {
@@ -630,28 +630,30 @@ class ChatPanel(
     /**
      * Add a message to this `Chat`. Mainly use for System messages for internal generated messages
      *
-     *contactName the name of the contact sending the message
-     *date the time at which the message is sent or received
-     *messageType the type of the message
-     *encType the content encode type i.e plain or html
-     *content the message text
+     * @param contactName the name of the contact sending the message
+     * @param date the time at which the message is sent or received
+     * @param messageType the type of the message
+     * @param mimeType the content encode type i.e plain or html
+     * @param message the message text
      */
     override fun addMessage(contactName: String, date: Date, messageType: Int, mimeType: Int, message: String) {
-        addMessage(ChatMessageImpl(contactName, contactName, date, messageType, mimeType, message, null, ChatMessage.DIR_IN))
+        // Create the new msg Uuid
+        val msgUuid = System.currentTimeMillis().toString() + hashCode()
+        addMessage(ChatMessageImpl(contactName, contactName, date, messageType, mimeType, message, msgUuid, ChatMessage.DIR_IN))
     }
 
     /**
      * Add a message to this `Chat`.
      *
-     *contactName the name of the contact sending the message
-     *displayName the display name of the contact
-     *date the time at which the message is sent or received
-     *chatMsgType the type of the message. See ChatMessage
-     *message the IMessage.
+     * @param contactName the name of the contact sending the message
+     * @param displayName the display name of the contact
+     * @param date the time at which the message is sent or received
+     * @param chatMsgType the type of the message. See ChatMessage
+     * @param message the IMessage.
      */
     fun addMessage(
-            contactName: String, displayName: String?, date: Date, chatMsgType: Int,
-            message: IMessage, correctedMessageUID: String?,
+            contactName: String, displayName: String, date: Date, chatMsgType: Int, message: IMessage,
+            correctedMessageUID: String?,
     ) {
         addMessage(ChatMessageImpl(contactName, displayName, date, chatMsgType, message, correctedMessageUID, ChatMessage.DIR_IN))
     }
@@ -659,20 +661,21 @@ class ChatPanel(
     /**
      * Adds a chat message to this `Chat` panel.
      *
-     *chatMessage the ChatMessage.
+     * @param chatMessage the ChatMessage.
      */
     fun addMessage(chatMessage: ChatMessageImpl) {
         // Must always cache the chatMsg as chatFragment has not registered to handle incoming
         // message on first onAttach or when it is not in focus.
         if (!cacheNextMsg(chatMessage)) {
-            Timber.e("Failed adding to msgCache (updated: %s): %s", cacheUpdated, chatMessage.messageUID)
+            Timber.e("Failed adding to msgCache (updated: %s): %s", cacheUpdated, chatMessage.mMessageUID)
         }
         messageSpeak(chatMessage, 2 * ttsDelay) // for chatRoom
 
         // Just show a ToastMessage if no ChatSessionListener to display the messages usually ChatMessage.MESSAGE_ERROR
         if (msgListeners.isEmpty()) {
-            aTalkApp.showToastMessage(chatMessage.message)
-        } else {
+            aTalkApp.showToastMessage(chatMessage.mMessage)
+        }
+        else {
             for (l in msgListeners) {
                 l!!.messageAdded(chatMessage)
             }
@@ -683,7 +686,7 @@ class ChatPanel(
      * Caches next message when chat is not in focus and it is not being blocked via sendMessage().
      * Otherwise duplicated messages when share link
      *
-     *newMsg the next message to cache.
+     * @param newMsg the next message to cache.
      *
      * @return true if newMsg added successfully to the msgCache
      */
@@ -692,7 +695,8 @@ class ChatPanel(
         if (!cacheBlocked) {
             // FFR: ANR synchronized (cacheLock); fixed with new msgCache merging optimization (20221229)
             synchronized(cacheLock) { return msgCache.add(newMsg).also { cacheUpdated = it } }
-        } else {
+        }
+        else {
             cacheBlocked = false
             cacheUpdated = null
         }
@@ -704,8 +708,9 @@ class ChatPanel(
         if (isChatTtsEnable) {
             // Object mDescriptor = mChatSession.getDescriptor();
             isChatTtsEnable = if (descriptor is MetaContact) {
-                descriptor.getDefaultContact()!!.isTtsEnable!!
-            } else {
+                descriptor.getDefaultContact().isTtsEnable!!
+            }
+            else {
                 (descriptor as ChatRoomWrapper).isTtsEnable
             }
         }
@@ -732,7 +737,7 @@ class ChatPanel(
     /**
      * call TTS to speak the text given in chatMessage if it is not HttpDownloadLink
      *
-     *chatMessage ChatMessage for TTS
+     * @param chatMessage ChatMessage for TTS
      */
     fun ttsSpeak(chatMessage: ChatMessage) {
         val textBody = chatMessage.message
@@ -740,7 +745,7 @@ class ChatPanel(
             val spkIntent = Intent(aTalkApp.instance, TTSService::class.java)
             spkIntent.putExtra(TTSService.EXTRA_MESSAGE, textBody)
             spkIntent.putExtra(TTSService.EXTRA_QMODE, false)
-            aTalkApp.instance!!.startService(spkIntent)
+            aTalkApp.instance.startService(spkIntent)
         }
     }
 
@@ -748,8 +753,8 @@ class ChatPanel(
      * Send an outgoing file message to chatFragment for it to start the file send process
      * The recipient can be contact or chatRoom
      *
-     *filePath as message content of the file to be sent
-     *messageType indicate which File transfer message is for
+     * @param filePath as message content of the file to be sent
+     * @param messageType indicate which File transfer message is for
      */
     fun addFTSendRequest(filePath: String?, messageType: Int) {
         val sendTo: String
@@ -760,13 +765,14 @@ class ChatPanel(
         val sender = mCurrentChatTransport.descriptor
         sendTo = if (sender is Contact) {
             sender.address
-        } else {
+        }
+        else {
             (sender as ChatRoom).getName()
         }
 
         // Do not use addMessage to avoid TTS activation for outgoing file message
         val chatMsg = ChatMessageImpl(sendTo, sendTo, date, messageType,
-                IMessage.ENCODE_PLAIN, filePath, msgUuid, ChatMessage.DIR_OUT)
+            IMessage.ENCODE_PLAIN, filePath, msgUuid, ChatMessage.DIR_OUT)
         if (!cacheNextMsg(chatMsg)) {
             Timber.e("Failed adding to msgCache (updated: %s): %s", cacheUpdated, msgUuid)
         }
@@ -782,9 +788,9 @@ class ChatPanel(
      * Adds the given `IncomingFileTransferRequest` to the conversation panel in order to
      * notify the user of an incoming file transfer request.
      *
-     *opSet the file transfer operation set
-     *request the request to display in the conversation panel
-     *date the date on which the request has been received
+     * @param opSet the file transfer operation set
+     * @param request the request to display in the conversation panel
+     * @param date the date on which the request has been received
      *
      * @see FileTransferActivator.fileTransferRequestReceived
      */
@@ -796,7 +802,7 @@ class ChatPanel(
         val msgType = ChatMessage.MESSAGE_FILE_TRANSFER_RECEIVE
         val encType = IMessage.ENCODE_PLAIN
         val chatMsg = ChatMessageImpl(senderName, date, msgType, encType,
-                msgContent, msgUuid, ChatMessage.DIR_IN, opSet, request, null)
+            msgContent, msgUuid, ChatMessage.DIR_IN, opSet, request, null)
 
         // Do not use addMessage to avoid TTS activation for incoming file message
         if (!cacheNextMsg(chatMsg)) {
@@ -817,7 +823,7 @@ class ChatPanel(
      * Use the name of the registering class as the host, the action to execute as the path and
      * any parameters as the query.
      *
-     *chatLinkClickedListener callback that is notified when a link was clicked.
+     * @param listener callback that is notified when a link was clicked.
      */
     override fun addChatLinkClickedListener(listener: ChatLinkClickedListener) {
         ChatSessionManager.addChatLinkListener(listener)
@@ -830,7 +836,7 @@ class ChatPanel(
             // message on first onAttach or not in focus
             val chatMessage = ChatMessageImpl.getMsgForEvent(evt)
             if (!cacheNextMsg(chatMessage)) {
-                Timber.e("Failed adding to msgCache (updated: %s): %s", cacheUpdated, chatMessage.messageUID)
+                Timber.e("Failed adding to msgCache (updated: %s): %s", cacheUpdated, chatMessage.mMessageUID)
             }
             for (l in msgListeners) {
                 l!!.messageReceived(evt)
@@ -850,7 +856,7 @@ class ChatPanel(
             if (evt.getSourceMessage().isRemoteOnly()) return
             val chatMessage = ChatMessageImpl.getMsgForEvent(evt)
             if (!cacheNextMsg(chatMessage)) {
-                Timber.e("Failed adding to msgCache (updated: %s): %s", cacheUpdated, chatMessage.messageUID)
+                Timber.e("Failed adding to msgCache (updated: %s): %s", cacheUpdated, chatMessage.mMessageUID)
             }
             for (l in msgListeners) {
                 l!!.messageDelivered(evt)
@@ -875,7 +881,7 @@ class ChatPanel(
         val contactJid = evt.destinationContact.address
         when (evt.errorCode) {
             MessageDeliveryFailedEvent.OFFLINE_MESSAGES_NOT_SUPPORTED -> errorMsg = aTalkApp.getResString(
-                    R.string.service_gui_MSG_DELIVERY_NOT_SUPPORTED, contactJid)
+                R.string.service_gui_MSG_DELIVERY_NOT_SUPPORTED, contactJid)
             MessageDeliveryFailedEvent.NETWORK_FAILURE -> errorMsg = aTalkApp.getResString(R.string.service_gui_MSG_NOT_DELIVERED)
             MessageDeliveryFailedEvent.PROVIDER_NOT_REGISTERED -> errorMsg = aTalkApp.getResString(R.string.service_gui_MSG_SEND_CONNECTION_PROBLEM)
             MessageDeliveryFailedEvent.INTERNAL_ERROR -> errorMsg = aTalkApp.getResString(R.string.service_gui_MSG_DELIVERY_INTERNAL_ERROR)
@@ -907,7 +913,7 @@ class ChatPanel(
      * Updates the status of the given chat transport in the send via selector box and notifies
      * the user for the status change.
      *
-     *chatTransport the `chatTransport` to update
+     * @param chatTransport the `chatTransport` to update
      */
     fun updateChatTransportStatus(chatTransport: ChatTransport) {
         if (isChatFocused) {
@@ -925,14 +931,14 @@ class ChatPanel(
             //        aTalkApp.getResString(R.string.service_gui_STATUS_CHANGED_CHAT_MESSAGE, chatTransport.getStatus().getStatusName()),
             //        IMessage.ENCRYPTION_NONE, null, null);
             addMessage(contactName, Date(), ChatMessage.MESSAGE_STATUS, IMessage.ENCODE_PLAIN,
-                    aTalkApp.getResString(R.string.service_gui_STATUS_CHANGED_CHAT_MESSAGE, chatTransport.status.statusName))
+                aTalkApp.getResString(R.string.service_gui_STATUS_CHANGED_CHAT_MESSAGE, chatTransport.status.statusName))
         }
     }
 
     /**
      * Renames all occurrences of the given `chatContact` in this chat panel.
      *
-     * chatContact the contact to rename name the new name
+     * @param chatContact the contact to rename name the new name
      */
     fun setContactName(chatContact: ChatContact<*>?, name: String?) {
         if (isChatFocused) {
@@ -948,7 +954,7 @@ class ChatPanel(
     /**
      * Sets the given `subject` to this chat.
      *
-     *subject the subject to set
+     * @param subject the subject to set
      */
     fun setChatSubject(subject: String?, oldSubject: String?) {
         if (subject != null && subject != chatSubject) {
@@ -964,15 +970,15 @@ class ChatPanel(
             }
             // Do not display change subject message if this is the original subject
             if (!TextUtils.isEmpty(oldSubject)) this.addMessage(chatSession!!.chatEntity, Date(), ChatMessage.MESSAGE_STATUS, IMessage.ENCODE_PLAIN,
-                    aTalkApp.getResString(R.string.service_gui_CHATROOM_SUBJECT_CHANGED, oldSubject, subject))
+                aTalkApp.getResString(R.string.service_gui_CHATROOM_SUBJECT_CHANGED, oldSubject, subject))
         }
     }
 
     /**
      * Updates the contact status - call from conference only.
      *
-     *chatContact the chat contact of the conference to update
-     *statusMessage the status message to show
+     * @param chatContact the chat contact of the conference to update
+     * @param statusMessage the status message to show
      */
     fun updateChatContactStatus(chatContact: ChatContact<*>, statusMessage: String) {
         if (StringUtils.isNotEmpty(statusMessage)) {
@@ -993,7 +999,8 @@ class ChatPanel(
         if (protocolProvider.getOperationSet(OperationSetMultiUserChat::class.java) != null
                 || protocolProvider.getOperationSet(OperationSetAdHocMultiUserChat::class.java) != null) {
             return mCurrentChatTransport
-        } else {
+        }
+        else {
             val chatTransportsIter = chatSession!!.getChatTransports()
             while (chatTransportsIter.hasNext()) {
                 val chatTransport = chatTransportsIter.next()
@@ -1007,9 +1014,9 @@ class ChatPanel(
     /**
      * Invites the given `chatContacts` to this chat.
      *
-     *inviteChatTransport the chat transport to use to send the invite
-     *chatContacts the contacts to invite
-     *reason the reason of the invitation
+     * @param inviteChatTransport the chat transport to use to send the invite
+     * @param chatContacts the contacts to invite
+     * @param reason the reason of the invitation
      */
     fun inviteContacts(inviteChatTransport: ChatTransport, chatContacts: Collection<String>, reason: String?) {
         val pps = inviteChatTransport.protocolProvider
@@ -1023,10 +1030,12 @@ class ChatPanel(
                     // conferenceChatSession = new ConferenceChatSession(this, chatRoomWrapper);
                     val chatIntent = ChatSessionManager.getChatIntent(chatRoomWrapper)
                     aTalkApp.globalContext.startActivity(chatIntent)
-                } else {
+                }
+                else {
                     Timber.e("Failed to create chatroom")
                 }
-            } else if (pps.getOperationSet(OperationSetAdHocMultiUserChat::class.java) != null) {
+            }
+            else if (pps.getOperationSet(OperationSetAdHocMultiUserChat::class.java) != null) {
                 val chatRoomWrapper = conferenceChatManager.createAdHocChatRoom(pps, chatContacts, reason)
                 // conferenceChatSession = new AdHocConferenceChatSession(this, chatRoomWrapper);
                 val chatIntent = ChatSessionManager.getChatIntent(chatRoomWrapper)
@@ -1035,7 +1044,8 @@ class ChatPanel(
             // if (conferenceChatSession != null) {
             //   this.setChatSession(conferenceChatSession);
             // }
-        } else {
+        }
+        else {
             for (contactAddress in chatContacts) {
                 try {
                     mCurrentChatTransport.inviteChatContact(JidCreate.entityBareFrom(contactAddress), reason)

@@ -68,7 +68,7 @@ class IncomingFileTransferJabberImpl
      *
      * @return the identifier of this file transfer
      */
-    override fun getID(): String? {
+    override fun getID(): String {
         return mId
     }
 

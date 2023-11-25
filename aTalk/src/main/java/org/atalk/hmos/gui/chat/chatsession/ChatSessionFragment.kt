@@ -353,9 +353,10 @@ open class ChatSessionFragment : OSGiFragment(), View.OnClickListener, ContactPr
      */
     private fun setChatType(chatTypeView: ImageView?, chatType: Int) {
         val iconId = when (chatType) {
-            ChatFragment.MSGTYPE_OMEMO -> R.drawable.encryption_omemo
-            ChatFragment.MSGTYPE_OTR, ChatFragment.MSGTYPE_OTR_UA -> R.drawable.encryption_otr
-            ChatFragment.MSGTYPE_NORMAL, ChatFragment.MSGTYPE_MUC_NORMAL -> R.drawable.encryption_none
+            ChatFragment.MSGTYPE_OMEMO ->
+                R.drawable.encryption_omemo
+            ChatFragment.MSGTYPE_NORMAL, ChatFragment.MSGTYPE_MUC_NORMAL ->
+                R.drawable.encryption_none
             else -> R.drawable.encryption_none
         }
         chatTypeView!!.setImageResource(iconId)

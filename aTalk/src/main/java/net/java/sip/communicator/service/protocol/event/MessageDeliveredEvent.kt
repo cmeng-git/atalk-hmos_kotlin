@@ -17,7 +17,10 @@ import java.util.*
  * @author Emil Ivov
  * @author Eng Chong Meng
  */
-class MessageDeliveredEvent(source: IMessage?, contact: Contact, contactResource: ContactResource?, sender: String?, timestamp: Date) : EventObject(source) {
+class MessageDeliveredEvent(
+        source: IMessage?, contact: Contact, contactResource: ContactResource?, sender: String,
+        timestamp: Date,
+) : EventObject(source) {
     /**
      * The contact that has sent this message.
      */
@@ -31,7 +34,7 @@ class MessageDeliveredEvent(source: IMessage?, contact: Contact, contactResource
     /**
      * Message sender full jid
      */
-    private val mSender: String?
+    private val mSender: String
 
     /**
      * A timestamp indicating the exact date when the event occurred.
@@ -59,10 +62,14 @@ class MessageDeliveredEvent(source: IMessage?, contact: Contact, contactResource
      *
      * @param source the `IMessage` whose delivery this event represents.
      * @param contact the `Contact` that this message was sent to.
+     * @param contactResource the `Contact` resource that this message was sent to
+     * @param sender the fullJid from which this message was sent
      * @param correctedMessageUID The ID of the message being corrected.
      */
-    constructor(source: IMessage?, contact: Contact, contactResource: ContactResource?,
-                sender: String?, correctedMessageUID: String?) : this(source, contact, contactResource, sender, Date()) {
+    constructor(
+            source: IMessage?, contact: Contact, contactResource: ContactResource?,
+            sender: String, correctedMessageUID: String?,
+    ) : this(source, contact, contactResource, sender, Date()) {
         this.correctedMessageUID = correctedMessageUID
     }
 
@@ -72,8 +79,6 @@ class MessageDeliveredEvent(source: IMessage?, contact: Contact, contactResource
      *
      * @param source the `IMessage` whose delivery this event represents.
      * @param contact the `Contact` that this message was sent to.
-     * @param contactResource the `Contact` resource that this message was sent to
-     * @param sender the fullJid from which this message was sent
      * @param timestamp a date indicating the exact moment when the event occurred
      */
     init {
@@ -86,19 +91,16 @@ class MessageDeliveredEvent(source: IMessage?, contact: Contact, contactResource
     /**
      * Returns a reference to the `Contact` that `IMessage` was sent to.
      *
-     * @return a reference to the `Contact` that has send the `IMessage`
-     * whose reception this event represents.
+     * @return a reference to the `Contact` that has send the `IMessage` whose reception this event represents.
      */
     fun getContact(): Contact {
         return mContact
     }
 
     /**
-     * Returns a reference to the `ContactResource` that has sent the `IMessage`
-     * whose reception this event represents.
+     * Returns a reference to the `ContactResource` that has sent the `IMessage` whose reception this event represents.
      *
-     * @return a reference to the `ContactResource` that has sent the `IMessage`
-     * whose reception this event represents.
+     * @return a reference to the `ContactResource` that has sent the `IMessage` whose reception this event represents.
      */
     fun getContactResource(): ContactResource? {
         return mContactResource
@@ -109,7 +111,7 @@ class MessageDeliveredEvent(source: IMessage?, contact: Contact, contactResource
      *
      * @return sender fullJid
      */
-    fun getSender(): String? {
+    fun getSender(): String {
         return mSender
     }
 
@@ -141,11 +143,9 @@ class MessageDeliveredEvent(source: IMessage?, contact: Contact, contactResource
     }
 
     /**
-     * Returns the ID of the message being corrected, or null if this was a new message and not a
-     * message correction.
+     * Returns the ID of the message being corrected, or null if this was a new message and not a message correction.
      *
-     * @return the ID of the message being corrected, or null if this was a new message and not a
-     * message correction.
+     * @return the ID of the message being corrected, or null if this was a new message and not a message correction.
      */
     fun getCorrectedMessageUID(): String? {
         return correctedMessageUID

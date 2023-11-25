@@ -81,7 +81,7 @@ class FileHistoryConversation private constructor(cPanel: ChatFragment, dir: Str
      * @param status file transfer status
      * @return the status message to display
      */
-    fun getStatusMessage(entityJid: String?, dir: String, status: Int): String {
+    private fun getStatusMessage(entityJid: String?, dir: String, status: Int): String {
         var statusMsg = ""
         val statusText = FileRecord.statusMap[status]
         if (FileRecord.IN == dir) {

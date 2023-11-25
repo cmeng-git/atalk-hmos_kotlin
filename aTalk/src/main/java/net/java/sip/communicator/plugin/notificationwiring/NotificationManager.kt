@@ -123,7 +123,8 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
             // Play the hangup sound - Let peerStateChanged() fire HANG_UPmChatActivity else double firing
             // fireNotification(HANG_UP)mChatActivity
         } catch (t: Throwable) {
-            if (t is ThreadDeath) throw t else {
+            if (t is ThreadDeath) throw t
+            else {
                 Timber.e(t, "An error occurred while trying to notify about the end of a call.")
             }
         }
@@ -227,7 +228,7 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
 
             // Fire notification
             val title = aTalkApp.getResString(R.string.xFile_FILE_RECEIVING_FROM,
-                    sourceContact.displayName)
+                sourceContact.displayName)
             fireChatNotification(sourceContact, INCOMING_FILE, title, message, request.getID())
         } catch (t: Throwable) {
             Timber.e(t, "Error notifying for file transfer request received")
@@ -378,7 +379,7 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
              */
             val weakCall = WeakReference(call)
             val notification = fireNotification(INCOMING_CALL, "",
-                    aTalkApp.getResString(R.string.service_gui_CALL_INCOMING, peerName), peerInfo) {
+                aTalkApp.getResString(R.string.service_gui_CALL_INCOMING, peerName), peerInfo) {
                 val call1 = weakCall.get() ?: return@fireNotification false
 
                 /*
@@ -402,7 +403,8 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
             peer.addCallPeerSecurityListener(this)
             peer.addCallPeerConferenceListener(this)
         } catch (t: Throwable) {
-            if (t is ThreadDeath) throw t else {
+            if (t is ThreadDeath) throw t
+            else {
                 Timber.e(t, "An error occurred while trying to notify about an incoming call")
             }
         }
@@ -424,7 +426,8 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
         val mediaServiceImpl = NotificationWiringActivator.mediaService
         if (mediaServiceImpl == null) {
             Timber.w("Media Service record listener init failed - jnlibffmpeg failed to load?")
-        } else mediaServiceImpl.addRecorderListener(this)
+        }
+        else mediaServiceImpl.addRecorderListener(this)
     }
 
     /**
@@ -462,7 +465,8 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
         val eventType = evt.getEventType()
         if (LocalUserAdHocChatRoomPresenceChangeEvent.LOCAL_USER_JOINED == eventType) {
             evt.getAdHocChatRoom()!!.addMessageListener(this)
-        } else if (LocalUserAdHocChatRoomPresenceChangeEvent.LOCAL_USER_LEFT == eventType || LocalUserAdHocChatRoomPresenceChangeEvent.LOCAL_USER_DROPPED == eventType) {
+        }
+        else if (LocalUserAdHocChatRoomPresenceChangeEvent.LOCAL_USER_LEFT == eventType || LocalUserAdHocChatRoomPresenceChangeEvent.LOCAL_USER_DROPPED == eventType) {
             evt.getAdHocChatRoom()!!.removeMessageListener(this)
         }
     }
@@ -478,7 +482,8 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
         val eventType = evt.getEventType()
         if (LocalUserChatRoomPresenceChangeEvent.LOCAL_USER_JOINED == eventType) {
             sourceChatRoom.addMessageListener(this)
-        } else if (LocalUserChatRoomPresenceChangeEvent.LOCAL_USER_LEFT == eventType || LocalUserChatRoomPresenceChangeEvent.LOCAL_USER_KICKED == eventType || LocalUserChatRoomPresenceChangeEvent.LOCAL_USER_DROPPED == eventType) {
+        }
+        else if (LocalUserChatRoomPresenceChangeEvent.LOCAL_USER_LEFT == eventType || LocalUserChatRoomPresenceChangeEvent.LOCAL_USER_KICKED == eventType || LocalUserChatRoomPresenceChangeEvent.LOCAL_USER_DROPPED == eventType) {
             sourceChatRoom.removeMessageListener(this)
         }
     }
@@ -535,14 +540,15 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
         val chatRoom = evt.getSourceChatRoom()
         val sourceParticipant = evt.getSourceChatRoomParticipant().displayName
         val message = evt.getMessage()
-        var msgBody = message.getContent()
+        var msgBody = message.getContent()!!
         val msgUid = message.getMessageUID()
         if (ChatMessage.MESSAGE_HTTP_FILE_DOWNLOAD == evt.getEventType()) {
             val filePath = msgBody.split("#")[0]
             val fileName = filePath.substring(filePath.lastIndexOf('/') + 1)
             val title = aTalkApp.getResString(R.string.xFile_FILE_RECEIVING_FROM, sourceParticipant)
             fireChatNotification(chatRoom, INCOMING_FILE, title, fileName, msgUid)
-        } else {
+        }
+        else {
             val fireChatNotification: Boolean
             val nickname = chatRoom.getName()
             fireChatNotification = msgBody.lowercase(Locale.getDefault()).contains(nickname.lowercase(Locale.getDefault()))
@@ -567,21 +573,23 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
         val chatRoom = evt.getSourceChatRoom()
         val nickName = evt.getSourceChatRoomMember().getNickName() // sender
         val message = evt.getMessage()
-        var msgBody = message.getContent()
+        var msgBody = message.getContent()!!
         val msgUid = message.getMessageUID()
         if (ChatMessage.MESSAGE_HTTP_FILE_DOWNLOAD == evt.getEventType()) {
             val filePath = msgBody.split("#")[0]
             val fileName = filePath.substring(filePath.lastIndexOf('/') + 1)
             val title = aTalkApp.getResString(R.string.xFile_FILE_RECEIVING_FROM, nickName)
             fireChatNotification(chatRoom, INCOMING_FILE, title, fileName, msgUid)
-        } else {
+        }
+        else {
             val fireChatNotification: Boolean
 
             /*
              * It is uncommon for IRC clients to display popup notifications for messages which
              * are sent to public channels and which do not mention the nickname of the local user.
              */
-            if (chatRoom.isSystem() || isPrivate(chatRoom)) fireChatNotification = true else {
+            if (chatRoom.isSystem() || isPrivate(chatRoom)) fireChatNotification = true
+            else {
                 fireChatNotification = chatRoom.getUserNickname() != null // recipient
             }
             if (fireChatNotification) {
@@ -620,14 +628,15 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
         // Fire notification as INCOMING_FILE is found
         val contact = evt.getSourceContact()
         val message = evt.getSourceMessage()
-        var msgBody = message.getContent()
+        var msgBody = message.getContent()!!
         val msgUid = message.getMessageUID()
         if (ChatMessage.MESSAGE_HTTP_FILE_DOWNLOAD == evt.getEventType()) {
-            val filePath = msgBody!!.split("#")[0]
+            val filePath = msgBody.split("#")[0]
             val fileName = filePath.substring(filePath.lastIndexOf('/') + 1)
             val title = aTalkApp.getResString(R.string.xFile_FILE_RECEIVING_FROM, contact.address)
             fireChatNotification(contact, INCOMING_FILE, title, fileName, msgUid)
-        } else {
+        }
+        else {
             // Fire as message notification
             val title = aTalkApp.getResString(R.string.service_gui_MSG_RECEIVED, contact.address)
 
@@ -710,7 +719,8 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
                     }
                     if (notification != null) callNotifications[call] = notification
                 }
-            } else {
+            }
+            else {
                 val notification = callNotifications[call]
                 if (notification != null) stopSound(notification)
             }
@@ -725,7 +735,8 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
                     peer1 != null && CallPeerState.ALERTING_REMOTE_SIDE == peer1.getState()
                 }
                 if (notification != null) callNotifications[call] = notification
-            } else if (newState == CallPeerState.BUSY) {
+            }
+            else if (newState == CallPeerState.BUSY) {
                 // We start the busy sound only if we're in a simple call.
                 if (!isConference(call!!)) {
                     val weakPeer = WeakReference(peer)
@@ -735,11 +746,13 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
                     }
                     if (notification != null) callNotifications[call] = notification
                 }
-            } else if (newState == CallPeerState.DISCONNECTED || newState == CallPeerState.FAILED) {
+            }
+            else if (newState == CallPeerState.DISCONNECTED || newState == CallPeerState.FAILED) {
                 fireNotification(HANG_UP)
             }
         } catch (t: Throwable) {
-            if (t is ThreadDeath) throw t else {
+            if (t is ThreadDeath) throw t
+            else {
                 Timber.e(t, "An error occurred while trying to notify about a change in the state of a call peer.")
             }
         }
@@ -761,10 +774,11 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
     override fun recorderStopped(recorder: Recorder) {
         try {
             fireNotification(CALL_SAVED, SystrayService.NONE_MESSAGE_TYPE,
-                    aTalkApp.getResString(R.string.plugin_callrecordingconfig_CALL_SAVED),
-                    aTalkApp.getResString(R.string.plugin_callrecordingconfig_CALL_SAVED_TO, recorder.filename))
+                aTalkApp.getResString(R.string.plugin_callrecordingconfig_CALL_SAVED),
+                aTalkApp.getResString(R.string.plugin_callrecordingconfig_CALL_SAVED_TO, recorder.filename))
         } catch (t: Throwable) {
-            if (t is ThreadDeath) throw t else {
+            if (t is ThreadDeath) throw t
+            else {
                 Timber.e(t, "An error occurred while trying to notify that the recording of a call has stopped.")
             }
         }
@@ -778,16 +792,16 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
 
         // Register incoming message notifications.
         notificationService.registerDefaultNotificationForEvent(INCOMING_MESSAGE,
-                NotificationAction.ACTION_POPUP_MESSAGE, null, null)
+            NotificationAction.ACTION_POPUP_MESSAGE, null, null)
         notificationService.registerDefaultNotificationForEvent(INCOMING_MESSAGE,
-                SoundNotificationAction(SoundProperties.INCOMING_MESSAGE, -1,
-                        isSoundNotificationEnabled = true, isSoundPlaybackEnabled = false, isSoundPCSpeakerEnabled = false))
+            SoundNotificationAction(SoundProperties.INCOMING_MESSAGE, -1,
+                isSoundNotificationEnabled = true, isSoundPlaybackEnabled = false, isSoundPCSpeakerEnabled = false))
 
         // Register incoming call notifications.
         notificationService.registerDefaultNotificationForEvent(INCOMING_CALL,
-                NotificationAction.ACTION_POPUP_MESSAGE, null, null)
+            NotificationAction.ACTION_POPUP_MESSAGE, null, null)
         val inCallSoundHandler = SoundNotificationAction(
-                SoundProperties.INCOMING_CALL, 2000, isSoundNotificationEnabled = true, isSoundPlaybackEnabled = true, isSoundPCSpeakerEnabled = true)
+            SoundProperties.INCOMING_CALL, 2000, isSoundNotificationEnabled = true, isSoundPlaybackEnabled = true, isSoundPCSpeakerEnabled = true)
         notificationService.run {
             registerDefaultNotificationForEvent(INCOMING_CALL, inCallSoundHandler)
 
@@ -820,19 +834,19 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
                 NotificationAction.ACTION_POPUP_MESSAGE, null, null)
             registerDefaultNotificationForEvent(CALL_SECURITY_ERROR,
                 SoundNotificationAction(SoundProperties.CALL_SECURITY_ERROR, -1,
-                        false, isSoundPlaybackEnabled = true, isSoundPCSpeakerEnabled = false))
+                    false, isSoundPlaybackEnabled = true, isSoundPCSpeakerEnabled = false))
 
             // Register sound notification for security state on during a call.
             registerDefaultNotificationForEvent(CALL_SECURITY_ON,
                 SoundNotificationAction(SoundProperties.CALL_SECURITY_ON, -1,
-                        isSoundNotificationEnabled = false, isSoundPlaybackEnabled = true, isSoundPCSpeakerEnabled = false))
+                    isSoundNotificationEnabled = false, isSoundPlaybackEnabled = true, isSoundPCSpeakerEnabled = false))
 
             // Register sound notification for incoming files.
             registerDefaultNotificationForEvent(INCOMING_FILE,
                 NotificationAction.ACTION_POPUP_MESSAGE, null, null)
             registerDefaultNotificationForEvent(INCOMING_FILE,
                 SoundNotificationAction(SoundProperties.INCOMING_FILE, -1,
-                        isSoundNotificationEnabled = true, isSoundPlaybackEnabled = false, isSoundPCSpeakerEnabled = false))
+                    isSoundNotificationEnabled = true, isSoundPlaybackEnabled = false, isSoundPCSpeakerEnabled = false))
 
             // Register notification for saved calls.
             registerDefaultNotificationForEvent(CALL_SAVED,
@@ -853,25 +867,28 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
             when (event.getEventSeverity()) {
                 SrtpListener.INFORMATION -> {
                     messageTitleKey = "service.gui.SECURITY_INFO"
-                    aTalkApp.showToastMessage(message)
+                    aTalkApp.showToastMessage("$message: $messageTitleKey")
                     return
                 }
+
                 SrtpListener.WARNING -> messageTitleKey = "service.gui.SECURITY_WARNING"
                 SrtpListener.SEVERE, SrtpListener.ERROR -> {
                     messageTitleKey = "service.gui.SECURITY_ERROR"
                     fireNotification(CALL_SECURITY_ERROR, SystrayService.WARNING_MESSAGE_TYPE,
-                            NotificationWiringActivator.resources.getI18NString(messageTitleKey)!!, message)
+                        NotificationWiringActivator.resources.getI18NString(messageTitleKey)!!, message)
                     return
                 }
-                else ->                     // Whatever other severity there is or will be, we do not know how to react to it yet.
+                // Whatever other severity there is or will be, we do not know how to react to it yet.
+                else ->
                     messageTitleKey = null
             }
             if (messageTitleKey != null) {
                 fireNotification(SECURITY_MESSAGE, SystrayService.INFORMATION_MESSAGE_TYPE,
-                        NotificationWiringActivator.resources.getI18NString(messageTitleKey)!!, message)
+                    NotificationWiringActivator.resources.getI18NString(messageTitleKey)!!, message)
             }
         } catch (t: Throwable) {
-            if (t is ThreadDeath) throw t else {
+            if (t is ThreadDeath) throw t
+            else {
                 Timber.e(t, "An error occurred while trying to notify about a security message")
             }
         }
@@ -905,7 +922,8 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
                 fireNotification(CALL_SECURITY_ON)
             }
         } catch (t: Throwable) {
-            if (t is ThreadDeath) throw t else {
+            if (t is ThreadDeath) throw t
+            else {
                 Timber.e(t, "An error occurred while trying to notify about a security-related event")
             }
         }
@@ -931,7 +949,7 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
 
         // if the event is caused by a bundle being stopped, we don't want to know
         if (serviceRef.bundle.state == Bundle.STOPPING) return
-        val service = NotificationWiringActivator.bundleContext!!.getService<Any>(serviceRef as ServiceReference<Any>)
+        val service = NotificationWiringActivator.bundleContext!!.getService(serviceRef as ServiceReference<Any>)
 
         // we don't care if the source service is not a protocol provider
         if (service is ProtocolProviderService) {
@@ -1034,9 +1052,10 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
             }
             proactiveTimer[chatDescriptor] = currentTime
             fireChatNotification(chatDescriptor, PROACTIVE_NOTIFICATION, fromJid,
-                    aTalkApp.getResString(R.string.service_gui_PROACTIVE_NOTIFICATION), null)
+                aTalkApp.getResString(R.string.service_gui_PROACTIVE_NOTIFICATION), null)
         } catch (t: Throwable) {
-            if (t is ThreadDeath) throw t else {
+            if (t is ThreadDeath) throw t
+            else {
                 Timber.e(t, "An error occurred while handling a chat state notification.")
             }
         }
@@ -1116,15 +1135,17 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
         /**
          * Fires a chat message notification for the given event type through the `NotificationService`.
          *
-         * @param chatDescriptor the chat contact to which the chat message correspondsmChatActivity the chat contact could be a
+         * @param chatDescriptor the chat contact to which the chat message correspondsChatActivity the chat contact could be a
          * Contact or a ChatRoom.
          * @param eventType the event type for which we fire a notification
          * @param messageTitle the title of the message
          * @param message the content of the message
          * @param messageUID the message UID
          */
-        fun fireChatNotification(chatDescriptor: Any, eventType: String, messageTitle: String,
-                message: String, messageUID: String?) {
+        fun fireChatNotification(
+                chatDescriptor: Any, eventType: String, messageTitle: String,
+                message: String, messageUID: String?,
+        ) {
             val notificationService = NotificationWiringActivator.getNotificationService()
                     ?: return
             var popupActionHandler: NotificationAction? = null
@@ -1137,13 +1158,12 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
                 if (contactIcon == null) {
                     contactIcon = AndroidImageUtil.getImageBytes(aTalkApp.globalContext, R.drawable.person_photo)
                 }
-            } else if (chatDescriptor is ChatRoom) {
-                val chatRoom = chatDescriptor
-
+            }
+            else if (chatDescriptor is ChatRoom) {
                 // For system rooms we don't want to send notification events.
-                if (chatRoom.isSystem()) return
+                if (chatDescriptor.isSystem()) return
                 if (uiService != null) {
-                    chatPanel = uiService.getChat(chatRoom)
+                    chatPanel = uiService.getChat(chatDescriptor)
                 }
             }
 
@@ -1155,7 +1175,7 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
             val extras = HashMap<String, Any>()
             extras[NotificationData.POPUP_MESSAGE_HANDLER_TAG_EXTRA] = chatDescriptor
             notificationService.fireNotification(eventType, SystrayService.INFORMATION_MESSAGE_TYPE,
-                    messageTitle, message, contactIcon, extras)
+                messageTitle, message, contactIcon, extras)
 
             // Reset the popupActionHandler to enable for ACTION_POPUP_MESSAGE for incomingMessage if it was disabled
             if (popupActionHandler != null) popupActionHandler.isEnabled = true
@@ -1226,10 +1246,14 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
          *
          * @return a reference to the fired notification to stop it.
          */
-        private fun fireNotification(eventType: String, messageTitle: String,
-                message: String, cmdargs: Map<String, String>?, loopCondition: Callable<Boolean>?): NotificationData? {
+        private fun fireNotification(
+                eventType: String, messageTitle: String,
+                message: String, cmdargs: Map<String, String>?, loopCondition: Callable<Boolean>?,
+        ): NotificationData? {
             val notificationService = NotificationWiringActivator.getNotificationService()
-            return if (notificationService == null) null else {
+            return if (notificationService == null)
+                null
+            else {
                 val extras = HashMap<String, Any>()
                 if (cmdargs != null) {
                     extras[NotificationData.COMMAND_NOTIFICATION_HANDLER_CMDARGS_EXTRA] = cmdargs
@@ -1238,7 +1262,7 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
                     extras[NotificationData.SOUND_NOTIFICATION_HANDLER_LOOP_CONDITION_EXTRA] = loopCondition
                 }
                 notificationService.fireNotification(eventType,
-                        SystrayService.INFORMATION_MESSAGE_TYPE, messageTitle, message, null, extras)
+                    SystrayService.INFORMATION_MESSAGE_TYPE, messageTitle, message, null, extras)
             }
         }// get all registered provider factories
 
@@ -1253,7 +1277,7 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
                 try {
                     // get all registered provider factories
                     serRefs = NotificationWiringActivator.bundleContext!!
-                            .getServiceReferences(ProtocolProviderFactory::class.java.name, null)
+                        .getServiceReferences(ProtocolProviderFactory::class.java.name, null)
                 } catch (e: InvalidSyntaxException) {
                     Timber.e("NotificationManager : %s", e.message)
                 }
@@ -1278,7 +1302,7 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
                 try {
                     // get all registered provider factories
                     serRefs = NotificationWiringActivator.bundleContext!!
-                            .getServiceReferences(ProtocolProviderService::class.java.name, null)
+                        .getServiceReferences(ProtocolProviderService::class.java.name, null)
                 } catch (e: InvalidSyntaxException) {
                     Timber.e("NotificationManager : %s", e.message)
                 }
@@ -1301,7 +1325,7 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
          *
          * @param chatRoom the `ChatRoom` to be determined as private or not
          *
-         * @return `true` if the specified `ChatRoom` is privatemChatActivity otherwise, `false`
+         * @return `true` if the specified `ChatRoom` is privateChatActivity otherwise, `false`
          */
         private fun isPrivate(chatRoom: ChatRoom): Boolean {
             if (!chatRoom.isSystem() && chatRoom.isJoined() && chatRoom.getMembersCount() == 1) {
@@ -1340,7 +1364,8 @@ class NotificationManager : CallChangeListener, CallListener, CallPeerConference
                         // The DIALING sound should be played for the first CallPeer only.
                         if (peer != aPeer)
                             return false
-                    } else {
+                    }
+                    else {
                         /*
                          * The DIALING sound should not be played if there is a CallPeer which does
                          * not require the DIALING sound to be played.

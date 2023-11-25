@@ -31,7 +31,7 @@ interface IMessage {
      * @return a String containing the content of this message or null if the message does not
      * contain data representable in text form.
      */
-    fun getContent(): String
+    fun getContent(): String?
 
     /**
      * Returns the mime type for the message content.
@@ -104,7 +104,7 @@ interface IMessage {
      *
      * @return a byte[] array containing message bytes.
      */
-    fun getRawData(): ByteArray
+    fun getRawData(): ByteArray?
 
     /**
      * Returns the subject of this message or null if the message contains no subject.
@@ -131,7 +131,7 @@ interface IMessage {
     companion object {
         /*
      * ENC_TYPE type defined in DB; use by IMessage Local to define the required actions
-     * Upper nibble (b7...b4) for body encryption Type i.e. OMEMO, OTR, NONE
+     * Upper nibble (b7...b4) for body encryption Type i.e. OMEMO, NONE
      * Lower nibble (b3...b2) for special mode flag - may not be included in DB e.g FLAG_REMOTE_ONLY etc
      * Lower nibble (b1...b0) for body mimeType i.e. HTML or PLAIN
      */

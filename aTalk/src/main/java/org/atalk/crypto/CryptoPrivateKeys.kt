@@ -25,16 +25,12 @@ import android.view.ContextMenu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.AdapterView
 import android.widget.AdapterView.AdapterContextMenuInfo
 import android.widget.BaseAdapter
 import android.widget.ListView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import net.java.sip.communicator.plugin.otr.OtrActivator
-import net.java.sip.communicator.plugin.otr.ScOtrKeyManager
 import net.java.sip.communicator.service.protocol.AccountID
-import net.java.sip.communicator.service.protocol.ProtocolProviderService
 import net.java.sip.communicator.util.account.AccountUtils
 import org.apache.commons.lang3.StringUtils
 import org.atalk.crypto.omemo.SQLiteOmemoStore
@@ -46,10 +42,7 @@ import org.atalk.util.CryptoHelper
 import org.jivesoftware.smack.SmackException
 import org.jivesoftware.smackx.omemo.OmemoManager
 import org.jivesoftware.smackx.omemo.OmemoService
-import org.jivesoftware.smackx.omemo.OmemoStore
 import org.jivesoftware.smackx.omemo.exceptions.CorruptedOmemoKeyException
-import org.jivesoftware.smackx.omemo.internal.OmemoDevice
-import org.jivesoftware.smackx.omemo.trust.OmemoFingerprint
 import timber.log.Timber
 import java.io.IOException
 import java.util.*
@@ -60,8 +53,6 @@ import java.util.*
  * @author Eng Chong Meng
  */
 class CryptoPrivateKeys : OSGiActivity() {
-    private val keyManager = OtrActivator.scOtrKeyManager
-
     /**
      * Adapter used to displays private keys for all accounts.
      */
@@ -119,17 +110,9 @@ class CryptoPrivateKeys : OSGiActivity() {
             }
             deviceFingerprints[deviceJid] = fingerprint
             accountList[deviceJid] = accountId
-
-            // Get OTRDevice fingerprint - can be null for new generation
-            deviceJid = OTR + bareJid
-            fingerprint = keyManager.getLocalFingerprint(accountId)!!
-            if (StringUtils.isNotEmpty(fingerprint)) {
-                fingerprint = fingerprint.lowercase(Locale.getDefault())
-            }
-            deviceFingerprints[deviceJid] = fingerprint
-            accountList[deviceJid] = accountId
         }
-        if (deviceFingerprints.isEmpty()) deviceFingerprints[aTalkApp.getResString(R.string.service_gui_settings_CRYPTO_PRIV_KEYS_EMPTY)] = ""
+        if (deviceFingerprints.isEmpty())
+            deviceFingerprints[aTalkApp.getResString(R.string.service_gui_settings_CRYPTO_PRIV_KEYS_EMPTY)] = ""
         return deviceFingerprints
     }
 
@@ -189,14 +172,14 @@ class CryptoPrivateKeys : OSGiActivity() {
         val message = getString(getResStrId, bareJid, warnMsg)
         val b = AlertDialog.Builder(this)
         b.setTitle(R.string.crypto_dialog_KEY_GENERATE_TITLE)
-                .setMessage(message)
-                .setPositiveButton(R.string.service_gui_PROCEED) { dialog: DialogInterface?, which: Int ->
-                    if (accountId != null) {
-                        if (bareJid.startsWith(OMEMO)) regenerate(accountId) else if (bareJid.startsWith(OTR)) keyManager.generateKeyPair(accountId)
-                    }
-                    accountsAdapter!!.notifyDataSetChanged()
+            .setMessage(message)
+            .setPositiveButton(R.string.service_gui_PROCEED) { dialog: DialogInterface?, which: Int ->
+                if (accountId != null && bareJid.startsWith(OMEMO)) {
+                    regenerate(accountId)
                 }
-                .setNegativeButton(R.string.service_gui_CANCEL) { dialog: DialogInterface, which: Int -> dialog.dismiss() }.show()
+                accountsAdapter!!.notifyDataSetChanged()
+            }
+            .setNegativeButton(R.string.service_gui_CANCEL) { dialog: DialogInterface, which: Int -> dialog.dismiss() }.show()
     }
 
     /**
@@ -222,7 +205,7 @@ class CryptoPrivateKeys : OSGiActivity() {
         /**
          * Creates new instance of `FingerprintListAdapter`.
          *
-         * fingerprintList list of `device` for which OMEMO/OTR fingerprints will be displayed.
+         * fingerprintList list of `device` for which OMEMO fingerprints will be displayed.
          */
         init {
             deviceJid = ArrayList(fingerprintList.keys)
@@ -277,7 +260,6 @@ class CryptoPrivateKeys : OSGiActivity() {
     }
 
     companion object {
-        private const val OTR = "OTR:"
         private const val OMEMO = "OMEMO:"
     }
 }

@@ -38,11 +38,15 @@ import java.util.*
  * @author Valentin Martinet
  * @author Eng Chong Meng
  */
-class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: AdHocChatRoomWrapper) : ChatSession(), AdHocChatRoomParticipantPresenceListener {
+class AdHocConferenceChatSession(
+        private val sessionRenderer: ChatPanel,
+
+        private val chatRoomWrapper: AdHocChatRoomWrapper,
+) : ChatSession(), AdHocChatRoomParticipantPresenceListener {
 
     override var currentChatTransport: ChatTransport? = null
-    private val chatRoomWrapper: AdHocChatRoomWrapper
-    private val sessionRenderer: ChatPanel
+
+    private val chatRoom : AdHocChatRoom = chatRoomWrapper.adHocChatRoom
 
     /**
      * Creates an instance of `AdHocConferenceChatSession`, by specifying the
@@ -53,13 +57,10 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
      * chatRoomWrapper the ad-hoc chat room corresponding to this conference session.
      */
     init {
-        this.sessionRenderer = sessionRenderer
-        this.chatRoomWrapper = chatRoomWrapper
-        currentChatTransport = AdHocConferenceChatTransport(this, chatRoomWrapper.adHocChatRoom)
+        chatRoom.addParticipantPresenceListener(this)
+        currentChatTransport = AdHocConferenceChatTransport(this, chatRoom)
         chatTransports.add(currentChatTransport!!)
         initChatParticipants()
-        val chatRoom = chatRoomWrapper.adHocChatRoom
-        chatRoom!!.addParticipantPresenceListener(this)
     }
 
     /**
@@ -76,14 +77,13 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
      * @return the chat identifier
      */
     override val chatId: String
-        get() = chatRoomWrapper.adHocChatRoomID!!
+        get() = chatRoomWrapper.adHocChatRoomID
 
     /**
      * Disposes this chat session.
      */
     override fun dispose() {
-        val chatRoom = chatRoomWrapper.adHocChatRoom
-        chatRoom!!.removeParticipantPresenceListener(this)
+        chatRoom.removeParticipantPresenceListener(this)
     }
 
     /**
@@ -92,7 +92,7 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
      * @return the entityJid of the ad-hoc chat room.
      */
     override val chatEntity: String
-        get() = chatRoomWrapper.adHocChatRoomName!!
+        get() = chatRoomWrapper.adHocChatRoomName
 
     /**
      * Returns the configuration form corresponding to the chat room.
@@ -131,8 +131,7 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
 
         // If the MetaHistoryService is not registered we have nothing to do here. The history
         // could be "disabled" from the user through one of the configuration forms.
-        return metaHistory.findLast(chatHistoryFilter as Array<String>, chatRoomWrapper.adHocChatRoom!!,
-                ConfigurationUtils.getChatHistorySize())
+        return metaHistory.findLast(chatHistoryFilter as Array<String>, chatRoom, ConfigurationUtils.getChatHistorySize())
     }
 
     /**
@@ -148,8 +147,7 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
 
         // If the MetaHistoryService is not registered we have nothing to do here. The history
         // could be "disabled" from the user through one of the configuration forms.
-        return metaHistory.findLastMessagesBefore(chatHistoryFilter,
-                chatRoomWrapper.adHocChatRoom!!, date, ConfigurationUtils.getChatHistorySize())
+        return metaHistory.findLastMessagesBefore(chatHistoryFilter, chatRoom, date, ConfigurationUtils.getChatHistorySize())
     }
 
     /**
@@ -165,9 +163,10 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
 
         // If the MetaHistoryService is not registered we have nothing to do here. The history
         // could be "disabled" from the user through one of the configuration forms.
-        return metaHistory.findFirstMessagesAfter(chatHistoryFilter,
-                chatRoomWrapper.adHocChatRoom!!, date, ConfigurationUtils.getChatHistorySize())
-    }// If the MetaHistoryService is not registered we have nothing to do here. The history
+        return metaHistory.findFirstMessagesAfter(chatHistoryFilter, chatRoom, date, ConfigurationUtils.getChatHistorySize())
+    }
+
+    // If the MetaHistoryService is not registered we have nothing to do here. The history
     // could be "disabled" from the user through one of the configuration forms.
     /**
      * Returns the start date of the history of this chat session.
@@ -182,14 +181,14 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
             // If the MetaHistoryService is not registered we have nothing to do here. The history
             // could be "disabled" from the user through one of the configuration forms.
             var startHistoryDate = Date(0)
-            val firstMessage = metaHistory.findFirstMessagesAfter(chatHistoryFilter,
-                    chatRoomWrapper.adHocChatRoom!!, Date(0), 1)
+            val firstMessage = metaHistory.findFirstMessagesAfter(chatHistoryFilter, chatRoom, Date(0), 1)
             if (firstMessage.isNotEmpty()) {
                 val fms = firstMessage.iterator()
                 val evt = fms.next()
                 if (evt is MessageDeliveredEvent) {
                     startHistoryDate = evt.getTimestamp()
-                } else if (evt is MessageReceivedEvent) {
+                }
+                else if (evt is MessageReceivedEvent) {
                     startHistoryDate = evt.getTimestamp()
                 }
             }
@@ -209,14 +208,14 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
             // If the MetaHistoryService is not registered we have nothing to do here. The history
             // could be "disabled" from the user through one of the configuration forms.
             var endHistoryDate = Date(0)
-            val lastMessage = metaHistory.findLastMessagesBefore(chatHistoryFilter,
-                    chatRoomWrapper.adHocChatRoom!!, Date(Long.MAX_VALUE), 1)
+            val lastMessage = metaHistory.findLastMessagesBefore(chatHistoryFilter, chatRoom, Date(Long.MAX_VALUE), 1)
             if (lastMessage.isNotEmpty()) {
                 val fms = lastMessage.iterator()
                 val evt = fms.next()
                 if (evt is MessageDeliveredEvent) {
                     endHistoryDate = evt.getTimestamp()
-                } else if (evt is MessageReceivedEvent) {
+                }
+                else if (evt is MessageReceivedEvent) {
                     endHistoryDate = evt.getTimestamp()
                 }
             }
@@ -224,8 +223,7 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
         }
 
     /**
-     * Returns the `ChatSessionRenderer` that provides the connection between this chat
-     * session and its UI.
+     * Returns the `ChatSessionRenderer` that provides the connection between this chat session and its UI.
      *
      * @return The `ChatSessionRenderer`.
      */
@@ -261,7 +259,8 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
     override val chatStatusIcon: ByteArray
         get() {
             var status = GlobalStatusEnum.OFFLINE
-            if (chatRoomWrapper.adHocChatRoom != null) status = GlobalStatusEnum.ONLINE
+            if (chatRoom != null)
+                status = GlobalStatusEnum.ONLINE
             return status.statusIcon!!
         }
 
@@ -277,11 +276,8 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
      * Initializes the list of participants.
      */
     private fun initChatParticipants() {
-        val chatRoom = chatRoomWrapper.adHocChatRoom
-        if (chatRoom != null) {
-            for (contact in chatRoom.getParticipants()!!) {
-                chatParticipants.add(AdHocConferenceChatContact(contact))
-            }
+        for (contact in chatRoom.getParticipants()!!) {
+            chatParticipants.add(AdHocConferenceChatContact(contact))
         }
     }
 
@@ -297,7 +293,7 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
      */
     override fun participantPresenceChanged(evt: AdHocChatRoomParticipantPresenceChangeEvent) {
         val sourceChatRoom = evt.getAdHocChatRoom()
-        if (sourceChatRoom != chatRoomWrapper.adHocChatRoom) return
+        if (sourceChatRoom != chatRoom) return
         val eventType = evt.getEventType()
         val participant = evt.getParticipant()
         var statusMessage: String? = null
@@ -313,16 +309,18 @@ class AdHocConferenceChatSession(sessionRenderer: ChatPanel, chatRoomWrapper: Ad
              */
             if (!evt.isReasonUserList()) {
                 statusMessage = aTalkApp.getResString(
-                        R.string.service_gui_CHATROOM_USER_JOINED, sourceChatRoom.getName())
+                    R.string.service_gui_CHATROOM_USER_JOINED, sourceChatRoom.getName())
                 sessionRenderer.updateChatContactStatus(chatContact, statusMessage)
             }
-        } else if (eventType == AdHocChatRoomParticipantPresenceChangeEvent.CONTACT_LEFT || eventType == AdHocChatRoomParticipantPresenceChangeEvent.CONTACT_QUIT) {
+        }
+        else if (eventType == AdHocChatRoomParticipantPresenceChangeEvent.CONTACT_LEFT || eventType == AdHocChatRoomParticipantPresenceChangeEvent.CONTACT_QUIT) {
             if (eventType == AdHocChatRoomParticipantPresenceChangeEvent.CONTACT_LEFT) {
                 statusMessage = aTalkApp.getResString(
-                        R.string.service_gui_CHATROOM_USER_LEFT, sourceChatRoom.getName())
-            } else if (eventType == AdHocChatRoomParticipantPresenceChangeEvent.CONTACT_QUIT) {
+                    R.string.service_gui_CHATROOM_USER_LEFT, sourceChatRoom.getName())
+            }
+            else if (eventType == AdHocChatRoomParticipantPresenceChangeEvent.CONTACT_QUIT) {
                 statusMessage = aTalkApp.getResString(
-                        R.string.service_gui_CHATROOM_USER_QUIT, sourceChatRoom.getName())
+                    R.string.service_gui_CHATROOM_USER_QUIT, sourceChatRoom.getName())
             }
             for (chatContact in chatParticipants) {
                 if (chatContact.descriptor!! == participant) {

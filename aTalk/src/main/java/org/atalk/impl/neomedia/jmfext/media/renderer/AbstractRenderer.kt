@@ -59,16 +59,16 @@ abstract class AbstractRenderer<T : Format> : ControlsAdapter(), Renderer {
          * @param threadPriority the priority to set the current thread to
          */
         fun useThreadPriority(threadPriority: Int) {
-            var throwable: Throwable? = null
             try {
                 Thread.currentThread().priority = threadPriority
-            } catch (iae: IllegalArgumentException) {
-                throwable = iae
-            } catch (iae: SecurityException) {
-                throwable = iae
-            }
-            if (throwable != null) {
-                Timber.w(throwable, "Failed to use thread priority: %s", threadPriority)
+            } catch (ex: Exception) {
+                when (ex) {
+                    is IllegalArgumentException,
+                    is SecurityException,
+                    -> {
+                        Timber.w(ex, "Failed to use thread priority: %s", threadPriority)
+                    }
+                }
             }
         }
     }

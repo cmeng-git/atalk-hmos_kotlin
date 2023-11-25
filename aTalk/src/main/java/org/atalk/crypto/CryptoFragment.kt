@@ -16,34 +16,23 @@
  */
 package org.atalk.crypto
 
-import android.content.Context
 import android.content.Intent
 import android.text.TextUtils
 import android.view.Menu
 import android.view.MenuInflater
 import android.view.MenuItem
-import androidx.fragment.app.FragmentTransaction
-import net.java.otr4j.OtrPolicy
 import net.java.sip.communicator.impl.msghistory.MessageHistoryActivator
-import net.java.sip.communicator.plugin.otr.OtrActivator
-import net.java.sip.communicator.plugin.otr.OtrContactManager
-import net.java.sip.communicator.plugin.otr.OtrContactManager.OtrContact
-import net.java.sip.communicator.plugin.otr.ScOtrEngineListener
-import net.java.sip.communicator.plugin.otr.ScOtrKeyManagerListener
-import net.java.sip.communicator.plugin.otr.ScSessionStatus
 import net.java.sip.communicator.service.contactlist.MetaContact
 import net.java.sip.communicator.service.gui.ChatLinkClickedListener
 import net.java.sip.communicator.service.msghistory.MessageHistoryService
 import net.java.sip.communicator.service.protocol.ChatRoom
 import net.java.sip.communicator.service.protocol.Contact
 import net.java.sip.communicator.service.protocol.IMessage
-import net.java.sip.communicator.service.protocol.ProtocolProviderService
 import net.java.sip.communicator.service.protocol.event.ChatRoomMemberPresenceChangeEvent
 import net.java.sip.communicator.service.protocol.event.ChatRoomMemberPresenceListener
 import org.atalk.crypto.listener.CryptoModeChangeListener
 import org.atalk.crypto.omemo.AndroidOmemoService
 import org.atalk.crypto.omemo.OmemoAuthenticateDialog
-import org.atalk.crypto.otr.OTRv3OutgoingSessionSwitcher
 import org.atalk.hmos.R
 import org.atalk.hmos.aTalkApp
 import org.atalk.hmos.gui.AndroidGUIActivator
@@ -51,7 +40,6 @@ import org.atalk.hmos.gui.chat.ChatFragment
 import org.atalk.hmos.gui.chat.ChatMessage
 import org.atalk.hmos.gui.chat.ChatPanel
 import org.atalk.hmos.gui.chat.ChatSessionManager
-import org.atalk.hmos.gui.chat.ChatTransport
 import org.atalk.hmos.gui.chat.MetaContactChatSession
 import org.atalk.hmos.gui.settings.SettingsActivity
 import org.atalk.service.osgi.OSGiFragment
@@ -73,8 +61,6 @@ import org.jivesoftware.smackx.omemo.trust.OmemoFingerprint
 import org.jivesoftware.smackx.pubsub.PubSubException
 import org.jxmpp.jid.BareJid
 import org.jxmpp.jid.DomainBareJid
-import org.jxmpp.jid.EntityBareJid
-import org.jxmpp.jid.Jid
 import timber.log.Timber
 import java.io.IOException
 import java.net.URI
@@ -93,8 +79,6 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
     private lateinit var mCryptoChoice: MenuItem
     private lateinit var mNone: MenuItem
     private lateinit var mOmemo: MenuItem
-    private lateinit var mOtr: MenuItem
-    private lateinit var mOtrSession: MenuItem
 
     private var mConnection: XMPPConnection? = null
 
@@ -114,25 +98,21 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
     private var mEntity: String? = null
     private var mCurrentChatSessionId: String? = null
 
-    /**
-     * Otr Contact for currently active chatSession.
-     */
-    private var currentOtrContact: OtrContact? = null
     private val mMHS: MessageHistoryService
 
     /**
-     * isOmemoMode flag prevents otr from changing status when transition from otr to omemo when
-     * `true`; otr listener is async event triggered.
+     * Creates a new instance of `OtrFragment`.
      */
-    private var isOmemoMode = false
+    init {
+        setHasOptionsMenu(true)
+        mMHS = MessageHistoryActivator.messageHistoryService
+    }
 
     /**
      * {@inheritDoc}
      */
     override fun onStop() {
         ChatSessionManager.removeCurrentChatListener(this)
-        OtrActivator.scOtrEngine.removeListener(scOtrEngineListener)
-        OtrActivator.scOtrKeyManager.removeListener(scOtrKeyManagerListener)
         super.onStop()
     }
 
@@ -142,9 +122,7 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
 
-        // (OtrActivator.scOtrEngine == null)
-        // This happens when Activity is recreated by the system after OSGi service has been
-        // killed (and the whole process)
+        // This happens when Activity is recreated by the system after OSGi service has been killed (and the whole process)
         if (AndroidGUIActivator.bundleContext == null) {
             Timber.e("OSGi service probably not initialized")
             return
@@ -155,12 +133,12 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
          * Menu instances used to select and control the crypto choices.
          * Add chat encryption choices if not found
          */
-        if (menu.findItem(R.id.encryption_none) == null) inflater.inflate(R.menu.crypto_choices, menu)
+        if (menu.findItem(R.id.encryption_none) == null)
+            inflater.inflate(R.menu.crypto_choices, menu)
+
         mCryptoChoice = menu.findItem(R.id.crypto_choice)
         mNone = menu.findItem(R.id.encryption_none)
         mOmemo = menu.findItem(R.id.encryption_omemo)
-        mOtr = menu.findItem(R.id.encryption_otr)
-        mOtrSession = menu.findItem(R.id.otr_session)
 
         // Initialize the padlock icon only after the Crypto menu is created
         doInit()
@@ -171,54 +149,38 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
      */
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         var hasChange = false
-        var showMultiOtrSession = false
         item.isChecked = true
 
         when (item.itemId) {
             R.id.crypto_choice -> {
                 var isOmemoSupported = omemoCapable[mDescriptor]
-                if (isOmemoSupported == null) isOmemoSupported = false
+                if (isOmemoSupported == null)
+                    isOmemoSupported = false
                 mOmemo.isEnabled = isOmemoSupported
                 mOmemo.icon!!.alpha = if (isOmemoSupported) 255 else 80
 
                 // sync button check to current chatType
                 if (activeChat != null) {
                     val mItem = checkCryptoButton(activeChat!!.chatType)
-                    mItem!!.isChecked = true
+                    mItem.isChecked = true
                 }
                 return true
             }
 
             R.id.encryption_none -> {
                 // if ((mChatType != MSGTYPE_NORMAL) && (mChatType != MSGTYPE_MUC_NORMAL)) {
-                mChatType = if (mDescriptor is Contact) ChatFragment.MSGTYPE_NORMAL else ChatFragment.MSGTYPE_MUC_NORMAL
+                mChatType = if (mDescriptor is Contact) ChatFragment.MSGTYPE_NORMAL
+                else ChatFragment.MSGTYPE_MUC_NORMAL
                 hasChange = true
-                doHandleOtrPressed(false)
                 doHandleOmemoPressed(false)
             }
 
             R.id.encryption_omemo -> {
                 if (!activeChat!!.isOmemoChat) mChatType = ChatFragment.MSGTYPE_OMEMO
                 hasChange = true
-                doHandleOtrPressed(false)
                 doHandleOmemoPressed(true)
             }
 
-            R.id.encryption_otr -> {
-                if (!activeChat!!.isOTRChat) mChatType = ChatFragment.MSGTYPE_OTR
-                hasChange = true //only if it is in plain text mode +++? currently
-                // hasChange = (ScSessionStatus.PLAINTEXT == scOtrEngine.getSessionStatus(currentOtrContact));
-                showMultiOtrSession = true
-                doHandleOtrPressed(true)
-                doHandleOmemoPressed(false)
-            }
-
-            R.id.otr_session -> {
-                val otrSessionDialog = OTRv3OutgoingSessionSwitcher.newInstance(currentOtrContact)
-                val ft = parentFragmentManager.beginTransaction()
-                ft.addToBackStack(null)
-                otrSessionDialog.show(ft, "otrDialog")
-            }
             else -> {}
         }
 
@@ -227,10 +189,7 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
             encryptionChoice[chatId] = mChatType
             setStatusOmemo(mChatType)
             // Timber.w("update persistent ChatType to: %s", mChatType);
-            mOtrSession.isVisible = showMultiOtrSession
-            // cmeng (20200717): proceed to save but will forced to normal on retrieval
-            // Do not store OTR as it is not valid on new session startup
-            // if ((mChatType != MSGTYPE_OTR) && (mChatType != MSGTYPE_OTR_UA))
+
             mMHS.setSessionChatType(activeChat!!.chatSession!!, mChatType)
             return true
         }
@@ -245,11 +204,15 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
      */
     private fun checkCryptoButton(chatType: Int): MenuItem {
         val mItem = when (chatType) {
-            ChatFragment.MSGTYPE_NORMAL, ChatFragment.MSGTYPE_MUC_NORMAL ->                 // if offline or in plain mode
-                if (currentOtrContact == null
-                        || ScSessionStatus.PLAINTEXT == OtrActivator.scOtrEngine.getSessionStatus(currentOtrContact)) mNone else mOtr
-            ChatFragment.MSGTYPE_OMEMO, ChatFragment.MSGTYPE_OMEMO_UA, ChatFragment.MSGTYPE_OMEMO_UT -> mOmemo
-            ChatFragment.MSGTYPE_OTR, ChatFragment.MSGTYPE_OTR_UA -> mOtr
+            ChatFragment.MSGTYPE_NORMAL,
+            ChatFragment.MSGTYPE_MUC_NORMAL,
+            -> mNone
+
+            ChatFragment.MSGTYPE_OMEMO,
+            ChatFragment.MSGTYPE_OMEMO_UA,
+            ChatFragment.MSGTYPE_OMEMO_UT,
+            -> mOmemo
+
             else -> mNone
         }
         return mItem
@@ -260,7 +223,6 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
      */
     private fun doHandleOmemoPressed(enable: Boolean) {
         // return: nothing to do if not enable
-        isOmemoMode = enable
         val pps = activeChat!!.protocolProvider
         if (!enable || mOmemoManager == null || mDescriptor == null || !pps.isRegistered) return
 
@@ -302,38 +264,38 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
             } catch (e: InterruptedException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 Timber.i("OMEMO changes mChatType to: %s", mChatType)
                 return
             } catch (e: SmackException.NoResponseException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 Timber.i("OMEMO changes mChatType to: %s", mChatType)
                 return
             } catch (e: CryptoFailedException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 Timber.i("OMEMO changes mChatType to: %s", mChatType)
                 return
             } catch (e: SmackException.NotConnectedException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 Timber.i("OMEMO changes mChatType to: %s", mChatType)
                 return
             } catch (e: SmackException.NotLoggedInException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 Timber.i("OMEMO changes mChatType to: %s", mChatType)
                 return
             } catch (e: Exception) { // catch any non-advertised exception
                 Timber.w("UndecidedOmemoIdentity check failed: %s", e.message)
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 Timber.w("Revert OMEMO mChatType to: %s", mChatType)
                 return
             }
@@ -352,15 +314,18 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
             if (numUntrusted > 0 && numUntrusted == fingerPrints.size) {
                 mChatType = ChatFragment.MSGTYPE_OMEMO_UT
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_SYSTEM, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_UNTRUSTED))
-            } else if (allTrusted) {
+                    getString(R.string.crypto_msg_OMEMO_SESSION_UNTRUSTED))
+            }
+            else if (allTrusted) {
                 mChatType = ChatFragment.MSGTYPE_OMEMO
-            } else {
+            }
+            else {
                 mChatType = ChatFragment.MSGTYPE_OMEMO_UA
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_SYSTEM, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_UNVERIFIED))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_UNVERIFIED))
             }
-        } else if (mDescriptor is ChatRoom) {
+        }
+        else if (mDescriptor is ChatRoom) {
             (mDescriptor as ChatRoom).addMemberPresenceListener(this)
             val entityBareJid = (mDescriptor as ChatRoom).getIdentifier()
             mEntity = entityBareJid.toString()
@@ -377,55 +342,55 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
             } catch (e: NoOmemoSupportException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 return
             } catch (e: InterruptedException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 return
             } catch (e: SmackException.NoResponseException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 return
             } catch (e: XMPPException.XMPPErrorException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 return
             } catch (e: CryptoFailedException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 return
             } catch (e: SmackException.NotConnectedException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 return
             } catch (e: SmackException.NotLoggedInException) {
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
                 return
             } catch (e: Exception) { // catch any non-advertised exception
                 Timber.w("UndecidedOmemoIdentity check failed: %s", e.message)
                 mChatType = ChatFragment.MSGTYPE_MUC_NORMAL
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message))
             }
             allTrusted = allTrusted && isAllTrusted(mMultiUserChat)
             if (allTrusted) {
                 mChatType = ChatFragment.MSGTYPE_OMEMO
-            } else {
+            }
+            else {
                 mChatType = ChatFragment.MSGTYPE_OMEMO_UA
                 activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_SYSTEM, IMessage.ENCODE_PLAIN,
-                        getString(R.string.crypto_msg_OMEMO_SESSION_UNVERIFIED_UNTRUSTED))
+                    getString(R.string.crypto_msg_OMEMO_SESSION_UNVERIFIED_UNTRUSTED))
             }
         }
         // Timber.d("OMEMO changes mChatType to: %s", mChatType);
-        // else Let calling method or OTR Listener to decide what to set
     }
 
     /**
@@ -507,72 +472,6 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
     }
 
     /**
-     * Handle OTR state when the option is selected/unSelected.
-     * mChatType is set by ScOtrEngineListener
-     *
-     *
-     * When (enable == true):
-     * - End session and go back to plain text for all non-encrypt states i.e.
-     * TIMED_OUT, LOADING and FINISHED (remote client end otr session)
-     * - Only start otr session if it is in PLAINTEXT mode
-     * - Return if it is already in ENCRYPTED state
-     *
-     *
-     * Default action when (enable == false):
-     * - End session and go back to plain text for all states i.e.
-     * TIMED_OUT, LOADING, FINISHED (remote client end otr session) and ENCRYPTED
-     * - Do nothing if it is already in PLAINTEXT state
-     *
-     *
-     * Run in new thread prevents network on main thread exception
-     */
-    private fun doHandleOtrPressed(enable: Boolean) {
-        if (currentOtrContact == null || !activeChat!!.protocolProvider.isRegistered) return
-        object : Thread() {
-            override fun run() {
-                val contact = currentOtrContact!!.contact
-                val policy = OtrActivator.scOtrEngine.getContactPolicy(contact!!)
-                val status = OtrActivator.scOtrEngine.getSessionStatus(currentOtrContact)
-                var chatType = ChatFragment.MSGTYPE_UNKNOWN
-                if (enable) {
-                    when (status) {
-                        ScSessionStatus.ENCRYPTED -> chatType = ChatFragment.MSGTYPE_OTR
-                        ScSessionStatus.TIMED_OUT -> {
-                            policy.sendWhitespaceTag = false
-                            OtrActivator.scOtrEngine.setContactPolicy(contact, policy)
-                            OtrActivator.scOtrEngine.endSession(currentOtrContact!!)
-                        }
-                        ScSessionStatus.LOADING, ScSessionStatus.FINISHED -> OtrActivator.scOtrEngine.endSession(currentOtrContact!!)
-                        ScSessionStatus.PLAINTEXT -> {
-                            // End any unclean session if any before proceed
-                            // scOtrEngine.endSession(currentOtrContact);
-                            val globalPolicy = OtrActivator.scOtrEngine.globalPolicy
-                            policy.sendWhitespaceTag = globalPolicy!!.sendWhitespaceTag
-                            OtrActivator.scOtrEngine.setContactPolicy(contact, policy)
-                            OtrActivator.scOtrEngine.startSession(currentOtrContact!!)
-                        }
-                        else -> {}
-                    }
-                } else {
-                    // let calling method or omemo decides what to set when OTR is disabled
-                    when (status) {
-                        ScSessionStatus.PLAINTEXT -> chatType = ChatFragment.MSGTYPE_NORMAL
-                        ScSessionStatus.TIMED_OUT, ScSessionStatus.ENCRYPTED -> {
-                            policy.sendWhitespaceTag = false
-                            OtrActivator.scOtrEngine.setContactPolicy(contact, policy)
-                            OtrActivator.scOtrEngine.endSession(currentOtrContact!!)
-                        }
-                        ScSessionStatus.LOADING, ScSessionStatus.FINISHED -> OtrActivator.scOtrEngine.endSession(currentOtrContact!!)
-                        else -> {}
-                    }
-                }
-                // cmeng - 20190721 - do not perform any UI update on user crypto option selection
-                // Just update OtrEngine state and let the otr events take care the rest of UI update.
-            }
-        }.start()
-    }
-
-    /**
      * Register listeners, initializes the padlock icons and encryption options menu enable state.
      * Must only be performed after the completion of onCreateOptionsMenu().
      *
@@ -580,12 +479,11 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
      */
     private fun doInit() {
         ChatSessionManager.addCurrentChatListener(this)
-        OtrActivator.scOtrEngine.addListener(scOtrEngineListener)
-        OtrActivator.scOtrKeyManager.addListener(scOtrKeyManagerListener)
 
         // Setup currentChatSession options for the Jid if login in
         val currentChatId = ChatSessionManager.getCurrentChatId()
-        if (currentChatId != null) setCurrentChatSession(currentChatId)
+        if (currentChatId != null)
+            setCurrentChatSession(currentChatId)
     }
 
     /**
@@ -602,8 +500,7 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
      *
      *
      * Sets current `ChatPanel` identified by given `chatSessionKey`.
-     * Init Crypto choice to last selected or encryption_none if new
-     * Set currentOtrContact as appropriate if OTR is supported
+     * Init Crypto choice to last selected or encryption_none.
      *
      * @param chatSessionId chat session key managed by `ChatSessionManager`
      */
@@ -621,44 +518,13 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
         // Do not proceed if chat session is triggered from system server (domainBareJid) i.e. welcome message
         runOnUiThread {
             if (activeChat != null
-                    && (contact == null || contact.contactJid !is DomainBareJid)) setCurrentContact(contact, chatSessionId) else {
+                    && (contact == null || contact.contactJid !is DomainBareJid))
+                initOmemo(chatSessionId)
+            else {
                 mOmemo.isEnabled = false
                 mOmemo.icon!!.alpha = 80
-                mOtr.isVisible = false
             }
         }
-    }
-
-    /**
-     * Sets the current `otrContact` and updates status and OTR MenuItem.
-     * // cmeng: Assume support only single remote resource login - current implementation
-     *
-     * @param contact new `contact` to be used.
-     */
-    private fun setCurrentContact(contact: Contact?, chatSessionId: String) {
-        currentOtrContact = null
-        if (contact == null) {
-            setOTRMenuItem(null)
-            initOmemo(chatSessionId)
-        } else {
-            val resources = contact.getResources()
-            if (resources != null) {
-                for (resource in resources) {
-                    val otrContact = OtrContactManager.getOtrContact(contact, resource)
-                    if (otrContact != null) {
-                        currentOtrContact = otrContact
-                        break
-                    }
-                }
-            }
-            setOTRMenuItem(contact)
-            initOmemo(chatSessionId)
-            if (!isOmemoMode && currentOtrContact != null) {
-                setStatusOtr(OtrActivator.scOtrEngine.getSessionStatus(currentOtrContact)!!)
-            }
-        }
-        // Timber.w("set otr session visibility: %s %s", currentOtrContact,isOmemoMode);
-        mOtrSession.isVisible = currentOtrContact != null && !isOmemoMode
     }
 
     /**
@@ -673,10 +539,6 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
         var chatType: Int
         if (!encryptionChoice.containsKey(chatSessionId)) {
             chatType = mMHS.getSessionChatType(activeChat!!.chatSession!!)
-            // OTR state in DB may not be valid in the current chat session, so force it to normal chat mode
-            if (chatType == ChatFragment.MSGTYPE_OTR || chatType == ChatFragment.MSGTYPE_OTR_UA) {
-                chatType = ChatFragment.MSGTYPE_NORMAL
-            }
             encryptionChoice[chatSessionId] = chatType
         }
         chatType = encryptionChoice[chatSessionId]!!
@@ -686,155 +548,10 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
         val mItem = checkCryptoButton(chatType)
         mItem.isChecked = true
         updateOmemoSupport()
-
-        // need to handle crypto state icon if it is not OTR - need to handle for all in Note 8???
-        if (mItem != mOtr) {
-            setStatusOmemo(chatType)
-        }
-        isOmemoMode = mItem === mOmemo
+        setStatusOmemo(chatType)
 
 //		Timber.w("ChatSession ID: %s\nEncryption choice: %s\nmItem: %s\nChatType: %s", chatSessionId,
 //				encryptionChoice, mItem, activeChat.getChatType());
-    }
-
-    /**
-     * OTR engine listener.
-     */
-    private val scOtrEngineListener = object : ScOtrEngineListener {
-        override fun sessionStatusChanged(contact: OtrContact?) {
-            // currentOtrContact can be null - equals order is important.
-            if (contact == currentOtrContact) {
-                setStatusOtr(OtrActivator.scOtrEngine.getSessionStatus(contact)!!)
-            }
-        }
-
-        override fun contactPolicyChanged(contact: Contact?) {
-            // this.otContact can be null - equals order is important.
-            if (contact == currentOtrContact!!.contact) {
-                setOTRMenuItem(contact)
-            }
-        }
-
-        override fun globalPolicyChanged() {
-            if (currentOtrContact != null) setOTRMenuItem(currentOtrContact!!.contact)
-        }
-
-        override fun multipleInstancesDetected(contact: OtrContact?) {
-            runOnUiThread { mOtrSession.isVisible = true }
-        }
-
-        override fun outgoingSessionChanged(contact: OtrContact?) {
-            // this.otrContact can be null - equals order is important.
-            if (contact == currentOtrContact) {
-                setStatusOtr(OtrActivator.scOtrEngine.getSessionStatus(contact)!!)
-            }
-        }
-    }
-
-    /**
-     * OTR key manager listener.
-     */
-    private val scOtrKeyManagerListener = object : ScOtrKeyManagerListener {
-        override fun contactVerificationStatusChanged(contact: OtrContact) {
-            // this.otrContact can be null - equals order is important..
-            if (contact.equals(currentOtrContact)) {
-                setStatusOtr(OtrActivator.scOtrEngine.getSessionStatus(contact)!!)
-            }
-        }
-    }
-
-    /**
-     * Creates a new instance of `OtrFragment`.
-     */
-    init {
-        setHasOptionsMenu(true)
-        mMHS = MessageHistoryActivator.messageHistoryService
-    }
-
-    /**
-     * Sets the button enabled status according to the passed in [OtrPolicy].
-     * Hides the padlock when OTR is not supported; Grey when supported but option disabled
-     *
-     * @param contact OTR .
-     */
-    private fun setOTRMenuItem(contact: Contact?) {
-        runOnUiThread {
-            // if (mOtr == null) return@runOnUiThread
-            if (contact != null && contact.presenceStatus.isOnline) {
-                mOtr.isVisible = true
-
-                // aTalk does not implement contact OTR UI for user selection.
-                val globalPolicy = OtrActivator.scOtrEngine.globalPolicy
-                if (globalPolicy!!.enableManual) {
-                    mOtr.isEnabled = true
-                    mOtr.icon!!.alpha = 255
-                } else {
-                    mOtr.icon!!.alpha = 80
-                    mOtr.isEnabled = false
-                }
-            } else {
-                mOtr.isVisible = false
-            }
-        }
-    }
-
-    /**
-     * Sets the padlock icon according to the passed in [ScSessionStatus].
-     *
-     * @param status the [ScSessionStatus].
-     * @see .isOmemoMode denition
-     */
-    private fun setStatusOtr(status: ScSessionStatus) {
-        // Only allow otr changing status triggered from events when not in omemo session
-        if (!isOmemoMode) {
-            val iconId: Int
-            val tipKey: Int
-            var chatType = ChatFragment.MSGTYPE_NORMAL
-            when (status) {
-                ScSessionStatus.ENCRYPTED -> {
-                    val pubKey = OtrActivator.scOtrEngine.getRemotePublicKey(currentOtrContact)
-                    val fingerprint = OtrActivator.scOtrKeyManager.getFingerprintFromPublicKey(pubKey)
-                    val isVerified = OtrActivator.scOtrKeyManager.isVerified(currentOtrContact!!.contact, fingerprint)
-                    chatType = if (isVerified) ChatFragment.MSGTYPE_OTR else ChatFragment.MSGTYPE_OTR_UA
-                    iconId = if (isVerified) R.drawable.crypto_otr_verified else R.drawable.crypto_otr_unverified
-                    tipKey = if (isVerified) R.string.plugin_otr_menu_OTR_AUTHETICATED else R.string.plugin_otr_menu_OTR_NON_AUTHETICATED
-                }
-                ScSessionStatus.FINISHED -> {
-                    iconId = R.drawable.crypto_otr_finished
-                    tipKey = R.string.plugin_otr_menu_OTR_Finish
-                }
-                ScSessionStatus.PLAINTEXT -> {
-                    iconId = R.drawable.crypto_otr_unsecure
-                    tipKey = R.string.plugin_otr_menu_OTR_PLAINTTEXT
-                    chatType = ChatFragment.MSGTYPE_NORMAL
-                }
-                ScSessionStatus.LOADING -> {
-                    iconId = R.drawable.crypto_otr_loading
-                    tipKey = R.string.plugin_otr_menu_OTR_HANDSHAKE
-                }
-                ScSessionStatus.TIMED_OUT -> {
-                    iconId = R.drawable.crypto_otr_pd_broken
-                    tipKey = R.string.plugin_otr_menu_OTR_TIMEOUT
-                }
-            }
-            runOnUiThread {
-                mCryptoChoice.setIcon(iconId)
-                mCryptoChoice.setTitle(tipKey)
-                mOtrSession.isVisible = mChatType != ChatFragment.MSGTYPE_NORMAL
-            }
-
-            // setStatusOmemo() will always get executed. So skip if same chatType
-            if (chatType != mChatType || chatType != activeChat!!.chatType) {
-                // Timber.d("OTR listener change mChatType to: %s (%s)", mChatType, chatType);
-                mChatType = chatType
-
-                // cmeng (20200717): proceed to save but will forced to normal on retrieval
-                // Do not store OTR as it is not valid on new session startup
-                // if (mChatType == MSGTYPE_NORMAL)
-                mMHS.setSessionChatType(activeChat!!.chatSession!!, mChatType)
-                notifyCryptoModeChanged(mChatType)
-            }
-        }
     }
 
     /**
@@ -859,11 +576,14 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
                 iconId = R.drawable.crypto_omemo_untrusted
                 tipKey = R.string.omemo_menu_untrusted
             }
-            ChatFragment.MSGTYPE_NORMAL, ChatFragment.MSGTYPE_MUC_NORMAL -> {
-                iconId = R.drawable.crypto_otr_unsecure
+            ChatFragment.MSGTYPE_NORMAL,
+            ChatFragment.MSGTYPE_MUC_NORMAL,
+            -> {
+                iconId = R.drawable.crypto_unsecure
                 tipKey = R.string.menu_crypto_plain_text
             }
-            else ->                 // return if it is in OTR mode (none of above)
+            // return if it is in none of above
+            else ->
                 return
         }
         runOnUiThread {
@@ -908,7 +628,8 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
                     entityCan = if (mDescriptor is ChatRoom) {
                         val muc = (mDescriptor as ChatRoom).getMultiUserChat()
                         mOmemoManager!!.multiUserChatSupportsOmemo(muc)
-                    } else {
+                    }
+                    else {
                         // buddy online check may sometimes experience reply timeout; OMEMO obsoleted feature
                         // not a good idea to include PEP_NODE_DEVICE_LIST_NOTIFY as some siblings may
                         // support omemo encryption.
@@ -946,20 +667,6 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
     }
 
     /**
-     * Indicates a contact has changed its status.
-     */
-    fun onContactPresenceStatusChanged() {
-        if (activeChat != null) {
-            val metaContact = activeChat!!.metaContact
-            val contact = metaContact!!.getDefaultContact()
-            // proceed if this is not a conference call (contact != null), and is not a domainBareJid
-            if (contact != null && contact.contactJid !is DomainBareJid) {
-                setOTRMenuItem(contact)
-            } else setOTRMenuItem(null)
-        }
-    }
-
-    /**
      * Listens for show history popup link
      */
     class ShowHistoryLinkListener : ChatLinkClickedListener {
@@ -987,8 +694,9 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
         if (allTrusted) {
             onOmemoAuthenticate(ChatFragment.MSGTYPE_OMEMO)
             activeChat!!.addMessage(mEntity!!, Date(), ChatMessage.MESSAGE_SYSTEM, IMessage.ENCODE_PLAIN,
-                    getString(R.string.crypto_msg_OMEMO_SESSION_VERIFIED))
-        } else {
+                getString(R.string.crypto_msg_OMEMO_SESSION_VERIFIED))
+        }
+        else {
             onOmemoAuthenticate(ChatFragment.MSGTYPE_OMEMO_UA)
             // activeChat.addMessage(mEntity, new Date(), ChatMessage.MESSAGE_ERROR, IMessage.ENCODE_PLAIN,
             //         "Undecided Omemo Identity: " + omemoDevices.toString());
@@ -1024,7 +732,8 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
         if (!cryptoModeChangeListeners.containsKey(mDescriptor)) {
             listener = cryptoModeChangeListeners[null]
             addCryptoModeListener(mDescriptor, listener)
-        } else {
+        }
+        else {
             listener = cryptoModeChangeListeners[mDescriptor]
         }
         listener?.onCryptoModeChange(chatType)
@@ -1051,12 +760,16 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
         }
         runOnUiThread {
             when (chatType) {
-                ChatFragment.MSGTYPE_NORMAL, ChatFragment.MSGTYPE_MUC_NORMAL -> onOptionsItemSelected(mNone)
-                ChatFragment.MSGTYPE_OMEMO ->                     // Do not emulate Omemo button press if mOmemoManager is null
+                ChatFragment.MSGTYPE_NORMAL,
+                ChatFragment.MSGTYPE_MUC_NORMAL,
+                ->
+                    onOptionsItemSelected(mNone)
+
+                ChatFragment.MSGTYPE_OMEMO ->
+                    // Do not emulate Omemo button press if mOmemoManager is null
                     if (mOmemoManager != null) {
                         onOptionsItemSelected(mOmemo)
                     }
-                ChatFragment.MSGTYPE_OTR -> onOptionsItemSelected(mOtr)
             }
         }
     }
@@ -1089,7 +802,8 @@ class CryptoFragment : OSGiFragment(), ChatSessionManager.CurrentChatListener, C
         fun resetEncryptionChoice(chatSessionId: String?) {
             if (TextUtils.isEmpty(chatSessionId)) {
                 encryptionChoice.clear()
-            } else {
+            }
+            else {
                 encryptionChoice.remove(chatSessionId)
             }
         }

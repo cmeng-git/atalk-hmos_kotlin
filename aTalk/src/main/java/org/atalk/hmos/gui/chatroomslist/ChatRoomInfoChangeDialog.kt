@@ -24,7 +24,6 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.TextView
 import net.java.sip.communicator.impl.muc.MUCActivator
-import net.java.sip.communicator.impl.muc.MUCServiceImpl
 import net.java.sip.communicator.service.muc.ChatRoomWrapper
 import org.atalk.hmos.R
 import org.atalk.hmos.gui.dialogs.DialogActivity

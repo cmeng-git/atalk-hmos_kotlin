@@ -5,7 +5,6 @@
  */
 package net.java.sip.communicator.plugin.loggingutils
 
-import android.content.Context
 import android.content.Intent
 import net.java.sip.communicator.impl.protocol.jabber.JabberActivator
 import org.atalk.hmos.R
@@ -96,7 +95,7 @@ class LogUploadServiceImpl : LogUploadService {
             Timber.w(e, "An exception occurred while writing debug info")
         }
         val versionSerVice = JabberActivator.versionService
-        Timber.i("Device installed with atalk-hmos version: %s, version code: %s",
+        Timber.i("Device installed with aTalk version: %s, version code: %s",
                 versionSerVice!!.currentVersion, versionSerVice.currentVersionCode)
     }
 

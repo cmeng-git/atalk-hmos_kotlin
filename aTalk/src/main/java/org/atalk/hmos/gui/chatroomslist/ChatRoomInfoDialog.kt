@@ -26,15 +26,12 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.TextView
 import net.java.sip.communicator.service.muc.ChatRoomWrapper
-import net.java.sip.communicator.service.protocol.ChatRoomMember
-import net.java.sip.communicator.service.protocol.ProtocolProviderService
 import org.atalk.hmos.R
 import org.atalk.service.osgi.OSGiDialogFragment
 import org.jivesoftware.smack.SmackException
 import org.jivesoftware.smack.XMPPException
 import org.jivesoftware.smackx.muc.MultiUserChatManager
 import org.jivesoftware.smackx.muc.RoomInfo
-import org.jxmpp.jid.EntityBareJid
 import org.jxmpp.util.XmppStringUtils
 import timber.log.Timber
 

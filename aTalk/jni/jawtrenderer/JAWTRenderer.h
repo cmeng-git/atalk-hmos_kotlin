@@ -2,8 +2,8 @@
 #include <jni.h>
 /* Header for class org_atalk_impl_neomedia_jmfext_media_renderer_video_JAWTRenderer */
 
-#ifndef _Included_org_atalk_impl_neomedia_jmfext_media_renderer_video_JAWTRenderer
-#define _Included_org_atalk_impl_neomedia_jmfext_media_renderer_video_JAWTRenderer
+#ifndef _Included_JAWTRenderer
+#define _Included_JAWTRenderer
 #ifdef __cplusplus
 extern "C" {
 #endif

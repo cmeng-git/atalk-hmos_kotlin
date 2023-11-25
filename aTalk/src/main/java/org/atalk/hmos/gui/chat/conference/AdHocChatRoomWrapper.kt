@@ -15,14 +15,13 @@ import net.java.sip.communicator.service.protocol.ProtocolProviderService
  * @author Valentin Martinet
  * @author Eng Chong Meng
  */
-class AdHocChatRoomWrapper
 /**
  * Creates a `AdHocChatRoomWrapper` by specifying the protocol provider, the identifier and the name of the ad-hoc chat room.
  *
  * @param parentProvider the protocol provider to which the corresponding ad-hoc chat room belongs
  * @param adHocChatRoomID the identifier of the corresponding ad-hoc chat room
  */
-(
+class AdHocChatRoomWrapper(
         /**
          * Returns the parent protocol provider.
          *
@@ -35,20 +34,12 @@ class AdHocChatRoomWrapper
          * @return the identifier of the ad-hoc chat room
          */
         // private final String adHocChatRoomName;
-        val adHocChatRoomID: String) {
-
+        val adHocChatRoomID: String,
+) {
     /**
-     * Returns the `AdHocChatRoom` that this wrapper represents.
-     *
-     * @return the `AdHocChatRoom` that this wrapper represents.
+     * The `AdHocChatRoom` that this wrapper represents.
      */
-    /**
-     * Sets the `AdHocChatRoom` that this wrapper represents.
-     *
-     * @param adHocChatRoom
-     * the ad-hoc chat room
-     */
-    var adHocChatRoom: AdHocChatRoom? = null
+    lateinit var adHocChatRoom: AdHocChatRoom
 
     /**
      * Creates a `ChatRoomWrapper` by specifying the corresponding chat room.
@@ -56,8 +47,8 @@ class AdHocChatRoomWrapper
      * @param adHocChatRoom
      * the chat room to which this wrapper corresponds.
      */
-    constructor(parentProvider: AdHocChatRoomProviderWrapper,
-            adHocChatRoom: AdHocChatRoom) : this(parentProvider, adHocChatRoom.getIdentifier()) {
+    constructor(parentProvider: AdHocChatRoomProviderWrapper, adHocChatRoom: AdHocChatRoom)
+            : this(parentProvider, adHocChatRoom.getIdentifier()) {
         this.adHocChatRoom = adHocChatRoom
     }
 
@@ -66,8 +57,10 @@ class AdHocChatRoomWrapper
      *
      * @return the ad-hoc chat room name
      */
-    val adHocChatRoomName: String?
-        get() = if (adHocChatRoom != null) adHocChatRoom!!.getName() else adHocChatRoomID
+    val adHocChatRoomName: String
+        get() = if (adHocChatRoom != null)
+            adHocChatRoom.getName()
+        else adHocChatRoomID
 
     /**
      * Returns the protocol provider service.

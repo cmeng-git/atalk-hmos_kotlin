@@ -13,13 +13,11 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.drawable.AnimationDrawable
-import android.net.Uri
 import android.os.Bundle
 import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.text.Editable
-import android.text.Html
 import android.text.Html.*
 import android.text.TextUtils
 import android.text.TextWatcher
@@ -37,9 +35,6 @@ import androidx.core.view.inputmethod.InputContentInfoCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.RecyclerView
 import net.java.sip.communicator.impl.protocol.jabber.CallJabberImpl
-import net.java.sip.communicator.impl.protocol.jabber.CallPeerJabberImpl
-import net.java.sip.communicator.service.contactlist.MetaContact
-import net.java.sip.communicator.service.gui.UIService
 import net.java.sip.communicator.service.protocol.IMessage
 import net.java.sip.communicator.util.ConfigurationUtils
 import okhttp3.internal.notify
@@ -51,7 +46,6 @@ import org.atalk.hmos.gui.aTalk
 import org.atalk.hmos.gui.call.CallManager
 import org.atalk.hmos.gui.call.notification.CallNotificationManager
 import org.atalk.hmos.gui.chat.ChatFragment.*
-import org.atalk.hmos.gui.share.Attachment
 import org.atalk.hmos.gui.share.MediaPreviewAdapter
 import org.atalk.hmos.gui.util.ContentEditText
 import org.atalk.hmos.gui.util.HtmlImageGetter
@@ -301,7 +295,7 @@ class ChatController(activity: Activity, fragment: ChatFragment?) : View.OnClick
         if (chatPanel == null) chatPanel = mChatFragment!!.chatPanel
         val correctionUID = chatPanel!!.correctionUID
         var encryption = IMessage.ENCRYPTION_NONE
-        if (chatPanel!!.isOmemoChat) encryption = IMessage.ENCRYPTION_OMEMO else if (chatPanel!!.isOTRChat) encryption = IMessage.ENCRYPTION_OTR
+        if (chatPanel!!.isOmemoChat) encryption = IMessage.ENCRYPTION_OMEMO
         if (correctionUID == null) {
             try {
                 mChatTransport!!.sendInstantMessage(message, encryption or encType)
@@ -363,14 +357,14 @@ class ChatController(activity: Activity, fragment: ChatFragment?) : View.OnClick
             if (!chatMessage!!.message!!.matches(ChatMessage.HTML_MARKUP)) editText(adapter, chatMessage, position)
         }
         else {
-            msgEdit.setText(chatMessage!!.contentForCorrection)
+            msgEdit.setText(chatMessage!!.getContentForCorrection())
         }
     }
 
     fun editText(adapter: AdapterView<*>?, chatMessage: ChatMessage, position: Int) {
         // ListView cListView = chatFragment.getChatListView()
-        val uidToCorrect = chatMessage.uidForCorrection
-        val content = chatMessage.contentForCorrection
+        val uidToCorrect = chatMessage.getUidForCorrection()
+        val content = chatMessage.getContentForCorrection()
         if (!TextUtils.isEmpty(content)) {
             // Sets corrected message content and show the keyboard
             msgEdit.setText(content)

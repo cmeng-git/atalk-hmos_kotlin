@@ -26,20 +26,19 @@ import java.util.*
  * @author Lyubomir Marinov
  * @author Eng Chong Meng
  */
-class ChatRoomMemberPresenceChangeEvent
 /**
- * Creates a `ChatRoomMemberPresenceChangeEvent` representing that a change in the
- * presence of a `ChatRoomMember` has occurred. Changes may include the participant being
- * kicked, join, left, etc.
+ * Creates a `ChatRoomMemberPresenceChangeEvent` representing that a change in the presence of a
+ * `ChatRoomMember` has occurred. Changes may include the participant being kicked, join, left, etc.
  *
  * @param sourceRoom the `ChatRoom` that produced this event
  * @param sourceMember the `ChatRoomMember` who this event is about
- * @param actor the ChatRoom Member who participated as an actor in the new event. For
- * example, in the case of a `MEMBER_KICKED` event the `actor` is the
- * moderator (e.g. user@host.org) who kicked the `sourceMember`.
+ * @param actor the ChatRoom Member who participated as an actor in the new event. For example, in the case
+ * of a `MEMBER_KICKED` event the `actor` is the moderator (e.g. user@host.org) who kicked the `sourceMember`.
  * @param eventType the event type; one of the MEMBER_XXX constants
  * @param reason the reason explaining why this event might have occurred
- */(sourceRoom: ChatRoom?,
+ */
+class ChatRoomMemberPresenceChangeEvent(
+        sourceRoom: ChatRoom,
         /**
          * The chat room member that the event relates to.
          */
@@ -55,20 +54,21 @@ class ChatRoomMemberPresenceChangeEvent
         /**
          * An optional String indicating a possible reason as to why the event might have occurred.
          */
-        private val reason: String) : EventObject(sourceRoom) {
+        private val reason: String?,
+) : EventObject(sourceRoom) {
     /**
-     * Creates a `ChatRoomMemberPresenceChangeEvent` representing that a change in the
-     * presence of a `ChatRoomMember` has occurred. Changes may include the participant being
-     * kicked, join, left, etc.
+     * Creates a `ChatRoomMemberPresenceChangeEvent` representing that a change in the presence of a
+     * `ChatRoomMember` has occurred. Changes may include the participant being kicked, join, left, etc.
      *
      * @param sourceRoom the `ChatRoom` that produced this event
      * @param sourceMember the `ChatRoomMember` that this event is about
      * @param eventType the event type; one of the MEMBER_XXX constants
      * @param reason the reason explaining why this event might have occurred
      */
-    constructor(sourceRoom: ChatRoom?, sourceMember: ChatRoomMember,
-            eventType: String, reason: String) : this(sourceRoom, sourceMember, null, eventType, reason) {
-    }
+    constructor(
+            sourceRoom: ChatRoom, sourceMember: ChatRoomMember,
+            eventType: String, reason: String?,
+    ) : this(sourceRoom, sourceMember, null, eventType, reason)
 
     /**
      * Returns the chat room that produced this event.
@@ -94,7 +94,7 @@ class ChatRoomMemberPresenceChangeEvent
      * @return a human readable String containing the reason for this event, or null if no
      * particular reason was specified.
      */
-    fun getReason(): String {
+    fun getReason(): String? {
         return reason
     }
 

@@ -64,7 +64,7 @@ class FileReceiveConversation private constructor(cPanel: ChatFragment, dir: Str
         messageViewHolder.stickerView.setImageDrawable(null)
         xferFile = createOutFile(fileTransferRequest)
         mFileTransfer = fileTransferRequest.onPrepare(xferFile)
-        mFileTransfer!!.addStatusListener(this)
+        mFileTransfer.addStatusListener(this)
         mEncryption = fileTransferRequest.getEncryptionType()
         setEncState(mEncryption)
         val downloadFileSize = fileTransferRequest.getFileSize()
@@ -130,7 +130,7 @@ class FileReceiveConversation private constructor(cPanel: ChatFragment, dir: Str
             FileTransferStatusChangeEvent.COMPLETED -> {
                 statusText = aTalkApp.getResString(R.string.xFile_FILE_RECEIVE_COMPLETED, mSendTo)
                 if (xferFile == null) { // Android view redraw happen
-                    xferFile = mChatFragment.chatListAdapter!!.getFileName(msgViewId)
+                    xferFile = mChatFragment.chatListAdapter!!.getFileName(msgViewId)!!
                 }
             }
             FileTransferStatusChangeEvent.FAILED -> {
@@ -156,7 +156,7 @@ class FileReceiveConversation private constructor(cPanel: ChatFragment, dir: Str
     private fun createOutFile(fileTransferRequest: IncomingFileTransferRequest): File {
         val fileName = fileTransferRequest.getFileName()
         val mimeType = fileTransferRequest.getMimeType()
-        setTransferFilePath(fileName!!, mimeType!!)
+        setTransferFilePath(fileName!!, mimeType)
 
         // Timber.d("Create Output File: %s (%s)", xferFile, fileName);
         // Change the file name to the name we would use on the local file system.
@@ -177,14 +177,14 @@ class FileReceiveConversation private constructor(cPanel: ChatFragment, dir: Str
             // Remove previously added listener (no further required), that notify for request cancellations if any.
             fileTransferOpSet.removeFileTransferListener(this@FileReceiveConversation)
             if (mFileTransfer != null) {
-                mChatFragment.addActiveFileTransfer(mFileTransfer!!.getID(), mFileTransfer!!, msgViewId)
+                mChatFragment.addActiveFileTransfer(mFileTransfer.getID(), mFileTransfer, msgViewId)
             }
             return true
         }
 
         override fun onPostExecute(result: Boolean) {
             if (mFileTransfer != null) {
-                setFileTransfer(mFileTransfer!!, fileTransferRequest.getFileSize())
+                setFileTransfer(mFileTransfer, fileTransferRequest.getFileSize())
             }
         }
     }

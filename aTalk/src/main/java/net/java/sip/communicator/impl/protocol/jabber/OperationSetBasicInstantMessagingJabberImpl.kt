@@ -5,7 +5,6 @@
  */
 package net.java.sip.communicator.impl.protocol.jabber
 
-import android.content.Context
 import android.text.Html
 import android.text.TextUtils
 import net.java.sip.communicator.impl.muc.MUCActivator
@@ -78,7 +77,8 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
         /**
          * The provider that created us.
          */
-        private val mPPS: ProtocolProviderServiceJabberImpl) : AbstractOperationSetBasicInstantMessaging(), RegistrationStateChangeListener, OperationSetMessageCorrection, IncomingChatMessageListener, StanzaListener, CarbonCopyReceivedListener, OmemoMessageListener {
+        private val mPPS: ProtocolProviderServiceJabberImpl,
+) : AbstractOperationSetBasicInstantMessaging(), RegistrationStateChangeListener, OperationSetMessageCorrection, IncomingChatMessageListener, StanzaListener, CarbonCopyReceivedListener, OmemoMessageListener {
     /**
      * A table mapping contact addresses to message threads that can be used to target a specific
      * resource (rather than sending a message to all logged instances of a user).
@@ -118,7 +118,7 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
         var threadID: String? = null
     }
 
-    private var mUserJid: String? = null
+    private lateinit var mUserJid: String
     private var mOmemoManager: OmemoManager? = null
     private val omemoVAxolotlProvider = OmemoVAxolotlProvider()
 
@@ -214,7 +214,8 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
         // by default we support default mime type, for other mime types method must be overridden
         if (IMessage.ENCODE_PLAIN == mimeType) {
             return true
-        } else if (IMessage.ENCODE_HTML == mimeType) {
+        }
+        else if (IMessage.ENCODE_HTML == mimeType) {
             val toJid = getRecentFullJidForContactIfPossible(contact)
             return mPPS.isFeatureListSupported(toJid, XHTMLExtension.NAMESPACE)
         }
@@ -271,7 +272,8 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
                     ta = StoredThreadID()
                     ta.threadID = nextThreadID()
                     putJidForAddress(bareJid, ta.threadID)
-                } else {
+                }
+                else {
                     return null
                 }
             }
@@ -314,8 +316,10 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
      * @return The MessageDeliveryEvent that resulted after attempting to send this message, so the
      * calling function can modify it if needed.
      */
-    private fun sendMessage(to: Contact?, toResource: ContactResource?,
-            message: IMessage?, extElements: Collection<ExtensionElement>): MessageDeliveredEvent? {
+    private fun sendMessage(
+            to: Contact?, toResource: ContactResource?,
+            message: IMessage?, extElements: Collection<ExtensionElement>,
+    ): MessageDeliveredEvent? {
         require(to is ContactJabberImpl) { "The specified contact is not a Jabber contact: $to" }
         try {
             assertConnected()
@@ -330,11 +334,11 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
         val threadID = getThreadIDForAddress(toJid, true)
         val timeStamp = Date()
         val messageBuilder = StanzaBuilder.buildMessage(message!!.getMessageUID())
-                .ofType(Message.Type.chat)
-                .to(toJid)
-                .from(mPPS.connection!!.user)
-                .setThread(threadID)
-                .addExtensions(extElements)
+            .ofType(Message.Type.chat)
+            .to(toJid)
+            .from(mPPS.connection!!.user)
+            .setThread(threadID)
+            .addExtensions(extElements)
         Timber.log(TimberLog.FINER, "MessageDeliveredEvent - Sending a message to: %s", toJid)
         message.setServerMsgId(messageBuilder.stanzaId)
         val msgDeliveryPendingEvt = MessageDeliveredEvent(message, to, toResource, mUserJid, timeStamp)
@@ -358,18 +362,17 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
                 // if (jabberProvider.isFeatureListSupported(toJid, XHTMLExtension.NAMESPACE)) {
                 // Add the XHTML text to the message
                 val htmlText = XHTMLText("", "us")
-                        .append(content)
-                        .appendCloseBodyTag()
+                    .append(content)
+                    .appendCloseBodyTag()
                 val xhtmlExtension = XHTMLExtension()
                 xhtmlExtension.addBody(htmlText.toXML())
                 messageBuilder.addExtension(xhtmlExtension)
-            } else {
+            }
+            else {
                 // this is plain text so keep it as it is.
                 messageBuilder.addBody(null, content)
             }
 
-            // msg.addExtension(new Version());
-            // Disable carbon for OTR message
             if (event.isMessageEncrypted() && isCarbonEnabled) {
                 CarbonExtension.Private.addTo(messageBuilder)
             }
@@ -429,7 +432,10 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
      * @param message The new message.
      * @param correctedMessageUID The ID of the message being replaced.
      */
-    override fun correctMessage(to: Contact?, resource: ContactResource?, message: IMessage?, correctedMessageUID: String?) {
+    override fun correctMessage(
+            to: Contact?, resource: ContactResource?, message: IMessage?,
+            correctedMessageUID: String?,
+    ) {
         val extElements: Collection<ExtensionElement> = listOf<ExtensionElement>(MessageCorrectExtension(correctedMessageUID))
         val msgDelivered = sendMessage(to, resource, message, extElements)
         if (msgDelivered != null) {
@@ -440,7 +446,7 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
 
     override fun sendInstantMessage(
             to: Contact, resource: ContactResource?, message: IMessage, correctedMessageUID: String?,
-            omemoManager: OmemoManager
+            omemoManager: OmemoManager,
     ) {
         val bareJid = to.contactJid!!.asBareJid()
         var msgContent = message.getContent()
@@ -454,8 +460,8 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
                 // Make this into encrypted xhtmlText for inclusion
                 val xhtmlEncrypted = encryptedMessage.element.toXML().toString()
                 val xhtmlText = XHTMLText("", "us")
-                        .append(xhtmlEncrypted)
-                        .appendCloseBodyTag()
+                    .append(xhtmlEncrypted)
+                    .appendCloseBodyTag()
 
                 // OMEMO body message content will strip off any xhtml tags info
                 msgContent = Html.fromHtml(msgContent).toString()
@@ -475,29 +481,30 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
             message.setReceiptStatus(ChatMessage.MESSAGE_DELIVERY_CLIENT_SENT)
             val msgDelivered = MessageDeliveredEvent(message, to, resource, mUserJid, correctedMessageUID)
             fireMessageEvent(msgDelivered)
-        } catch (e: UndecidedOmemoIdentityException) {
-            val omemoAuthListener = OmemoAuthenticateListener(to, resource!!, message, correctedMessageUID!!,
-                omemoManager)
-            val ctx = aTalkApp.globalContext
-            ctx.startActivity(OmemoAuthenticateDialog.createIntent(ctx, omemoManager, e.undecidedDevices, omemoAuthListener))
-            return
-        } catch (e: CryptoFailedException) {
-            errMessage = aTalkApp.getResString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message)
-        } catch (e: InterruptedException) {
-            errMessage = aTalkApp.getResString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message)
-        } catch (e: NotConnectedException) {
-            errMessage = aTalkApp.getResString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message)
-        } catch (e: NoResponseException) {
-            errMessage = aTalkApp.getResString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message)
-        } catch (e: IOException) {
-            errMessage = aTalkApp.getResString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, e.message)
-        } catch (e: NotLoggedInException) {
-            errMessage = aTalkApp.getResString(R.string.service_gui_MSG_SEND_CONNECTION_PROBLEM)
+        } catch (ex: Exception) {
+            when (ex) {
+                is UndecidedOmemoIdentityException -> {
+                    val omemoAuthListener = OmemoAuthenticateListener(to, resource!!, message, correctedMessageUID, omemoManager)
+                    val ctx = aTalkApp.globalContext
+                    ctx.startActivity(OmemoAuthenticateDialog.createIntent(ctx, omemoManager, ex.undecidedDevices, omemoAuthListener))
+                    return
+                }
+
+                is CryptoFailedException,
+                is InterruptedException,
+                is NotConnectedException,
+                is NoResponseException,
+                is IOException,
+                -> errMessage = aTalkApp.getResString(R.string.crypto_msg_OMEMO_SESSION_SETUP_FAILED, ex.message)
+
+                is NotLoggedInException ->
+                    errMessage = aTalkApp.getResString(R.string.service_gui_MSG_SEND_CONNECTION_PROBLEM)
+            }
         }
         if (!TextUtils.isEmpty(errMessage)) {
             Timber.w("%s", errMessage)
             val failedEvent = MessageDeliveryFailedEvent(message, to,
-                    MessageDeliveryFailedEvent.OMEMO_SEND_ERROR, System.currentTimeMillis(), errMessage)
+                MessageDeliveryFailedEvent.OMEMO_SEND_ERROR, System.currentTimeMillis(), errMessage)
             fireMessageEvent(failedEvent)
         }
     }
@@ -505,17 +512,20 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
     /**
      * Omemo listener callback on user authentication for undecided omemoDevices
      */
-    private inner class OmemoAuthenticateListener(var to: Contact, var resource: ContactResource, var message: IMessage, var correctedMessageUID: String,
-            var omemoManager: OmemoManager) : AuthenticateListener {
+    private inner class OmemoAuthenticateListener(
+            var to: Contact, var resource: ContactResource, var message: IMessage, var correctedMessageUID: String?,
+            var omemoManager: OmemoManager,
+    ) : AuthenticateListener {
         override fun onAuthenticate(allTrusted: Boolean, omemoDevices: Set<OmemoDevice>?) {
             if (allTrusted) {
                 sendInstantMessage(to, resource, message, correctedMessageUID, omemoManager)
-            } else {
+            }
+            else {
                 val errMessage = aTalkApp.getResString(R.string.omemo_send_error,
-                        "Undecided Omemo Identity: " + omemoDevices.toString())
+                    "Undecided Omemo Identity: " + omemoDevices.toString())
                 Timber.w("%s", errMessage)
                 val failedEvent = MessageDeliveryFailedEvent(message, to,
-                        MessageDeliveryFailedEvent.OMEMO_SEND_ERROR, System.currentTimeMillis(), errMessage)
+                    MessageDeliveryFailedEvent.OMEMO_SEND_ERROR, System.currentTimeMillis(), errMessage)
                 fireMessageEvent(failedEvent)
             }
         }
@@ -553,7 +563,8 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
             // make sure this listener is not already installed in this connection - ChatManager has taken care <set>
             mChatManager = ChatManager.getInstanceFor(connection)
             mChatManager!!.addIncomingListener(this)
-        } else if (evt.getNewState() === RegistrationState.REGISTERED) {
+        }
+        else if (evt.getNewState() === RegistrationState.REGISTERED) {
             val userJid = connection!!.user
             mUserJid = userJid.toString()
 
@@ -561,7 +572,8 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
             connection.removeAsyncStanzaListener(this@OperationSetBasicInstantMessagingJabberImpl)
             connection.addAsyncStanzaListener(this, INCOMING_SVR_MESSAGE_FILTER)
             enableDisableCarbon(userJid)
-        } else if (evt.getNewState() === RegistrationState.UNREGISTERED || evt.getNewState() === RegistrationState.CONNECTION_FAILED || evt.getNewState() === RegistrationState.AUTHENTICATION_FAILED) {
+        }
+        else if (evt.getNewState() === RegistrationState.UNREGISTERED || evt.getNewState() === RegistrationState.CONNECTION_FAILED || evt.getNewState() === RegistrationState.AUTHENTICATION_FAILED) {
             if (connection != null) {  // must not assume - may call after log off
                 connection.removeAsyncStanzaListener(this)
                 if (connection.isAuthenticated) {
@@ -615,7 +627,7 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
         val sourceContact = opSetPersPresence!!.createVolatileContact(message.from)
         val sender = message.from.toString()
         val msgEvt = MessageReceivedEvent(newMessage, sourceContact,
-                null, sender, getTimeStamp(message), null)
+            null, sender, getTimeStamp(message), null)
         fireMessageEvent(msgEvt)
     }
 
@@ -628,12 +640,13 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
         try {
             enableCarbon = (mCarbonManager!!.isSupportedByServer
                     && !mPPS.accountID.getAccountPropertyBoolean(
-                    ProtocolProviderFactory.IS_CARBON_DISABLED, false))
+                ProtocolProviderFactory.IS_CARBON_DISABLED, false))
             if (enableCarbon) {
                 mCarbonManager!!.carbonsEnabled = true
                 mCarbonManager!!.addCarbonCopyReceivedListener(this)
                 isCarbonEnabled = true
-            } else {
+            }
+            else {
                 isCarbonEnabled = false
                 mCarbonManager = null
             }
@@ -653,8 +666,10 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
      * The listener that we use in order to handle incoming messages and carbon messages.
      */
     private var isForwardedSentMessage = false
-    override fun onCarbonCopyReceived(direction: CarbonExtension.Direction,
-            carbonCopy: Message, wrappingMessage: Message) {
+    override fun onCarbonCopyReceived(
+            direction: CarbonExtension.Direction,
+            carbonCopy: Message, wrappingMessage: Message,
+    ) {
         isForwardedSentMessage = CarbonExtension.Direction.sent == direction
         val userJId = if (isForwardedSentMessage) carbonCopy.to else carbonCopy.from
         isCarbon = wrappingMessage.hasExtension(CarbonExtension.NAMESPACE)
@@ -689,9 +704,7 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
         // Timber.d("Received from %s the message %s", userBareID, message.toString());
         val msgID = message.stanzaId
         val correctedMessageUID = getCorrectionMessageId(message)
-
-        // Get the message type i.e. OTR or NONE; for chat message encryption indication
-        var encType = if (msgBody.startsWith("?OTR")) IMessage.ENCRYPTION_OTR else IMessage.ENCRYPTION_NONE
+        var encType = IMessage.ENCRYPTION_NONE
 
         // set up default in case XHTMLExtension contains no message
         // if msgBody contains markup text then set as ENCODE_HTML mode
@@ -727,7 +740,7 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
                 }
                 val errorReason = error?.toString() ?: ""
                 val msgDeliveryFailed = ChatRoomMessageDeliveryFailedEvent(privateContactRoom,
-                        null, errorResultCode, System.currentTimeMillis(), errorReason, newMessage)
+                    null, errorResultCode, System.currentTimeMillis(), errorReason, newMessage)
                 privateContactRoom.fireMessageEvent(msgDeliveryFailed)
                 return
             }
@@ -764,14 +777,15 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
             msgEvt = MessageDeliveredEvent(newMessage, sourceContact, null, sender, timestamp)
             // Update message unread count for carbon message for the actual recipient.
             NotificationManager.updateMessageCount(sourceContact)
-        } else {
+        }
+        else {
             msgEvt = MessageReceivedEvent(newMessage, sourceContact, resource!!, sender, timestamp,
-                    correctedMessageUID, isPrivateMessaging, privateContactRoom)
+                correctedMessageUID, isPrivateMessaging, privateContactRoom)
         }
 
         // Start up Chat session if no exist, for offline message when history log is disabled;
         // Else first offline message is not shown
-        if (mhs != null &&  !mhs.isHistoryLoggingEnabled && message.hasExtension(DelayInformation.QNAME)) {
+        if (mhs != null && !mhs.isHistoryLoggingEnabled && message.hasExtension(DelayInformation.QNAME)) {
             createChatForContact(sourceContact)
         }
         fireMessageEvent(msgEvt)
@@ -822,7 +836,8 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
         val delayInfo = msg.getExtension(DelayInformation::class.java)
         timeStamp = if (delayInfo != null) {
             delayInfo.stamp
-        } else {
+        }
+        else {
             Date()
         }
         return timeStamp
@@ -930,20 +945,23 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
             msgEvt = MessageDeliveredEvent(newMessage, contact, null, sender, timeStamp)
             // Update message unread count for carbon message for the actual recipient.
             NotificationManager.updateMessageCount(contact)
-        } else {
+        }
+        else {
             msgEvt = MessageReceivedEvent(newMessage, contact, null, sender, timeStamp, correctedMsgID)
         }
 
         // Start up Chat session if no exist, for offline message when history log is disabled;
         // Else first offline message is not shown
-        if (mhs != null &&  !mhs.isHistoryLoggingEnabled && message.hasExtension(DelayInformation.QNAME)) {
+        if (mhs != null && !mhs.isHistoryLoggingEnabled && message.hasExtension(DelayInformation.QNAME)) {
             createChatForContact(contact)
         }
         fireMessageEvent(msgEvt)
     }
 
-    override fun onOmemoCarbonCopyReceived(direction: CarbonExtension.Direction,
-            carbonCopy: Message, wrappingMessage: Message, decryptedCarbonCopy: Received) {
+    override fun onOmemoCarbonCopyReceived(
+            direction: CarbonExtension.Direction,
+            carbonCopy: Message, wrappingMessage: Message, decryptedCarbonCopy: Received,
+    ) {
         isForwardedSentOmemoMessage = CarbonExtension.Direction.sent == direction
         onOmemoMessageReceived(carbonCopy, decryptedCarbonCopy)
 
@@ -972,7 +990,7 @@ class OperationSetBasicInstantMessagingJabberImpl internal constructor(
          * has extensionElement i.e. XEP-0071: XHTML-IM
          */
         private val MESSAGE_FILTER = AndFilter(
-                MessageTypeFilter.NORMAL_OR_CHAT, OrFilter(MessageWithBodiesFilter.INSTANCE,
+            MessageTypeFilter.NORMAL_OR_CHAT, OrFilter(MessageWithBodiesFilter.INSTANCE,
                 StanzaExtensionFilter(XHTMLExtension.ELEMENT, XHTMLExtension.NAMESPACE))
         )
         private val INCOMING_SVR_MESSAGE_FILTER = AndFilter(MESSAGE_FILTER, FromTypeFilter.DOMAIN_BARE_JID)

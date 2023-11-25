@@ -226,8 +226,7 @@ OpenSLESSystem_queryAudioInputCapabilitiesBySampleRate
          SLAudioIODeviceCapabilitiesItf engine_AudioIODeviceCapabilitiesItf,
          jlong deviceID, SLAudioInputDescriptor descriptor,
          jdouble sampleRate, jint sampleRateIndex, jintArray sampleSizesInBits, jint channel,
-         jint channelIndex,
-         jintArray audioInputCapabilities, jint *audioInputCapabilitiesIndex) {
+         jint channelIndex, jintArray audioInputCapabilities, jint *audioInputCapabilitiesIndex) {
     SLint32 sampleFormatCount;
     SLresult result
             = (*engine_AudioIODeviceCapabilitiesItf)->QuerySampleFormatsSupported(
@@ -290,8 +289,7 @@ OpenSLESSystem_queryAudioInputCapabilitiesBySampleRate
                                 channelIndex
                         };
                         jint _audioInputCapabilitiesIndex = *audioInputCapabilitiesIndex;
-                        jsize audioInputCapabilityLength =
-                                sizeof(audioInputCapability) / sizeof(jint);
+                        jsize audioInputCapabilityLength = sizeof(audioInputCapability) / sizeof(jint);
 
                         (*jniEnv)->SetIntArrayRegion(
                                 jniEnv,
@@ -301,8 +299,7 @@ OpenSLESSystem_queryAudioInputCapabilitiesBySampleRate
                                 audioInputCapability);
                         if ((*jniEnv)->ExceptionCheck(jniEnv))
                             break;
-                        *audioInputCapabilitiesIndex
-                                = _audioInputCapabilitiesIndex + audioInputCapabilityLength;
+                        *audioInputCapabilitiesIndex = _audioInputCapabilitiesIndex + audioInputCapabilityLength;
                     }
                 }
             }

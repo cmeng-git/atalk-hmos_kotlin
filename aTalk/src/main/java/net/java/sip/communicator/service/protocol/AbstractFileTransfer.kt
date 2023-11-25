@@ -16,10 +16,9 @@ import timber.log.Timber
 import java.util.*
 
 /**
- * An abstract implementation of the `FileTransfer` interface providing implementation of
- * status and progress events related methods and leaving all protocol specific methods abstract. A
- * protocol specific implementation could extend this class and implement only `cancel()` and
- * `getTransferredBytes()`.
+ * An abstract implementation of the `FileTransfer` interface providing implementation of status and
+ * progress events related methods and leaving all protocol specific methods abstract. A protocol
+ * specific implementation could extend this class and implement only `cancel()` and `getTransferredBytes()`.
  *
  * @author Yana Stamcheva
  * @author Eng Chong Meng
@@ -123,7 +122,11 @@ abstract class AbstractFileTransfer : FileTransfer {
      * @param reason the jingle terminate reason
      */
     fun fireStatusChangeEvent(reason: JingleReason) {
-        var reasonText = if (reason.text != null) reason.text else reason.asEnum().toString()
+        var reasonText = if (reason.text != null)
+            reason.text
+        else
+            reason.asEnum().toString()
+
         when (reason.asEnum()) {
             JingleReason.Reason.decline -> fireStatusChangeEvent(FileTransferStatusChangeEvent.DECLINED, reasonText)
             JingleReason.Reason.cancel -> fireStatusChangeEvent(FileTransferStatusChangeEvent.CANCELED, reasonText)
@@ -150,7 +153,7 @@ abstract class AbstractFileTransfer : FileTransfer {
                 mStatus, newStatus, listeners.size)
 
         // Updates the mStatus only after statusEvent is created.
-        val statusEvent = FileTransferStatusChangeEvent(this, mStatus, newStatus, reason!!)
+        val statusEvent = FileTransferStatusChangeEvent(this, mStatus, newStatus, reason)
         mStatus = newStatus
         for (statusListener in listeners) {
             statusListener.statusChanged(statusEvent)

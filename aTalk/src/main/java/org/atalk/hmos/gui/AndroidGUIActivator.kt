@@ -76,7 +76,7 @@ class AndroidGUIActivator : BundleActivator {
         }
         ConfigurationUtils.loadGuiConfigurations()
 
-        // Register show history settings OTR link listener
+        // Register show history settings Omemo link listener
         ChatSessionManager.addChatLinkListener(CryptoFragment.ShowHistoryLinkListener())
     }
 

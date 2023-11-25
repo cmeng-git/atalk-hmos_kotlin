@@ -22,7 +22,6 @@ import org.atalk.hmos.aTalkApp
 import org.atalk.hmos.gui.chat.ChatSessionManager
 import org.atalk.hmos.gui.util.AndroidImageUtil.drawableFromBytes
 import org.atalk.hmos.gui.util.AndroidImageUtil.roundedDrawableFromBytes
-import org.atalk.hmos.gui.util.DrawableCache
 import org.atalk.impl.neomedia.device.util.AndroidCamera
 import org.jxmpp.jid.DomainBareJid
 

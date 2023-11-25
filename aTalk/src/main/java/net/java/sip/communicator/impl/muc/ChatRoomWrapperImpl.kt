@@ -90,10 +90,10 @@ class ChatRoomWrapperImpl(
         }
 
         MUCActivator.configurationService!!.addPropertyChangeListener(
-                MessageHistoryService.PNAME_IS_MESSAGE_HISTORY_ENABLED, propertyListener)
+            MessageHistoryService.PNAME_IS_MESSAGE_HISTORY_ENABLED, propertyListener)
         MUCActivator.configurationService!!.addPropertyChangeListener(
-                MessageHistoryService.PNAME_IS_MESSAGE_HISTORY_PER_CONTACT_ENABLED_PREFIX
-                        + "." + chatRoomID, propertyListener)
+            MessageHistoryService.PNAME_IS_MESSAGE_HISTORY_PER_CONTACT_ENABLED_PREFIX
+                    + "." + chatRoomID, propertyListener)
     }
 
     /**
@@ -102,7 +102,8 @@ class ChatRoomWrapperImpl(
      * @param parentProvider the protocol provider to which the corresponding chat room belongs
      * @param chatRoom the chat room to which this wrapper corresponds.
      */
-    constructor(parentProvider: ChatRoomProviderWrapper, chatRoom: ChatRoom) : this(parentProvider, chatRoom.getIdentifier().toString()) {
+    constructor(parentProvider: ChatRoomProviderWrapper, chatRoom: ChatRoom)
+            : this(parentProvider, chatRoom.getIdentifier().toString()) {
         this.chatRoom = chatRoom
     }
 
@@ -186,7 +187,7 @@ class ChatRoomWrapperImpl(
             }
             else {
                 updateChatRoomProperty(protocolProvider, chatRoomID, ROOM_STATUS_ENABLE,
-                        java.lang.Boolean.toString(isRoomStatusEnable))
+                    java.lang.Boolean.toString(isRoomStatusEnable))
             }
         }
     /**
@@ -231,11 +232,11 @@ class ChatRoomWrapperImpl(
     override var isPersistent: Boolean? = null
         get() {
             if (field == null) {
-                if (chatRoom != null) {
-                    field = chatRoom!!.isPersistent()
+                field = if (chatRoom != null) {
+                    chatRoom!!.isPersistent()
                 }
                 else
-                    field = true
+                    true
             }
             return field
         }
@@ -263,7 +264,8 @@ class ChatRoomWrapperImpl(
      */
     override val entityBareJid: EntityBareJid?
         get() {
-            if (chatRoom != null) return chatRoom!!.getIdentifier()
+            if (chatRoom != null)
+                return chatRoom!!.getIdentifier()
             else {
                 try {
                     return JidCreate.entityBareFrom(chatRoomID)
@@ -391,10 +393,10 @@ class ChatRoomWrapperImpl(
      */
     override fun removeListeners() {
         MUCActivator.configurationService!!.removePropertyChangeListener(
-                MessageHistoryService.PNAME_IS_MESSAGE_HISTORY_ENABLED, propertyListener)
+            MessageHistoryService.PNAME_IS_MESSAGE_HISTORY_ENABLED, propertyListener)
         MUCActivator.configurationService!!.removePropertyChangeListener(
-                MessageHistoryService.PNAME_IS_MESSAGE_HISTORY_PER_CONTACT_ENABLED_PREFIX + "."
-                        + chatRoomID, propertyListener)
+            MessageHistoryService.PNAME_IS_MESSAGE_HISTORY_PER_CONTACT_ENABLED_PREFIX + "."
+                    + chatRoomID, propertyListener)
     }
 
     /**

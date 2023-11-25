@@ -230,23 +230,25 @@ class PulseAudioRenderer @JvmOverloads constructor(
             stream = audioSystem!!.createStream(sampleRate, channels,
                 javaClass.name, mediaRole)
             this.channels = channels
-        } catch (ise: IllegalStateException) {
-            exception = ise
-        } catch (re: RuntimeException) {
-            exception = re
+        } catch (ex: java.lang.Exception) {
+            when (ex) {
+                is IllegalStateException,
+                is RuntimeException,
+                -> {
+                    val rue = ResourceUnavailableException()
+                    rue.initCause(ex)
+                    throw rue
+                }
+            }
         }
-        if (exception != null) {
-            val rue = ResourceUnavailableException()
-            rue.initCause(exception)
-            throw rue
-        }
+
         if (stream == 0L) throw ResourceUnavailableException("stream")
         try {
             var attr = PA.buffer_attr_new(-1, 2 /* millis / 10 */
                     * (sampleRate / 100) * channels * (sampleSizeInBits / 8), -1, -1, -1)
             if (attr == 0L) throw ResourceUnavailableException("pa_buffer_attr_new")
             try {
-                val stateCallback = Runnable { audioSystem!!.signalMainloop(false) }
+                val stateCallback = Runnable { audioSystem.signalMainloop(false) }
                 PA.stream_set_state_callback(stream, stateCallback)
                 val dev = locatorDev
                 PA.stream_connect_playback(stream, dev, attr,
@@ -256,7 +258,7 @@ class PulseAudioRenderer @JvmOverloads constructor(
                         PA.buffer_attr_free(attr)
                         attr = 0
                     }
-                    val state = audioSystem!!.waitForStreamState(stream, PA.STREAM_READY)
+                    val state = audioSystem.waitForStreamState(stream, PA.STREAM_READY)
                     if (state != PA.STREAM_READY) throw ResourceUnavailableException("stream.state")
                     PA.stream_set_write_callback(stream, writeCb)
                     setStreamVolume(stream)

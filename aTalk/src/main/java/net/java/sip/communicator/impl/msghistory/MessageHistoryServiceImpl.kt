@@ -580,8 +580,8 @@ class MessageHistoryServiceImpl : MessageHistoryService, MessageHistoryAdvancedS
      *
      * @return last message for the specified sessionUuid
      */
-    fun getLastMessageForSessionUuid(sessionUuid: String?): String {
-        var msgBody = ""
+    fun getLastMessageForSessionUuid(sessionUuid: String?): String? {
+        var msgBody: String? = null
         val endTimeStamp = Date().time.toString()
         if (!TextUtils.isEmpty(sessionUuid)) {
             val columns = arrayOf(ChatMessage.MSG_BODY)

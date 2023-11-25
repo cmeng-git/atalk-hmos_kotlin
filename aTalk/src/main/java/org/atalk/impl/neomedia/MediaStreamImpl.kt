@@ -903,16 +903,21 @@ open class MediaStreamImpl(
                  */
                 val localSSRC = sendStream.ssrc and 0xFFFFFFFFL
                 if (mLocalSourceID != localSSRC) setLocalSourceID(localSSRC)
-            } catch (ioe: IOException) {
-                Timber.e(ioe, "Failed to create send stream for data source %s  and stream index %s;\n%s",
-                    dataSource, streamIndex, ioe.message)
-            } catch (ioe: NullPointerException) {
-                Timber.e(ioe, "Failed to create send stream for data source %s  and stream index %s;\n%s",
-                    dataSource, streamIndex, ioe.message)
-            } catch (ufe: UnsupportedFormatException) {
-                Timber.e(ufe,
-                    "Failed to create send stream for data source %s and stream index %s because of failed format %s;;\n%s",
-                    dataSource, streamIndex, ufe.failedFormat, ufe.message)
+            } catch (ex: Exception) {
+                when (ex) {
+                    is IOException,
+                    is NullPointerException -> {
+                        Timber.e(ex, "Failed to create send stream for data source %s  and stream index %s;\n%s",
+                            dataSource, streamIndex, ex.message)
+                    }
+
+                    is UnsupportedFormatException -> {
+                        Timber.e(ex,
+                            "Failed to create send stream for data source %s and stream index %s because of failed format %s;;\n%s",
+                            dataSource, streamIndex, ex.failedFormat, ex.message)
+
+                    }
+                }
             }
         }
 
@@ -1802,65 +1807,65 @@ open class MediaStreamImpl(
             val mediaTypeStr = mediaType?.toString() ?: ""
             val eol = "\n$rtpstat"
             buff.append("call stats for outgoing ").append(mediaTypeStr)
-                    .append(" stream SSRC: ").append(getLocalSourceID()).append(eol)
-                    .append("bytes sent: ").append(s.bytesSent).append(eol)
-                    .append("RTP sent: ").append(s.rtpSent).append(eol)
-                    .append("remote reported min inter-arrival jitter: ")
-                    .append(mss.minUploadJitterMs).append("ms").append(eol)
-                    .append("remote reported max inter-arrival jitter: ")
-                    .append(mss.maxUploadJitterMs).append("ms").append(eol)
-                    .append("local collisions: ").append(s.localColls)
-                    .append(eol)
-                    .append("remote collisions: ").append(s.remoteColls)
-                    .append(eol)
-                    .append("RTCP sent: ").append(s.rtcpSent).append(eol)
-                    .append("transmit failed: ").append(s.transmitFailed)
+                .append(" stream SSRC: ").append(getLocalSourceID()).append(eol)
+                .append("bytes sent: ").append(s.bytesSent).append(eol)
+                .append("RTP sent: ").append(s.rtpSent).append(eol)
+                .append("remote reported min inter-arrival jitter: ")
+                .append(mss.minUploadJitterMs).append("ms").append(eol)
+                .append("remote reported max inter-arrival jitter: ")
+                .append(mss.maxUploadJitterMs).append("ms").append(eol)
+                .append("local collisions: ").append(s.localColls)
+                .append(eol)
+                .append("remote collisions: ").append(s.remoteColls)
+                .append(eol)
+                .append("RTCP sent: ").append(s.rtcpSent).append(eol)
+                .append("transmit failed: ").append(s.transmitFailed)
             Timber.log(TimberLog.FINER, "%s", buff)
             val rs = rtpManager.globalReceptionStats
             val format = format
             buff = StringBuilder(rtpstat)
             buff.append("call stats for incoming ")
-                    .append(format ?: "")
-                    .append(" stream SSRC: ").append(getRemoteSourceID())
-                    .append(eol)
-                    .append("packets received: ").append(rs.packetsRecd)
-                    .append(eol)
-                    .append("bytes received: ").append(rs.bytesRecd)
-                    .append(eol)
-                    .append("packets lost: ")
-                    .append(mss.receiveStats.packetsLost)
-                    .append(eol)
-                    .append("min inter-arrival jitter: ")
-                    .append(statisticsEngine!!.minInterArrivalJitter)
-                    .append(eol)
-                    .append("max inter-arrival jitter: ")
-                    .append(statisticsEngine!!.maxInterArrivalJitter)
-                    .append(eol)
-                    .append("RTCPs received: ").append(rs.rtcpRecd)
-                    .append(eol)
-                    .append("bad RTCP packets: ").append(rs.badRTCPPkts)
-                    .append(eol)
-                    .append("bad RTP packets: ").append(rs.badRTPkts)
-                    .append(eol)
-                    .append("local collisions: ").append(rs.localColls)
-                    .append(eol)
-                    .append("malformed BYEs: ").append(rs.malformedBye)
-                    .append(eol)
-                    .append("malformed RRs: ").append(rs.malformedRR)
-                    .append(eol)
-                    .append("malformed SDESs: ").append(rs.malformedSDES)
-                    .append(eol)
-                    .append("malformed SRs: ").append(rs.malformedSR)
-                    .append(eol)
-                    .append("packets looped: ").append(rs.packetsLooped)
-                    .append(eol)
-                    .append("remote collisions: ").append(rs.remoteColls)
-                    .append(eol)
-                    .append("SRs received: ").append(rs.srRecd)
-                    .append(eol)
-                    .append("transmit failed: ").append(rs.transmitFailed)
-                    .append(eol)
-                    .append("unknown types: ").append(rs.unknownTypes)
+                .append(format ?: "")
+                .append(" stream SSRC: ").append(getRemoteSourceID())
+                .append(eol)
+                .append("packets received: ").append(rs.packetsRecd)
+                .append(eol)
+                .append("bytes received: ").append(rs.bytesRecd)
+                .append(eol)
+                .append("packets lost: ")
+                .append(mss.receiveStats.packetsLost)
+                .append(eol)
+                .append("min inter-arrival jitter: ")
+                .append(statisticsEngine!!.minInterArrivalJitter)
+                .append(eol)
+                .append("max inter-arrival jitter: ")
+                .append(statisticsEngine!!.maxInterArrivalJitter)
+                .append(eol)
+                .append("RTCPs received: ").append(rs.rtcpRecd)
+                .append(eol)
+                .append("bad RTCP packets: ").append(rs.badRTCPPkts)
+                .append(eol)
+                .append("bad RTP packets: ").append(rs.badRTPkts)
+                .append(eol)
+                .append("local collisions: ").append(rs.localColls)
+                .append(eol)
+                .append("malformed BYEs: ").append(rs.malformedBye)
+                .append(eol)
+                .append("malformed RRs: ").append(rs.malformedRR)
+                .append(eol)
+                .append("malformed SDESs: ").append(rs.malformedSDES)
+                .append(eol)
+                .append("malformed SRs: ").append(rs.malformedSR)
+                .append(eol)
+                .append("packets looped: ").append(rs.packetsLooped)
+                .append(eol)
+                .append("remote collisions: ").append(rs.remoteColls)
+                .append(eol)
+                .append("SRs received: ").append(rs.srRecd)
+                .append(eol)
+                .append("transmit failed: ").append(rs.transmitFailed)
+                .append(eol)
+                .append("unknown types: ").append(rs.unknownTypes)
             Timber.log(TimberLog.FINER, "%s", buff)
         } catch (t: Throwable) {
             Timber.e(t, "Error writing statistics")
@@ -1871,9 +1876,9 @@ open class MediaStreamImpl(
         mediaStreamStatsImpl.updateStats()
         if (TimberLog.isTraceEnable) {
             val buff = StringBuilder("\nReceive stream stats: discarded RTP packets: ")
-                    .append(mediaStreamStatsImpl.nbDiscarded)
-                    .append("\nReceive stream stats: decoded with FEC: ")
-                    .append(mediaStreamStatsImpl.nbFec)
+                .append(mediaStreamStatsImpl.nbDiscarded)
+                .append("\nReceive stream stats: decoded with FEC: ")
+                .append(mediaStreamStatsImpl.nbFec)
             Timber.log(TimberLog.FINER, "%s", buff)
         }
     }
@@ -2545,25 +2550,25 @@ open class MediaStreamImpl(
                 val mediaType = mediaType
                 val mediaTypeStr = mediaType?.toString() ?: ""
                 buff.append("Received a ")
-                        .append(if (senderReport) "sender" else "receiver")
-                        .append(" report for ")
-                        .append(mediaTypeStr)
-                        .append(" stream SSRC:")
-                        .append(getLocalSourceID())
-                        .append(" [")
+                    .append(if (senderReport) "sender" else "receiver")
+                    .append(" report for ")
+                    .append(mediaTypeStr)
+                    .append(" stream SSRC:")
+                    .append(getLocalSourceID())
+                    .append(" [")
                 if (senderReport) {
                     buff.append("packet count:")
-                            .append((report as SenderReport).senderPacketCount)
-                            .append(", bytes:")
-                            .append(report.senderByteCount)
+                        .append((report as SenderReport).senderPacketCount)
+                        .append(", bytes:")
+                        .append(report.senderByteCount)
                 }
                 if (feedback != null) {
                     buff.append(", inter-arrival jitter:")
-                            .append(remoteJitter)
-                            .append(", lost packets:").append(feedback.numLost)
-                            .append(", time since previous report:")
-                            .append((feedback.dlsr / 65.536).toInt())
-                            .append("ms")
+                        .append(remoteJitter)
+                        .append(", lost packets:").append(feedback.numLost)
+                        .append(", time since previous report:")
+                        .append((feedback.dlsr / 65.536).toInt())
+                        .append("ms")
                 }
                 buff.append(" ]")
                 Timber.log(TimberLog.FINER, "%s", buff)
@@ -2671,11 +2676,11 @@ open class MediaStreamImpl(
         val vp9PT = getDynamicRTPPayloadType(Constants.VP9)
         return if (redBlock.payloadType == vp8PT) {
             org.atalk.impl.neomedia.codec.video.vp8.DePacketizer.VP8PayloadDescriptor
-                    .getTemporalLayerIndex(redBlock.buffer, redBlock.offset, redBlock.length)
+                .getTemporalLayerIndex(redBlock.buffer, redBlock.offset, redBlock.length)
         }
         else if (redBlock.payloadType == vp9PT) {
             org.atalk.impl.neomedia.codec.video.vp9.DePacketizer.VP9PayloadDescriptor
-                    .getTemporalLayerIndex(redBlock.buffer, redBlock.offset, redBlock.length)
+                .getTemporalLayerIndex(redBlock.buffer, redBlock.offset, redBlock.length)
         }
         else {
             // XXX not implementing temporal layer detection should not break things.
@@ -2710,7 +2715,7 @@ open class MediaStreamImpl(
         val vp9PT = getDynamicRTPPayloadType(Constants.VP9)
         return if (redBlock.payloadType == vp9PT) {
             org.atalk.impl.neomedia.codec.video.vp9.DePacketizer.VP9PayloadDescriptor
-                    .getSpatialLayerIndex(redBlock.buffer, redBlock.offset, redBlock.length)
+                .getSpatialLayerIndex(redBlock.buffer, redBlock.offset, redBlock.length)
         }
         else {
             // XXX not implementing temporal layer detection should not break things.

@@ -33,6 +33,7 @@ import org.atalk.hmos.gui.dialogs.DialogActivity
 import org.atalk.hmos.gui.dialogs.DialogActivity.DialogListener
 import org.atalk.hmos.gui.login.LoginSynchronizationPoint
 import org.atalk.hmos.gui.menu.MainMenuActivity
+import org.atalk.hmos.gui.util.LocaleHelper
 import org.atalk.hmos.plugin.timberlog.TimberLog
 import org.atalk.service.neomedia.SrtpControlType
 import org.atalk.util.OSUtils
@@ -740,6 +741,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
         config.setResource(mResource)
         config.setProxyInfo(proxy)
         config.setCompressionEnabled(false)
+        config.setLanguage(LocaleHelper.xmlLocale)
 
         /*=== Configure connection for BOSH or TCP ===*/
         val isBosh = accountID.isBOSHEnable()

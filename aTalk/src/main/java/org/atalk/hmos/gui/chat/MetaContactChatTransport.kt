@@ -18,8 +18,6 @@ package org.atalk.hmos.gui.chat
 
 import android.content.Context
 import android.net.Uri
-import android.os.Parcel
-import android.os.Parcelable
 import net.java.sip.communicator.impl.protocol.jabber.OperationSetFileTransferJabberImpl
 import net.java.sip.communicator.impl.protocol.jabber.OutgoingFileOfferJingleImpl
 import net.java.sip.communicator.service.protocol.Contact
@@ -108,7 +106,7 @@ class MetaContactChatTransport @JvmOverloads constructor(
     private val mPPS: ProtocolProviderService
 
     private val ftOpSet: OperationSetFileTransferJabberImpl?
-    private var httpFileUploadManager: HttpFileUploadManager? = null
+    private lateinit var httpFileUploadManager: HttpFileUploadManager
     private var jingleFTManager: JingleFileTransferManager? = null
     private var jetManager: JetManager? = null
 
@@ -346,8 +344,12 @@ class MetaContactChatTransport @JvmOverloads constructor(
     /**
      * `true` if this chat transport supports file transfer, otherwise returns `false`.
      */
-    private fun allowsFileTransfer(): Boolean {
-        return ftOpSet != null || httpFileUploadManager != null && httpFileUploadManager!!.isUploadServiceDiscovered
+    override fun allowsFileTransfer(): Boolean {
+        return ftOpSet != null || hasUploadService()
+    }
+
+    private fun hasUploadService(): Boolean {
+        return httpFileUploadManager.isUploadServiceDiscovered
     }
 
     /**
@@ -596,7 +598,7 @@ class MetaContactChatTransport @JvmOverloads constructor(
                     httpFileUpload(file, chatType, xferCon)
                 } catch (ex2: OperationNotSupportedException) {
                     // Use legacy FileTransfer starting with SOCKS5, fallback to IBB ByteStream transfer.
-                    ftOpSet!!.sendFile(mContact, file, xferCon!!.msgUuid!!)
+                    ftOpSet!!.sendFile(mContact, file, xferCon!!.msgUuid)
                 }
             }
         }
@@ -648,7 +650,7 @@ class MetaContactChatTransport @JvmOverloads constructor(
                 }
                 // Let OutgoingFileOfferJingleImpl handle status changes
                 // xferCon.setStatus(FileTransferStatusChangeEvent.IN_PROGRESS, mContact, encType, "JingleFile Sending");
-                OutgoingFileOfferJingleImpl(mContact, file, msgUuid!!, ofoController, mPPS.connection!!)
+                OutgoingFileOfferJingleImpl(mContact, file, msgUuid, ofoController, mPPS.connection!!)
             } catch (ex: SSLHandshakeException) {
                 throw OperationNotSupportedException(if (ex.cause != null) ex.cause!!.message else ex.message)
             } catch (e: UndecidedOmemoIdentityException) {
@@ -729,16 +731,16 @@ class MetaContactChatTransport @JvmOverloads constructor(
     @Throws(Exception::class)
     private fun httpFileUpload(file: File, chatType: Int, xferCon: FileSendConversation?): Any {
         // check to see if server supports httpFileUpload service if contact is off line or legacy file transfer failed
-        return if (httpFileUploadManager!!.isUploadServiceDiscovered) {
+        return if (hasUploadService()) {
             var encType = IMessage.ENCRYPTION_NONE
             val url: Any
             try {
                 if (ChatFragment.MSGTYPE_OMEMO == chatType) {
                     encType = IMessage.ENCRYPTION_OMEMO
-                    url = httpFileUploadManager!!.uploadFileEncrypted(file, xferCon)
+                    url = httpFileUploadManager.uploadFileEncrypted(file, xferCon)
                 }
                 else {
-                    url = httpFileUploadManager!!.uploadFile(file, xferCon)
+                    url = httpFileUploadManager.uploadFile(file, xferCon)
                 }
                 xferCon!!.setStatus(FileTransferStatusChangeEvent.IN_PROGRESS, mContact, encType, "HTTP File Upload")
                 url

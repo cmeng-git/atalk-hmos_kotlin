@@ -17,7 +17,6 @@ package net.java.sip.communicator.service.gui
 
 import net.java.sip.communicator.service.protocol.OperationSet
 import java.awt.Component
-import javax.swing.JButton
 import javax.swing.JMenuItem
 
 /**
@@ -118,13 +117,6 @@ abstract class UIContact {
      * @return a list of all `UIContactDetail`s within this `UIContact`
      */
     abstract val contactDetails: List<UIContactDetail?>?
-
-    /**
-     * Returns all custom action buttons for this notification contact.
-     *
-     * @return a list of all custom action buttons for this notification contact
-     */
-    abstract val contactCustomActionButtons: Collection<JButton?>?
 
     /**
      * Returns the preferred height of this group in the contact list.

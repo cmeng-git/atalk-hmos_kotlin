@@ -11,7 +11,6 @@ import net.java.sip.communicator.service.contactlist.MetaContact
 import net.java.sip.communicator.service.filehistory.FileRecord
 import net.java.sip.communicator.service.muc.ChatRoomWrapper
 import net.java.sip.communicator.service.protocol.AccountInfoUtils
-import net.java.sip.communicator.service.protocol.Contact
 import net.java.sip.communicator.service.protocol.IMessage
 import net.java.sip.communicator.service.protocol.IncomingFileTransferRequest
 import net.java.sip.communicator.service.protocol.OperationSetFileTransfer
@@ -49,11 +48,11 @@ class ChatMessageImpl(
          * Exception as recipient:
          * contactId: ChatMessage.MESSAGE_FILE_TRANSFER_SEND & ChatMessage.MESSAGE_STICKER_SEND:
          */
-        override val sender: String?,
+        override val sender: String,
         /**
          * The display name of the message sender. It may be the same as sender
          */
-        override val senderName: String?,
+        override val senderName: String,
         /**
          * The date and time of the message.
          */
@@ -69,7 +68,7 @@ class ChatMessageImpl(
         /**
          * The content of the message.
          */
-        override val contentForClipboard: String?,
+        val mMessage: String?,
         /**
          * The encryption type of the message content.
          */
@@ -77,7 +76,7 @@ class ChatMessageImpl(
         /**
          * A unique identifier for this message.
          */
-        override val uidForCorrection: String?,
+        val mMessageUID: String,
         /**
          * The unique identifier of the last message that this message should replace,
          * or `null` if this is a new message.
@@ -86,7 +85,7 @@ class ChatMessageImpl(
         /**
          * The direction of the message.
          */
-        override val messageDir: String?,
+        override val messageDir: String,
         /**
          * The HTTP file download file transfer status
          */
@@ -104,82 +103,10 @@ class ChatMessageImpl(
          */
         override val remoteMsgId: String?,
 
-        opSet: OperationSetFileTransfer?, request: Any?, fileRecord: FileRecord?) : ChatMessage {
-
-    /**
-     * Returns the name of the entity sending the message.
-     *
-     * @return the name of the entity sending the message.
-     */
-    /**
-     * Returns the display name of the entity sending the message.
-     *
-     * @return the display name of the entity sending the message
-     */
-    /**
-     * Returns the date and time of the message.
-     *
-     * @return the date and time of the message.
-     */
-    /**
-     * Returns the type of the message.
-     *
-     * @return the type of the message.
-     */
-    /**
-     * Set the type of the message.
-     */
-    /**
-     * Returns the mime type of the content type (e.g. "text", "text/html", etc.).
-     *
-     * @return the mimeType
-     */
-    /**
-     * {@inheritDoc}
-     */
-    /**
-     * {@inheritDoc}
-     */
-    /**
-     * Returns the message direction i.e. in/put.
-     *
-     * @return the direction of this message.
-     */
-
-    /**
-     * Returns the message delivery receipt status
-     *
-     * @return the receipt status
-     */
-    /**
-     * Returns the encryption type of the original received message.
-     *
-     * @return the encryption type
-     */
-    /**
-     * Returns the UID of this message.
-     *
-     * @return the UID of this message.
-     */
-    /**
-     * {@inheritDoc}
-     */
-    /**
-     * Returns the UID of the message that this message replaces, or `null` if this is a new message.
-     *
-     * @return the UID of the message that this message replaces, or `null` if this is a new message.
-     */
-    /**
-     * Returns the server message Id of the message sent - for tracking delivery receipt
-     *
-     * @return the server message Id of the message sent.
-     */
-    /**
-     * Returns the remote message Id of the message received - for tracking delivery receipt
-     *
-     * @return the remote message Id of the message received.
-     */
-
+        opSet: OperationSetFileTransfer?,
+        request: Any?,
+        fileRecord: FileRecord?,
+) : ChatMessage {
     /**
      * Field used to cache processed message body after replacements and corrections. This text is
      * used to display the message on the screen.
@@ -205,39 +132,41 @@ class ChatMessageImpl(
     /*
      * ChatMessageImpl with enclosed IMessage as content
      */
-    constructor(sender: String, senderName: String?, date: Date, messageType: Int, msg: IMessage, correctedMessageUID: String?, direction: String?) : this(sender, senderName, date, messageType, msg.getMimeType(), msg.getContent(),
-            msg.getEncryptionType(), msg.getMessageUID(), correctedMessageUID, direction,
-            msg.getXferStatus(), msg.getReceiptStatus(), msg.getServerMsgId(), msg.getRemoteMsgId(), null, null, null)
+    constructor(
+            sender: String, senderName: String, date: Date, messageType: Int, msg: IMessage,
+            correctedMessageUID: String?, direction: String,
+    ) : this(sender, senderName, date, messageType, msg.getMimeType(), msg.getContent(),
+        msg.getEncryptionType(), msg.getMessageUID(), correctedMessageUID, direction,
+        msg.getXferStatus(), msg.getReceiptStatus(), msg.getServerMsgId(), msg.getRemoteMsgId(), null, null, null)
 
     /*
      * Default direction ot DIR_OUT, not actually being use in message except in file transfer
      */
-    constructor(sender: String, senderName: String?, date: Date, messageType: Int, mimeType: Int, content: String?, messageUID: String?, direction: String?) : this(sender, senderName, date, messageType, mimeType, content, IMessage.ENCRYPTION_NONE, messageUID, null, direction,
-            FileRecord.STATUS_UNKNOWN, ChatMessage.MESSAGE_DELIVERY_NONE, "", "", null, null, null)
+    constructor(
+            sender: String, senderName: String, date: Date, messageType: Int, mimeType: Int, content: String?,
+            messageUID: String, direction: String,
+    ) : this(sender, senderName, date, messageType, mimeType, content, IMessage.ENCRYPTION_NONE, messageUID, null, direction,
+        FileRecord.STATUS_UNKNOWN, ChatMessage.MESSAGE_DELIVERY_NONE, "", "", null, null, null)
 
     /**
      * Creates a `ChatMessageImpl` by specifying all parameters of the message.
      *
      * @param sender The string Id of the message sender.
-     * @param senderName the sender display name
      * @param date the DateTimeStamp
      * @param messageType the type (INCOMING, OUTGOING, SYSTEM etc)
      * @param mimeType the content type of the message
      * @param content the message content
-     * @param encryptionType the message original encryption type
      * @param messageUID The ID of the message.
-     * @param correctedMessageUID The ID of the message being replaced.
-     * @param xferStatus The file transfer status.
-     * @param receiptStatus The message delivery receipt status.
-     * @param serverMsgId The sent message stanza Id.
-     * @param remoteMsgId The received message stanza Id.
+     * @param direction The file transfer direction.
      * @param opSet The OperationSetFileTransfer.
      * @param request IncomingFileTransferRequest or HttpFileDownloadJabberImpl
      * @param fileRecord The history file record.
      */
-    constructor(sender: String, date: Date, messageType: Int, mimeType: Int, content: String?, messageUID: String?,
-            direction: String?, opSet: OperationSetFileTransfer?, request: Any?, fileRecord: FileRecord?) : this(sender, sender, date, messageType, mimeType, content, IMessage.ENCRYPTION_NONE, messageUID, null, direction,
-            FileRecord.STATUS_UNKNOWN, ChatMessage.MESSAGE_DELIVERY_NONE, null, null, opSet, request, fileRecord)
+    constructor(
+            sender: String, date: Date, messageType: Int, mimeType: Int, content: String?, messageUID: String,
+            direction: String, opSet: OperationSetFileTransfer?, request: Any?, fileRecord: FileRecord?,
+    ) : this(sender, sender, date, messageType, mimeType, content, IMessage.ENCRYPTION_NONE, messageUID, null, direction,
+        FileRecord.STATUS_UNKNOWN, ChatMessage.MESSAGE_DELIVERY_NONE, null, null, opSet, request, fileRecord)
 
     init {
         this.fileRecord = fileRecord
@@ -263,12 +192,16 @@ class ChatMessageImpl(
      */
     override val message: String?
         get() {
-            if (cachedOutput != null) return cachedOutput
-            if (contentForClipboard == null) return null
-            var output = contentForClipboard
+            if (cachedOutput != null)
+                return cachedOutput
+
+            if (mMessage == null)
+                return null
+
+            var output = mMessage
             // Escape HTML content -  seems not necessary for android OS (getMimeType() can be null)
             if (IMessage.ENCODE_HTML != mimeType) {
-                output = StringEscapeUtils.escapeHtml4(contentForClipboard)
+                output = StringEscapeUtils.escapeHtml4(mMessage)
             }
             // Process replacements (cmeng - just do a direct unicode conversion for std emojis)
             output = StringEscapeUtils.unescapeXml(output)
@@ -286,23 +219,21 @@ class ChatMessageImpl(
      * {@inheritDoc}
      */
     override fun mergeMessage(consecutiveMessage: ChatMessage): ChatMessage {
-        return if (uidForCorrection != null && uidForCorrection == consecutiveMessage.correctedMessageUID) {
+        return if (mMessageUID != null && mMessageUID == consecutiveMessage.correctedMessageUID) {
             consecutiveMessage
         }
-        else MergedMessage(this).mergeMessage(consecutiveMessage)
+        else
+            MergedMessage(this).mergeMessage(consecutiveMessage)
     }
-
-    override val contentForCorrection: String?
-        get() = message
 
     /**
      * Update file transfer status for the message with the specified msgUuid.
      *
-     * msgUuid Message uuid
-     * status Status of the fileTransfer
+     * @param msgUuid Message uuid
+     * @param status Status of the fileTransfer
      */
     fun updateFTStatus(msgUuid: String, status: Int) {
-        if (uidForCorrection == msgUuid) {
+        if (mMessageUID == msgUuid) {
             xferStatus = status
         }
     }
@@ -310,30 +241,35 @@ class ChatMessageImpl(
     /**
      * Update file transfer status and FileRecord for the message with the specified msgUuid.
      *
-     * descriptor The recipient
-     * msgUuid Message uuid also use as FileRecord id
-     * status Status of the fileTransfer
-     * fileName FileName
-     * encType Message encode Type
-     * recordType ChatMessage#Type
-     * direction File received or send
+     * @param  descriptor The recipient
+     * @param  msgUuid Message uuid also use as FileRecord id
+     * @param  status Status of the fileTransfer
+     * @param  fileName FileName
+     * @param  encType Message encode Type
+     * @param  recordType ChatMessage#Type
+     * @param  dir File received or send
      *
      * @return True if found the a matching msgUuid for update
      */
-    fun updateFTStatus(descriptor: Any, msgUuid: String, status: Int, fileName: String, encType: Int, recordType: Int, dir: String): Boolean {
-        if (uidForCorrection == msgUuid) {
+    fun updateFTStatus(
+            descriptor: Any, msgUuid: String, status: Int, fileName: String?, encType: Int, recordType: Int, dir: String,
+    ): Boolean {
+        if (mMessageUID == msgUuid) {
             xferStatus = status
             messageType = recordType
 
             // Require to create new if (fileName != null) to update both filePath and mXferStatus
             if (!TextUtils.isEmpty(fileName)) {
                 val entityJid = when (descriptor) {
-                    is ChatRoomWrapper -> descriptor.chatRoom
-                    is MetaContact -> {
+                    is ChatRoomWrapper ->
+                        descriptor.chatRoom
+                    is MetaContact ->
                         descriptor.getDefaultContact()
+                    else -> {
+                        // never happen
                     }
-                    else -> {}
                 }
+
                 fileRecord = FileRecord(msgUuid, entityJid!!, dir, date, File(fileName), encType, xferStatus)
             }
             // Timber.d("Updated ChatMessage Uid: %s (%s); status: %s => FR: %s", msgUuid, dir, status, fileRecord);
@@ -343,14 +279,33 @@ class ChatMessageImpl(
     }
 
     /**
+     * Returns the UID of this message.
+     *
+     * @return the UID of this message.
+     */
+    override fun getMessageUID(): String {
+        return mMessageUID
+    }
+
+    override fun getUidForCorrection(): String {
+        return mMessageUID
+    }
+
+    override fun getContentForCorrection(): String? {
+        return mMessage
+    }
+
+    override fun getContentForClipboard(): String? {
+        return mMessage
+    }
+
+    /**
      * Returns the IncomingFileTransferRequest of this message.
      *
      * @return the IncomingFileTransferRequest of this message.
      */
     override val ftRequest: IncomingFileTransferRequest?
         get() = request
-
-    override val messageUID: String? = null
 
     /**
      * Indicate if this.message should be considered as consecutive message;
@@ -362,18 +317,22 @@ class ChatMessageImpl(
      */
     override fun isConsecutiveMessage(nextMsg: ChatMessage): Boolean {
         if (nextMsg == null) return false
-        val isNonEmpty = !TextUtils.isEmpty(contentForClipboard)
+        val isNonEmpty = !TextUtils.isEmpty(mMessage)
 
         // Same UID specified i.e. corrected message
-        val isCorrectionMessage = uidForCorrection != null && uidForCorrection == nextMsg.correctedMessageUID
+        val isCorrectionMessage = mMessageUID != null && mMessageUID == nextMsg.correctedMessageUID
 
         // FTRequest and FTHistory messages are always treated as non-consecutiveMessage
-        val isFTMsg = messageType == ChatMessage.MESSAGE_FILE_TRANSFER_RECEIVE || messageType == ChatMessage.MESSAGE_FILE_TRANSFER_SEND || messageType == ChatMessage.MESSAGE_STICKER_SEND || messageType == ChatMessage.MESSAGE_FILE_TRANSFER_HISTORY
-        val isHttpFTMsg = isNonEmpty && contentForClipboard!!.matches(HTTP_FT_MSG)
-        val isMarkUpText = isNonEmpty && contentForClipboard!!.matches(ChatMessage.HTML_MARKUP)
+        val isFTMsg = messageType == ChatMessage.MESSAGE_FILE_TRANSFER_RECEIVE
+                || messageType == ChatMessage.MESSAGE_FILE_TRANSFER_SEND
+                || messageType == ChatMessage.MESSAGE_STICKER_SEND
+                || messageType == ChatMessage.MESSAGE_FILE_TRANSFER_HISTORY
+
+        val isHttpFTMsg = isNonEmpty && mMessage!!.matches(HTTP_FT_MSG)
+        val isMarkUpText = isNonEmpty && mMessage!!.matches(ChatMessage.HTML_MARKUP)
 
         // New GeoLocation message always treated as non-consecutiveMessage
-        val isLatLng = isNonEmpty && (contentForClipboard!!.contains("geo:") || contentForClipboard.contains("LatLng:"))
+        val isLatLng = isNonEmpty && (mMessage!!.contains("geo:") || mMessage.contains("LatLng:"))
 
         // system message always treated as non-consecutiveMessage
         val isSystemMsg = messageType == ChatMessage.MESSAGE_SYSTEM || messageType == ChatMessage.MESSAGE_ERROR
@@ -386,7 +345,10 @@ class ChatMessageImpl(
 
         // true if the new message is within a minute from the last one
         val inElapseTime = nextMsg.date.time - date.time < 60000
-        return (isCorrectionMessage || !(isFTMsg || isHttpFTMsg || isMarkUpText || isLatLng || isSystemMsg || isNonMerge(nextMsg))) && isEncTypeSame && isJidSame && inElapseTime
+
+        return isCorrectionMessage
+                || (!(isFTMsg || isHttpFTMsg || isMarkUpText || isLatLng || isSystemMsg || isNonMerge(nextMsg))
+                && isEncTypeSame && isJidSame && inElapseTime)
     }
 
     /**
@@ -398,18 +360,22 @@ class ChatMessageImpl(
      */
     private fun isNonMerge(nextMessage: ChatMessage): Boolean {
         val msgType = nextMessage.messageType
-        val bodyText = nextMessage.message!!
+        val bodyText : String? = nextMessage.message
         val isNonEmpty = !TextUtils.isEmpty(bodyText)
 
         // FTRequest and FTHistory messages are always treated as non-consecutiveMessage
-        val isFTMsg = msgType == ChatMessage.MESSAGE_FILE_TRANSFER_RECEIVE || msgType == ChatMessage.MESSAGE_FILE_TRANSFER_SEND || msgType == ChatMessage.MESSAGE_STICKER_SEND || msgType == ChatMessage.MESSAGE_FILE_TRANSFER_HISTORY
-        val isHttpFTMsg = isNonEmpty && bodyText.matches(HTTP_FT_MSG)
+        val isFTMsg = msgType == ChatMessage.MESSAGE_FILE_TRANSFER_RECEIVE
+                || msgType == ChatMessage.MESSAGE_FILE_TRANSFER_SEND
+                || msgType == ChatMessage.MESSAGE_STICKER_SEND
+                || msgType == ChatMessage.MESSAGE_FILE_TRANSFER_HISTORY
+
+        val isHttpFTMsg = isNonEmpty && bodyText!!.matches(HTTP_FT_MSG)
 
         // XHTML markup message always treated as non-consecutiveMessage
-        val isMarkUpText = isNonEmpty && bodyText.matches(ChatMessage.HTML_MARKUP)
+        val isMarkUpText = isNonEmpty && bodyText!!.matches(ChatMessage.HTML_MARKUP)
 
         // New GeoLocation message always treated as non-consecutiveMessage
-        val isLatLng = isNonEmpty && (bodyText.contains("geo:") || bodyText.contains("LatLng:"))
+        val isLatLng = isNonEmpty && (bodyText!!.contains("geo:") || bodyText.contains("LatLng:"))
 
         // system message always treated as non-consecutiveMessage
         val isSystemMsg = msgType == ChatMessage.MESSAGE_SYSTEM || msgType == ChatMessage.MESSAGE_ERROR
@@ -421,38 +387,44 @@ class ChatMessageImpl(
         fun getMsgForEvent(evt: MessageDeliveredEvent): ChatMessageImpl {
             val imessage = evt.getSourceMessage()
             val sender = evt.getContact().protocolProvider.accountID.accountJid
-            val senderName = if (evt.getSender()!!.isEmpty()) sender else evt.getSender()
+
+            val senderName = evt.getSender().ifEmpty { sender }
+
             return ChatMessageImpl(sender, senderName, evt.getTimestamp(),
-                    ChatMessage.MESSAGE_OUT, imessage, evt.getCorrectedMessageUID(), ChatMessage.DIR_OUT)
+                ChatMessage.MESSAGE_OUT, imessage, evt.getCorrectedMessageUID(), ChatMessage.DIR_OUT)
         }
 
         fun getMsgForEvent(evt: MessageReceivedEvent): ChatMessageImpl {
             val imessage = evt.getSourceMessage()
             val contact = evt.getSourceContact()
-            val sender = evt.getSender().ifEmpty { AndroidGUIActivator.contactListService.findMetaContactByContact(contact)!!.getDisplayName() }
+            val sender = evt.getSender().ifEmpty {
+                AndroidGUIActivator.contactListService.findMetaContactByContact(contact)!!.getDisplayName()!!
+            }
+
             return ChatMessageImpl(contact.address, sender,
-                    evt.getTimestamp(), evt.getEventType(), imessage, evt.getCorrectedMessageUID(), ChatMessage.DIR_IN)
+                evt.getTimestamp(), evt.getEventType(), imessage, evt.getCorrectedMessageUID(), ChatMessage.DIR_IN)
         }
 
         fun getMsgForEvent(evt: ChatRoomMessageDeliveredEvent): ChatMessageImpl {
             val imessage = evt.getMessage()!!
             val chatRoom = evt.getSourceChatRoom().getName()
             return ChatMessageImpl(chatRoom, chatRoom, evt.getTimestamp(),
-                    ChatMessage.MESSAGE_MUC_OUT, imessage, null, ChatMessage.DIR_OUT)
+                ChatMessage.MESSAGE_MUC_OUT, imessage, null, ChatMessage.DIR_OUT)
         }
 
         fun getMsgForEvent(evt: ChatRoomMessageReceivedEvent): ChatMessageImpl {
             val imessage = evt.getMessage()
             val nickName = evt.getSourceChatRoomMember().getNickName()
             val contact = evt.getSourceChatRoomMember().getContactAddress()
+
             return ChatMessageImpl(nickName!!, contact, evt.getTimestamp(),
-                    evt.getEventType(), imessage, null, ChatMessage.DIR_IN)
+                evt.getEventType(), imessage, null, ChatMessage.DIR_IN)
         }
 
         fun getMsgForEvent(fileRecord: FileRecord): ChatMessageImpl {
             return ChatMessageImpl(fileRecord.getJidAddress(), fileRecord.date,
-                    ChatMessage.MESSAGE_FILE_TRANSFER_HISTORY, IMessage.ENCODE_PLAIN, null,
-                    fileRecord.id, fileRecord.direction, null, null, fileRecord)
+                ChatMessage.MESSAGE_FILE_TRANSFER_HISTORY, IMessage.ENCODE_PLAIN, null,
+                fileRecord.id, fileRecord.direction, null, null, fileRecord)
         }
 
         /**
@@ -471,7 +443,8 @@ class ChatMessageImpl(
             try {
                 if (accountInfoOpSet != null) {
                     val displayName = AccountInfoUtils.getDisplayName(accountInfoOpSet)
-                    if (displayName != null && displayName.isNotEmpty()) return displayName
+                    if (displayName != null && displayName.isNotEmpty())
+                        return displayName
                 }
             } catch (e: Exception) {
                 Timber.w("Cannot obtain display name through OPSet")

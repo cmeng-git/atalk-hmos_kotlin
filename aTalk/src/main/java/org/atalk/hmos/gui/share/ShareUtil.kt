@@ -135,7 +135,7 @@ object ShareUtil {
     }
 
     /**
-     * Share of both text and images in a single intent for local forward only in aTalk
+     * Share of both text and images in a single intent for local forward only in aTalk;
      * msgContent is saved intent.categories if both types are required; otherwise follow standard share method
      *
      * @param context a reference context of the activity

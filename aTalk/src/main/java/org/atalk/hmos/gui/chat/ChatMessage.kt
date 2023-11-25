@@ -109,14 +109,14 @@ interface ChatMessage {
      *
      * @return the UID of this message.
      */
-    val messageUID: String?
+    fun getMessageUID(): String
 
     /**
      * Returns the message direction i.e. in/put.
      *
      * @return the direction of this message.
      */
-    val messageDir: String?
+    val messageDir: String
 
     /**
      * Returns the UID of the message that this message replaces, or `null` if this is a new message.
@@ -149,21 +149,21 @@ interface ChatMessage {
      *
      * @return the UID that should be used for matching correction messages.
      */
-    val uidForCorrection: String?
+    fun getUidForCorrection(): String?
 
     /**
      * Returns original message content that should be given for the user to edit the correction.
      *
      * @return original message content that should be given for the user to edit the correction.
      */
-    val contentForCorrection: String?
+    fun getContentForCorrection(): String?
 
     /**
      * Returns message content that should be used for copy and paste functionality.
      *
      * @return message content that should be used for copy and paste functionality.
      */
-    val contentForClipboard: String?
+    fun getContentForClipboard(): String?
 
     /**
      * Returns the OperationSetFileTransfer of this message.

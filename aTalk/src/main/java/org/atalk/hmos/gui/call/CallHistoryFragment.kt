@@ -19,14 +19,11 @@ package org.atalk.hmos.gui.call
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
 import android.content.Context
-import android.graphics.drawable.BitmapDrawable
 import android.os.AsyncTask
-import android.os.Handler
 import android.util.SparseBooleanArray
 import android.view.ActionMode
 import android.view.LayoutInflater
 import android.view.Menu
-import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
@@ -39,14 +36,10 @@ import android.widget.TextView
 import android.widget.TimePicker
 import androidx.fragment.app.FragmentActivity
 import net.java.sip.communicator.impl.callhistory.CallHistoryActivator
-import net.java.sip.communicator.service.callhistory.CallHistoryService
-import net.java.sip.communicator.service.callhistory.CallPeerRecord
 import net.java.sip.communicator.service.callhistory.CallRecord
 import net.java.sip.communicator.service.contactlist.MetaContact
 import net.java.sip.communicator.service.contactlist.MetaContactGroup
-import net.java.sip.communicator.service.protocol.AccountID
 import net.java.sip.communicator.service.protocol.CallPeerState
-import net.java.sip.communicator.service.protocol.Contact
 import net.java.sip.communicator.service.protocol.OperationSet
 import net.java.sip.communicator.service.protocol.OperationSetBasicTelephony
 import net.java.sip.communicator.service.protocol.OperationSetPresence
@@ -65,7 +58,6 @@ import org.atalk.hmos.gui.util.EntityListHelper
 import org.atalk.service.osgi.OSGiActivity
 import org.atalk.service.osgi.OSGiFragment
 import org.jxmpp.jid.DomainBareJid
-import org.jxmpp.jid.Jid
 import org.osgi.framework.Bundle
 import timber.log.Timber
 import java.util.*

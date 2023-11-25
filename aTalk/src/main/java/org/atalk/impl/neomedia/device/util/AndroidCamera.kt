@@ -10,7 +10,6 @@ import org.atalk.impl.neomedia.NeomediaActivator
 import org.atalk.impl.neomedia.device.DeviceConfiguration
 import org.atalk.service.neomedia.MediaUseCase
 import timber.log.Timber
-import java.util.*
 import javax.media.CaptureDeviceInfo
 import javax.media.Format
 import javax.media.MediaLocator
@@ -108,7 +107,8 @@ class AndroidCamera
             get() {
                 val devConfig: DeviceConfiguration = NeomediaActivator.getMediaServiceImpl()!!.deviceConfiguration
                 val videoDevices = devConfig.getAvailableVideoCaptureDevices(MediaUseCase.CALL)
-                Collections.sort(videoDevices, SortByName())
+                videoDevices.sortWith(SortByName())
+
                 val cameras = arrayOfNulls<AndroidCamera>(videoDevices.size)
                 for (i in videoDevices.indices) {
                     val device = videoDevices[i]

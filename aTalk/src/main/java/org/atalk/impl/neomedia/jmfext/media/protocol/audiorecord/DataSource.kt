@@ -414,10 +414,15 @@ class DataSource : AbstractPullBufferCaptureDevice {
         fun setThreadPriority(threadPriority: Int) {
             try {
                 Process.setThreadPriority(threadPriority)
-            } catch (ex: IllegalArgumentException) {
-                Timber.w("Failed to set thread priority: %s", ex.message)
-            } catch (ex: SecurityException) {
-                Timber.w("Failed to set thread priority: %s", ex.message)
+
+            } catch (ex: Exception) {
+                when (ex) {
+                    is IllegalArgumentException,
+                    is SecurityException,
+                    -> {
+                        Timber.w("Failed to set thread priority: %s", ex.message)
+                    }
+                }
             }
         }
     }

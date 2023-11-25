@@ -6,11 +6,19 @@
      They are automatically updated with "ant bump-version".
 -->
 <changelog>
-    <release version="4.0.x (12/01/2023)" versioncode="400000">
+    <release version="4.0.x (11/25/2023)" versioncode="400000">
         <change>Kotlin refactor of aTalk java source</change>
         <change>Move project name space to org.atalk.hmos</change>
         <change>Change minimum API support to 24 (android-7)</change>
         <change>Migrate ice4j to only compatible with API-24</change>
+        <change>Merged CallEnded with VideoCallActivity; Auto return to contactList 3 seconds after call has ended</change>
+        <change>Remove OTR encryption and Desktop support</change>
+        <change>Update osmdroid-android:6.1.14 to 6.1.17</change>
+        <change>Update all aTalk JNI libraries build to use NDK '22.1.7171670'</change>
+        <change>Upgrade jni libraries sources for:libvpx 1.13.0 to 1.13.1; ffmpeg 5.1.2 to 5.1.4</change>
+        <change>Clean up JNI scripts for all native libraries built, and use prebuilt toolchain</change>
+        <change>Update osmdroid-android:6.1.14 to 6.1.17</change>
+        <change>Bug fixes and enhancements</change>
     </release>
 
     <release version="3.2.1 (07/03/2023)" versioncode="302010">
