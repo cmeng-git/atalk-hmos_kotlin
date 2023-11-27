@@ -91,8 +91,7 @@ object FMJPlugInConfiguration {
             "org.atalk.impl.neomedia.codec.audio.amrwb.Packetizer")
 
     /**
-     * The package prefixes of the additional JMF `DataSource`s (e.g. low latency PortAudio
-     * and ALSA `CaptureDevice`s).
+     * The package prefixes of the additional JMF <code>DataSource</code>s (e.g. ALSA CaptureDevices).
      */
     private val CUSTOM_PACKAGES = arrayOf(
             "org.atalk.impl.neomedia.jmfext",

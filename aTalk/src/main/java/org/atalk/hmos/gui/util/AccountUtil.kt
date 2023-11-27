@@ -30,10 +30,7 @@ object AccountUtil {
      * @return [Drawable] for default presence status or `null` otherwise
      */
     fun getDefaultPresenceIcon(context: Context, protocolName: String): Drawable? {
-        if (protocolName == ProtocolNames.SIP) {
-            return BitmapDrawable(aTalkApp.appResources,
-                    BitmapFactory.decodeResource(context.resources, R.drawable.default_sip_status))
-        } else if (protocolName == ProtocolNames.JABBER) {
+        if (protocolName == ProtocolNames.JABBER) {
             return BitmapDrawable(aTalkApp.appResources,
                     BitmapFactory.decodeResource(context.resources, R.drawable.default_jabber_status))
         }

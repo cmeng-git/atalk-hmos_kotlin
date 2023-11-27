@@ -129,7 +129,7 @@ class CallHistorySourceContact(
                 }
                 val supportedOpSets = LinkedList<Class<out OperationSet?>>()
 
-                // if the contat supports call
+                // if the contact supports call
                 if ((preferredProviders != null
                                 && preferredProviders.containsKey(OperationSetBasicTelephony::class.java)) || preferredProtocols != null) {
                     supportedOpSets.add(OperationSetBasicTelephony::class.java)

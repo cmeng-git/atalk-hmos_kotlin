@@ -1,8 +1,16 @@
 Project aTalk-Android Release Notes
 =========================================================================
 Version:        4.0.x (400000)
-Release Date:   11/25/2023
+Release Date:   11/28/2023
 Author:         cmeng
+- Remove SIP and ICQ protocols and preference settings support
+- Remove aTalk unused codec audio system and unused classes:
+  * portaudio, pulseaudio, quicktime, and video4Linux protocol directory
+  * PortAudioRenderer, PulseAudioRenderer, WASAPIRenderer,
+  * AudioSilenceCaptureDevice, AudioSilenceMediaDevice,
+  * AudioSilenceSystem, DirectShowSystem, PortAudioSystem, PulseAudioSystem,
+    QuickTimeSystem, NoneAudioSystem, and Video4Linux2System
+- Build openssl jni library without installing the man document.
 
 /* === 11/25/2023 === */
 - Remove OTR encryption support

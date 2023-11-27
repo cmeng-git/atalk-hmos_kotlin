@@ -103,16 +103,6 @@
     </PreferenceCategory>
 
     <PreferenceCategory android:title="@string/service_gui_settings_OTHER">
-
-        <!-- Preference
-            android:summary="@string/service_gui_settings_SIP_SUMMARY"
-            android:title="@string/service_gui_settings_SIP">
-            <intent
-                android:action="android.intent.action.VIEW"
-                android:targetClass="org.atalk.hmos.gui.settings.SipSettings"
-                android:targetPackage="org.atalk.hmos" />
-        </Preference -->
-
         <Preference
             android:summary="@string/plugin_provisioning_PROVISIONING_SUMMARY"
             android:title="@string/plugin_provisioning_PROVISIONING" >

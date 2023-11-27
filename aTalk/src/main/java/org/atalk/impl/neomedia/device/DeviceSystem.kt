@@ -360,21 +360,14 @@ abstract class DeviceSystem protected constructor(mediaType: MediaType, locatorP
              */
             val classNames = when (mediaType) {
                 MediaType.AUDIO -> arrayOf(
-                        if (OSUtils.IS_ANDROID) ".AudioRecordSystem" else null,
-                        if (OSUtils.IS_ANDROID) ".OpenSLESSystem" else null,
-                        if (OSUtils.IS_LINUX || OSUtils.IS_FREEBSD) ".PulseAudioSystem" else null,
-                        if (OSUtils.IS_WINDOWS) ".WASAPISystem" else null,
-                        if (OSUtils.IS_MAC) ".MacCoreaudioSystem" else null,
-                        if (OSUtils.IS_ANDROID) null else ".PortAudioSystem",
-                        ".AudioSilenceSystem",
-                        ".NoneAudioSystem")
+                        ".AudioRecordSystem",
+                        ".OpenSLESSystem"
+                )
                 MediaType.VIDEO -> arrayOf( // MediaRecorderSystem not working for API-23; so remove the support
                         // OSUtils.IS_ANDROID ? ".MediaRecorderSystem" : null,
-                        if (OSUtils.IS_ANDROID) ".AndroidCameraSystem" else null,
-                        if (OSUtils.IS_LINUX || OSUtils.IS_FREEBSD) ".Video4Linux2System" else null,
-                        if (OSUtils.IS_MAC) ".QuickTimeSystem" else null,
-                        if (OSUtils.IS_WINDOWS) ".DirectShowSystem" else null,
-                        ".ImgStreamingSystem")
+                        ".AndroidCameraSystem",
+                        ".ImgStreamingSystem"
+                )
                 else -> throw IllegalArgumentException("mediaType")
             }
             initializeDeviceSystems(classNames)
@@ -391,12 +384,11 @@ abstract class DeviceSystem protected constructor(mediaType: MediaType, locatorP
          * @param classNames the names of the classes which extend the `DeviceSystem` class
          * and instances of which are to be initialized.
          */
-        private fun initializeDeviceSystems(classNames: Array<String?>) {
+        private fun initializeDeviceSystems(classNames: Array<String>) {
             synchronized(deviceSystems) {
                 var packageName: String? = null
                 for (className_ in classNames) {
-                    var className = className_ ?: continue
-
+                    var className = className_
                     if (className.startsWith(".")) {
                         if (packageName == null) packageName = DeviceSystem::class.java.getPackage()?.name
                         className = packageName + className

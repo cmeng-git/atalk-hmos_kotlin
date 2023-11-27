@@ -459,22 +459,9 @@ abstract class AudioSystem protected constructor(
         const val LOCATOR_PROTOCOL_JAVASOUND = "javasound"
 
         /**
-         * The protocol of the `MediaLocator`s identifying `CaptureDeviceInfo`s
-         * contributed by `MacCoreaudioSystem`.
-         */
-        const val LOCATOR_PROTOCOL_MACCOREAUDIO = "maccoreaudio"
-
-        /**
          * The protocol of the `MediaLocator`s identifying OpenSL ES capture devices.
          */
         const val LOCATOR_PROTOCOL_OPENSLES = "opensles"
-        const val LOCATOR_PROTOCOL_PORTAUDIO = "portaudio"
-        const val LOCATOR_PROTOCOL_PULSEAUDIO = "pulseaudio"
-
-        /**
-         * The protocol of the `MediaLocator`s identifying `CaptureDeviceInfo`s contributed by `WASAPISystem`.
-         */
-        const val LOCATOR_PROTOCOL_WASAPI = "wasapi"
 
         /**
          * The (base) name of the `ConfigurationService` property which indicates whether

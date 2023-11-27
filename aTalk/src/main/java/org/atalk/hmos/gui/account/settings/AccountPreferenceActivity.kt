@@ -82,7 +82,6 @@ class AccountPreferenceActivity : OSGiActivity(), PreferenceFragmentCompat.OnPre
     private fun createPreferencesFragment(userUniqueID: String?, protocolName: String): AccountPreferenceFragment {
         val preferencesFragment = when (protocolName) {
             ProtocolNames.JABBER -> JabberPreferenceFragment()
-            ProtocolNames.SIP -> SipPreferenceFragment()
             else -> throw IllegalArgumentException("Unsupported protocol name: $protocolName")
         }
         val args = Bundle()
@@ -101,7 +100,7 @@ class AccountPreferenceActivity : OSGiActivity(), PreferenceFragmentCompat.OnPre
             val fragments = supportFragmentManager.fragments
             if (fragments.isNotEmpty()) {
                 val fragment = fragments[fragments.size - 1]
-                if (fragment is JabberPreferenceFragment || fragment is SipPreferenceFragment) {
+                if (fragment is JabberPreferenceFragment) {
                     preferencesFragment!!.commitChanges()
                     return true
                 }

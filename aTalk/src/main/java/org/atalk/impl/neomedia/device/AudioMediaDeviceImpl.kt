@@ -97,8 +97,7 @@ open class AudioMediaDeviceImpl : MediaDeviceImpl {
             if (captureDeviceSharing == null) {
                 val protocol = getCaptureDeviceInfoLocatorProtocol()
                 var createCaptureDeviceIfNull = true
-                if (AudioSystem.LOCATOR_PROTOCOL_JAVASOUND.equals(protocol, ignoreCase = true)
-                        || AudioSystem.LOCATOR_PROTOCOL_PORTAUDIO.equals(protocol, ignoreCase = true)) {
+                if (AudioSystem.LOCATOR_PROTOCOL_JAVASOUND.equals(protocol, ignoreCase = true)) {
                     captureDevice = superCreateCaptureDevice()
                     createCaptureDeviceIfNull = false
                     if (captureDevice != null) {

@@ -20,7 +20,6 @@ import net.java.sip.communicator.service.protocol.OperationFailedException
 import net.java.sip.communicator.service.protocol.OperationSetAdvancedTelephony
 import net.java.sip.communicator.service.protocol.OperationSetBasicTelephony
 import net.java.sip.communicator.service.protocol.OperationSetDesktopStreaming
-import net.java.sip.communicator.service.protocol.OperationSetPresence
 import net.java.sip.communicator.service.protocol.OperationSetResourceAwareTelephony
 import net.java.sip.communicator.service.protocol.OperationSetTelephonyConferencing
 import net.java.sip.communicator.service.protocol.OperationSetVideoBridge
@@ -48,7 +47,6 @@ import org.jivesoftware.smackx.avatar.AvatarManager
 import timber.log.Timber
 import java.text.ParseException
 import java.util.*
-import javax.swing.JComponent
 
 /**
  * @author Yana Stamcheva
@@ -119,7 +117,9 @@ object CallManager {
      */
     @Synchronized
     fun getActiveCall(callKey: String?): Call<*>? {
-        synchronized(activeCalls) { return activeCalls[callKey] }
+        synchronized(activeCalls) {
+            return activeCalls[callKey]
+        }
     }
 
     /**
@@ -128,7 +128,9 @@ object CallManager {
      * @return collection of currently active calls.
      */
     fun getActiveCalls(): Collection<Call<*>?> {
-        synchronized(activeCalls) { return activeCalls.values }
+        synchronized(activeCalls) {
+            return activeCalls.values
+        }
     }
 
     /**
@@ -138,7 +140,9 @@ object CallManager {
      */
     @Synchronized
     fun getActiveCallsCount(): Int {
-        synchronized(activeCalls) { return activeCalls.size }
+        synchronized(activeCalls) {
+            return activeCalls.size
+        }
     }
 
     /**
@@ -252,75 +256,11 @@ object CallManager {
      * Indicates if the local video is currently enabled for the given `call`.
      *
      * @param call the `Call`, for which we would to check if the local video streaming is currently enabled
-     * @return `true` if the local video streaming is currently enabled for the given
-     * `call`, `false` otherwise
+     * @return `true` if the local video streaming is currently enabled for the given `call`, `false` otherwise
      */
     fun isLocalVideoEnabled(call: Call<*>?): Boolean {
         val telephony = call!!.pps.getOperationSet(OperationSetVideoTelephony::class.java)
         return telephony != null && telephony.isLocalVideoAllowed(call)
-    }
-    /**
-     * Creates a call to the given call string. The given component indicates where should be
-     * shown the "call via" menu if needed.
-     *
-     * callString the string to call
-     * c the component, which indicates where should be shown the "call via" menu if needed
-     * l listener that is notified when the call interface has been started after call was created
-     */
-    /**
-     * Creates a call to the given call string. The given component indicates where should be
-     * shown the "call via" menu if needed.
-     *
-     * @param cString the string to call
-     * @param c the component, which indicates where should be shown the "call via" menu if needed
-     */
-    @JvmOverloads
-    fun createCall(cString: String, c: JComponent?, l: CallInterfaceListener? = null) {
-        var callString = cString
-        callString = callString.trim { it <= ' ' }
-
-        // Removes special characters from phone numbers.
-        if (ConfigurationUtils.isNormalizePhoneNumber() && !NetworkUtils.isValidIPAddress(callString)) {
-            callString = AndroidGUIActivator.phoneNumberI18nService!!.normalize(callString).toString()
-        }
-        val telephonyProviders = getTelephonyProviders()
-        if (telephonyProviders.size == 1) {
-            createCall(telephonyProviders[0], callString, false)
-            l?.callInterfaceStarted()
-        }
-        else if (telephonyProviders.size > 1) {
-            /*
-             * Allow plugins which do not have a (Jitsi) UI to create calls by automatically
-             * picking up a telephony provider.
-             */
-            if (c == null) {
-                var preferredTelephonyProvider: ProtocolProviderService? = null
-                for (telephonyProvider in telephonyProviders) {
-                    try {
-                        val presenceOpSet = telephonyProvider.getOperationSet(OperationSetPresence::class.java)
-                        if (presenceOpSet?.findContactByID(callString) != null) {
-                            preferredTelephonyProvider = telephonyProvider
-                            break
-                        }
-                    } catch (t: Throwable) {
-                        if (t is ThreadDeath) throw t
-                    }
-                }
-                if (preferredTelephonyProvider == null) preferredTelephonyProvider = telephonyProviders[0]
-                createCall(preferredTelephonyProvider, callString, false)
-                l?.callInterfaceStarted()
-            }
-            else {
-                val chooseAccountDialog = ChooseCallAccountPopupMenu(c, callString, telephonyProviders, l)
-
-                // chooseAccountDialog.setLocation(c.getLocation());
-                chooseAccountDialog.showPopupMenu()
-            }
-        }
-        else {
-            DialogActivity.showDialog(aTalkApp.globalContext,
-                    R.string.service_gui_WARNING, R.string.service_gui_NO_ONLINE_TELEPHONY_ACCOUNT)
-        }
     }
 
     /**

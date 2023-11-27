@@ -730,12 +730,9 @@ class DeviceConfiguration : PropertyChangeNotifier(), PropertyChangeListener {
          * The list of class names of custom `Renderer` implementations to be registered with JMF.
          */
         private val CUSTOM_RENDERERS = arrayOf(
-            if (OSUtils.IS_ANDROID) ".audio.AudioTrackRenderer" else null,
-            if (OSUtils.IS_ANDROID) ".audio.OpenSLESRenderer" else null,
-            if (OSUtils.IS_LINUX) ".audio.PulseAudioRenderer" else null,
-            if (OSUtils.IS_WINDOWS) ".audio.WASAPIRenderer" else null,
-            if (OSUtils.IS_ANDROID) null else ".audio.PortAudioRenderer",
-            if (OSUtils.IS_ANDROID) ".video.SurfaceRenderer" else null,
+            ".audio.AudioTrackRenderer",
+            ".audio.OpenSLESRenderer",
+            ".video.SurfaceRenderer",
             ".video.JAWTRenderer"
         )
 

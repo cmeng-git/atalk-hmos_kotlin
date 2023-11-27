@@ -312,9 +312,6 @@
                 android:name="android.preference"
                 android:resource="@xml/silk_preferences" />
         </activity-alias>
-        <!-- Sip settings -->
-        <activity
-            android:name=".gui.settings.SipSettings" />
         <!-- Provisioning settings -->
         <activity
             android:name=".gui.settings.ProvisioningSettings" />

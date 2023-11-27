@@ -26,7 +26,7 @@ class AudioNotifierServiceImpl : AudioNotifierService, PropertyChangeListener {
      * The cache of `SCAudioClip` instances which we may reuse. The reuse is complex because
      * a `SCAudioClip` may be used by a single user at a time.
      */
-    private var audios: MutableMap<AudioKey, SCAudioClip>? = null
+    private var audioClips: MutableMap<AudioKey, SCAudioClip>? = null
 
     /**
      * The `Object` which synchronizes the access to [.audios].
@@ -105,7 +105,7 @@ class AudioNotifierServiceImpl : AudioNotifierService, PropertyChangeListener {
              * at a time. That's why we'll forget about them while they are in use, and we'll
              * reclaim them when they are no longer in use.
              */
-            audio = if (audios == null) null else audios!!.remove(key)
+            audio = if (audioClips == null) null else audioClips!!.remove(key)
             if (audio == null) {
                 audio = try {
                     val audioSystem = deviceConfiguration.audioSystem
@@ -130,13 +130,13 @@ class AudioNotifierServiceImpl : AudioNotifierService, PropertyChangeListener {
              * Make sure the SCAudioClip will be reclaimed for reuse when it is no longer in use.
              */
             if (audio != null) {
-                if (audios == null) audios = HashMap()
+                if (audioClips == null) audioClips = HashMap()
                 /*
                      * We have to return in the Map which was active at the time the SCAudioClip was
                      * initialized because it may have become invalid if the playback or notify audio
                      * device changed.
                      */
-                val finalAudios = audios!!
+                val finalAudios = audioClips!!
                 val finalAudio = audio!!
                 audio = object : SCAudioClip {
                     /**
@@ -167,7 +167,7 @@ class AudioNotifierServiceImpl : AudioNotifierService, PropertyChangeListener {
                     @Throws(Throwable::class)
                     protected fun finalize() {  // java.lang.Object.finalize()
                         try {
-                            synchronized(audios!!) { finalAudios.put(key, finalAudio) }
+                            synchronized(audioClips!!) { finalAudios.put(key, finalAudio) }
                         } finally {
                             // super.finalize()
                         }
@@ -226,13 +226,13 @@ class AudioNotifierServiceImpl : AudioNotifierService, PropertyChangeListener {
                 /*
                  * Make sure that the currently referenced SCAudioClips will not be reclaimed.
                  */
-                audios = null
+                audioClips = null
             }
         }
     }
 
     /**
-     * Implements the key of [AudioNotifierServiceImpl.audios]. Combines the `uri` of
+     * Implements the key of [AudioNotifierServiceImpl.audioClips]. Combines the `uri` of
      * the `SCAudioClip` with the indicator which determines whether the
      * `SCAudioClip` in question uses the playback or the notify audio device.
      */
