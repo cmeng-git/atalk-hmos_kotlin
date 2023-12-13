@@ -14,16 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.atalk.persistance.migrations
+package org.atalk.impl.appupdate
 
-import android.database.sqlite.SQLiteDatabase
+import net.java.sip.communicator.service.update.UpdateService
+import org.atalk.hmos.BuildConfig
 
-object Migrations {
-    fun upgradeDatabase(db: SQLiteDatabase, migrationsHelper: MigrationsHelper?) {
-        when (db.version) {
-            1 -> {
-                // MigrationTo2.createOmemoTables(db)
-            }
-        }
+/**
+ * Dummy UpdateServiceImpl class for aTalk release version
+ *
+ * @author Eng Chong Meng
+ */
+class UpdateServiceImpl : UpdateService {
+    override fun checkForUpdates() {}
+
+    override fun getLatestVersion(): String {
+        return BuildConfig.VERSION_NAME
     }
+
+    override val isLatestVersion: Boolean
+        get() {
+            return true
+        }
 }

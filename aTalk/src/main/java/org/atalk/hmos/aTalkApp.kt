@@ -83,7 +83,6 @@ class aTalkApp : Application(), LifecycleEventObserver {
 
         // Trigger the aTalk database upgrade or creation if none exist
         DatabaseBackend.getInstance(this)
-        // MigrationTo6.updateChatSessionTable(DatabaseBackend.getInstance(this).getWritableDatabase());
 
         // Do this after WebView(this).destroy(); Set up contextWrapper to use aTalk user selected Language
         super.onCreate()

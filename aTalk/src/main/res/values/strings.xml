@@ -26,6 +26,10 @@
 
 <resources>
     <string name="accept_call_video">Answer call with video</string>
+    <string name="account_delete_on_server">Delete account on server</string>
+    <string name="account_delete_on_server_unregistered">Delete account on server failed, user not registered!</string>
+    <string name="account_delete_on_server_failed">Delete account on server failed:\n%1$s</string>
+    <string name="account_delete_on_server_successful">Delete account on server successful:\n%1$s</string>
     <string name="account_setup_basics_show_password">Show password</string>
     <string name="account_override_server">Override server setting</string>
     <string name="account_registration">Register new account on server</string>
@@ -48,6 +52,8 @@
     <string name="notification_setting">Notification Settings&#8230;</string>
     <string name="no_application_found_to_open_file">No application found to open file</string>
     <string name="password">password</string>
+    <string name="password_change_on_server_failed">Password change on server failed:\n%1$s</string>
+    <string name="password_change_on_server_successful">Password change on server successful!</string>
     <string name="service_gui_PASSWORD">Password:</string>
     <string name="send_process_signal">Send Process Signal</string>
     <string name="show_call_info">Call info</string>

@@ -30,7 +30,10 @@ import javax.media.format.VideoFormat
  * @author Lyubomir Marinov
  * @author Eng Chong Meng
  */
-abstract class DeviceSystem protected constructor(mediaType: MediaType, locatorProtocol: String, features: Int = 0) : PropertyChangeNotifier() {
+abstract class DeviceSystem protected constructor(
+        mediaType: MediaType, locatorProtocol: String,
+        features: Int = 0,
+) : PropertyChangeNotifier() {
     /**
      * Gets the flags indicating the optional features supported by this `DeviceSystem`.
      *
@@ -89,7 +92,8 @@ abstract class DeviceSystem protected constructor(mediaType: MediaType, locatorP
             try {
                 return Class.forName(className).newInstance() as Renderer
             } catch (t: Throwable) {
-                if (t is ThreadDeath) throw t else {
+                if (t is ThreadDeath) throw t
+                else {
                     Timber.e(t, "Failed to initialize a new %s instance", className)
                 }
             }
@@ -360,13 +364,15 @@ abstract class DeviceSystem protected constructor(mediaType: MediaType, locatorP
              */
             val classNames = when (mediaType) {
                 MediaType.AUDIO -> arrayOf(
-                        ".AudioRecordSystem",
-                        ".OpenSLESSystem"
+                    ".AudioRecordSystem",
+                    ".OpenSLESSystem",
+                    ".AudioSilenceSystem",
+                    ".NoneAudioSystem"
                 )
                 MediaType.VIDEO -> arrayOf( // MediaRecorderSystem not working for API-23; so remove the support
-                        // OSUtils.IS_ANDROID ? ".MediaRecorderSystem" : null,
-                        ".AndroidCameraSystem",
-                        ".ImgStreamingSystem"
+                    // OSUtils.IS_ANDROID ? ".MediaRecorderSystem" : null,
+                    ".AndroidCameraSystem",
+                    ".ImgStreamingSystem"
                 )
                 else -> throw IllegalArgumentException("mediaType")
             }
@@ -418,7 +424,8 @@ abstract class DeviceSystem protected constructor(mediaType: MediaType, locatorP
                             if (t is ThreadDeath) {
                                 Timber.e("Fatal error while initialize Device Systems: %s; %s", className, t.message)
                                 throw t
-                            } else {
+                            }
+                            else {
                                 Timber.w("Initialize failed: %s; %s", className, t.message)
                             }
                         }
@@ -427,7 +434,8 @@ abstract class DeviceSystem protected constructor(mediaType: MediaType, locatorP
                             if (!deviceSystems.contains(deviceSystem)) deviceSystems.add(deviceSystem)
                             Timber.d("Initialize successful: %s", className)
                         }
-                    } else {
+                    }
+                    else {
                         reinitialize = true
                     }
 
@@ -439,7 +447,8 @@ abstract class DeviceSystem protected constructor(mediaType: MediaType, locatorP
                             if (t is ThreadDeath) {
                                 Timber.e("Fatal error while initialize Device Systems: %s; %s", className, t.message)
                                 throw t
-                            } else {
+                            }
+                            else {
                                 Timber.w("Failed to initialize %s; %s", className, t.message)
                             }
                         }
@@ -517,7 +526,8 @@ abstract class DeviceSystem protected constructor(mediaType: MediaType, locatorP
                 if (t != null) {
                     if (t is Exception) throw (t as Exception?)!! else throw UndeclaredThrowableException(t)
                 }
-            } else {
+            }
+            else {
                 deviceSystem!!.initialize()
             }
         }

@@ -1,10 +1,19 @@
 Project aTalk-Android Release Notes
 =========================================================================
 Version:        4.0.x (400000)
-Release Date:   11/28/2023
+Release Date:   12/28/2023
 Author:         cmeng
+
+/* === 12/12/2023 === */
+- Add user selectable option 'Delete account on server' when user remove an account; user must login to perform this action.
+- While user is login, changing local password will also change password on the server.
+- Revert deletion of AudioSilenceSystem, AudioSilenceCaptureDevice, AudioSilenceMediaDevice classes
+- Upgrade smack library to version 4.4.7
+- Reset and cleanup mysql database version and creation.
+
+/* === 11/28/2023 === */
 - Remove SIP and ICQ protocols and preference settings support
-- Remove aTalk unused codec audio system and unused classes:
+- Remove aTalk unused codec, audio system and unused classes:
   * portaudio, pulseaudio, quicktime, and video4Linux protocol directory
   * PortAudioRenderer, PulseAudioRenderer, WASAPIRenderer,
   * AudioSilenceCaptureDevice, AudioSilenceMediaDevice,
@@ -17,7 +26,6 @@ Author:         cmeng
 - Remove Desktop Util support
 - Minimize use of android unsupported java classes e.g. java.jwt.Component, javax.swing.JComponent
 - Remove unused classes, strings and drawables resources
-- Fix kotlin refactored source errors
 - Update all aTalk JNI libraries build to use NDK '22.1.7171670';
   * Max NDK version that is compatible with aTalk JNI libraries built.
   * Retain ANDROID_API=21 for 64-bit and aTalk-android minSDK support;
@@ -28,6 +36,7 @@ Author:         cmeng
 - Clean up JNI scripts for all native libraries built
 - Use the prebuilt toolchain instead of using make_standalone_toolchain.py.
 - Update osmdroid-android:6.1.14 to 6.1.17
+- Fix kotlin refactored source errors
 
 /* === 11/02/2023 === */
 - Fixed CallEnded class not call even it was being replaced in VideoCallActivity (Kotlin problem?)

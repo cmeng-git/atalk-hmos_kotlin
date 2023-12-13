@@ -29,8 +29,8 @@ import net.java.sip.communicator.util.account.AccountUtils
 import org.atalk.hmos.R
 import org.atalk.hmos.aTalkApp
 import org.atalk.hmos.gui.AndroidGUIActivator
-import org.atalk.hmos.gui.account.RemoveAccountDialog.OnAccountRemovedListener
-import org.atalk.hmos.gui.account.RemoveAccountDialog.create
+import org.atalk.hmos.gui.account.AccountDeleteDialog.OnAccountRemovedListener
+import org.atalk.hmos.gui.account.AccountDeleteDialog.create
 import org.atalk.hmos.gui.account.settings.AccountPreferenceActivity
 import org.atalk.hmos.gui.contactlist.AddGroupDialog
 import org.atalk.hmos.gui.dialogs.DialogActivity
@@ -40,7 +40,6 @@ import org.atalk.persistance.FileBackend
 import org.atalk.persistance.ServerPersistentStoresRefreshDialog
 import org.atalk.service.osgi.OSGiActivity
 import org.jivesoftware.smackx.avatar.vcardavatar.VCardAvatarManager
-import org.jxmpp.jid.BareJid
 import org.jxmpp.stringprep.XmppStringprepException
 import timber.log.Timber
 import java.io.File
@@ -176,7 +175,7 @@ open class AccountsListActivity : OSGiActivity() {
                     override fun onAccountRemoved(account: Account) {
                         listAdapter!!.remove(account)
                     }
-                }).show()
+                })
                 true
             }
             R.id.account_settings -> {

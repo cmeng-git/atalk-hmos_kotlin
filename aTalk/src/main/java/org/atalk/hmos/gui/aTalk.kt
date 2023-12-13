@@ -19,7 +19,6 @@ package org.atalk.hmos.gui
 import android.Manifest
 import android.app.Activity
 import android.app.SearchManager
-import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -30,15 +29,12 @@ import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
-import androidx.viewpager.widget.PagerAdapter
 import androidx.viewpager.widget.ViewPager
 import de.cketti.library.changelog.ChangeLog
-import net.java.sip.communicator.service.contactlist.MetaContact
 import org.atalk.hmos.R
 import org.atalk.hmos.aTalkApp
 import org.atalk.hmos.gui.actionbar.ActionBarStatusFragment
 import org.atalk.hmos.gui.call.CallHistoryFragment
-import org.atalk.hmos.gui.chat.ChatPanel
 import org.atalk.hmos.gui.chat.ChatSessionManager
 import org.atalk.hmos.gui.chat.chatsession.ChatSessionFragment
 import org.atalk.hmos.gui.chatroomslist.ChatRoomListFragment
@@ -47,9 +43,6 @@ import org.atalk.hmos.gui.menu.MainMenuActivity
 import org.atalk.hmos.gui.util.DepthPageTransformer
 import org.atalk.hmos.gui.util.EntityListHelper
 import org.atalk.hmos.gui.webview.WebViewFragment
-import org.atalk.impl.neomedia.device.AndroidCameraSystem
-import org.atalk.persistance.migrations.MigrateDir
-import org.osgi.framework.BundleContext
 import timber.log.Timber
 
 /**
@@ -108,10 +101,6 @@ class aTalk : MainMenuActivity(), EntityListHelper.TaskCompleted {
         // allow 15 seconds for first launch login to complete before showing history log if the activity is still active
         val cl = ChangeLog(this)
         if (cl.isFirstRun) {
-            // Purge obsoleted aTalk avatarCache directory and contents 2.2.0 (2020/03/13): To be removed in future release.
-            MigrateDir.purgeAvatarCache()
-            // Update camera database, and remove mediaRecorder support (2021/11/05); not longer supported since API-23.
-            AndroidCameraSystem.cleanMediaDB()
             runOnUiThread {
                 Handler().postDelayed({
                     if (!isFinishing) {

@@ -34,7 +34,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import com.codetroopers.betterpickers.calendardatepicker.CalendarDatePickerDialogFragment
 import com.codetroopers.betterpickers.calendardatepicker.MonthAdapter.CalendarDay
 import com.yalantis.ucrop.UCrop
-import net.java.sip.communicator.service.protocol.AccountID
 import net.java.sip.communicator.service.protocol.OperationFailedException
 import net.java.sip.communicator.service.protocol.OperationSetPresence
 import net.java.sip.communicator.service.protocol.OperationSetServerStoredAccountInfo
@@ -68,8 +67,8 @@ import net.java.sip.communicator.util.ServiceUtils
 import net.java.sip.communicator.util.account.AccountUtils
 import org.atalk.hmos.R
 import org.atalk.hmos.gui.AndroidGUIActivator
-import org.atalk.hmos.gui.account.RemoveAccountDialog.OnAccountRemovedListener
-import org.atalk.hmos.gui.account.RemoveAccountDialog.create
+import org.atalk.hmos.gui.account.AccountDeleteDialog.OnAccountRemovedListener
+import org.atalk.hmos.gui.account.AccountDeleteDialog.create
 import org.atalk.hmos.gui.account.settings.AccountPreferenceActivity
 import org.atalk.hmos.gui.actionbar.ActionBarUtil
 import org.atalk.hmos.gui.contactlist.ContactInfoActivity
@@ -891,9 +890,9 @@ open class AccountInfoPresenceActivity : OSGiActivity(), EventListener<AccountEv
                 accountInfoOpSet!!.replaceDetail(oldDetail, newDetail)
             }
         } catch (e1: ArrayIndexOutOfBoundsException) {
-            Timber.d("Failed to update account details.%s %s", mAccount!!.getAccountName(), e1.message)
+            Timber.d("Failed to update account details.%s %s", mAccount.getAccountName(), e1.message)
         } catch (e1: OperationFailedException) {
-            Timber.d("Failed to update account details.%s %s", mAccount!!.getAccountName(), e1.message)
+            Timber.d("Failed to update account details.%s %s", mAccount.getAccountName(), e1.message)
         }
     }
 
@@ -919,7 +918,7 @@ open class AccountInfoPresenceActivity : OSGiActivity(), EventListener<AccountEv
                         hasChanges = false
                         finish()
                     }
-                }).show()
+                })
                 return true
             }
             R.id.account_settings -> {
@@ -961,8 +960,8 @@ open class AccountInfoPresenceActivity : OSGiActivity(), EventListener<AccountEv
      * @param avatarView the [View] that has been clicked
      */
     private fun onAvatarClicked(avatarView: View) {
-        if (mAccount!!.getAvatarOpSet() == null) {
-            Timber.w("Avatar operation set is not supported by %s", mAccount!!.getAccountName())
+        if (mAccount.getAvatarOpSet() == null) {
+            Timber.w("Avatar operation set is not supported by %s", mAccount.getAccountName())
             showAvatarChangeError()
             return
         }

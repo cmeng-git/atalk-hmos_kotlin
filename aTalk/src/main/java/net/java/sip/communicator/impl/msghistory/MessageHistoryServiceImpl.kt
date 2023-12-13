@@ -723,6 +723,8 @@ class MessageHistoryServiceImpl : MessageHistoryService, MessageHistoryAdvancedS
                         Timber.e("Omemo decrypt message (%s): %s", msgId, e.message)
                     } catch (e: IOException) {
                         Timber.e("Omemo decrypt message (%s): %s", msgId, e.message)
+                    } catch (e: IllegalArgumentException) {
+                        Timber.e("Omemo decrypt message (%s): %s", msgId, e.message)
                     }
                 } else {
                     iMessage = MessageJabberImpl(msg.body, IMessage.ENCRYPTION_NONE, null, msgId)

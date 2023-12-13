@@ -1,5 +1,5 @@
 --- /home/cmeng/source/smack/Smack-4.4.0-beta1/org/jivesoftware/smack/bosh/XMPPBOSHConnection.java	2020-05-31 19:46:48.000000000 
-+++ /home/cmeng/workspace/android/atalk-hmos/aTalk/src/main/java/org/jivesoftware/smack/bosh/XMPPBOSHConnection.java	2020-07-04 11:07:21.000000000
++++ /home/cmeng/workspace/android/atalk-hmos_kotlin/aTalk/src/main/java/org/jivesoftware/smack/bosh/XMPPBOSHConnection.java	2020-07-04 11:07:21.000000000
 @@ -37,13 +37,16 @@
  import org.jivesoftware.smack.packet.IQ;
  import org.jivesoftware.smack.packet.Message;

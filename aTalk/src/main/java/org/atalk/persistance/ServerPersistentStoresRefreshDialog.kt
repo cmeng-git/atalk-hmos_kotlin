@@ -17,7 +17,6 @@
 package org.atalk.persistance
 
 import android.app.Activity
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -26,8 +25,6 @@ import android.widget.CheckBox
 import net.java.sip.communicator.impl.protocol.jabber.ProtocolProviderServiceJabberImpl
 import net.java.sip.communicator.impl.protocol.jabber.ScServiceDiscoveryManager
 import net.java.sip.communicator.plugin.loggingutils.LogsCollector
-import net.java.sip.communicator.service.protocol.AccountID
-import net.java.sip.communicator.service.protocol.ProtocolProviderService
 import net.java.sip.communicator.service.protocol.RegistrationState
 import net.java.sip.communicator.util.account.AccountUtils
 import org.atalk.crypto.omemo.SQLiteOmemoStore
@@ -35,7 +32,7 @@ import org.atalk.hmos.BuildConfig
 import org.atalk.hmos.R
 import org.atalk.hmos.aTalkApp
 import org.atalk.hmos.gui.dialogs.DialogActivity
-import org.atalk.persistance.migrations.MigrationTo2
+import org.atalk.persistance.migrations.OmemoDBCreate
 import org.atalk.service.fileaccess.FileCategory
 import org.atalk.service.libjitsi.LibJitsi
 import org.atalk.service.osgi.OSGiFragment
@@ -210,14 +207,14 @@ class ServerPersistentStoresRefreshDialog : OSGiFragment() {
         val omemoStoreDB = getInstance().omemoStoreBackend
         val ppServices = AccountUtils.registeredProviders
         if (omemoStoreDB is SQLiteOmemoStore) {
-            val db = DatabaseBackend.getInstance(ctx)!!
+            val db = DatabaseBackend.getInstance(ctx)
             for (pps in ppServices) {
                 val accountId = pps.accountID
                 accountId.unsetKey(JSONKEY_CURRENT_PREKEY_ID)
                 accountId.unsetKey(JSONKEY_REGISTRATION_ID)
                 db.updateAccount(accountId)
             }
-            MigrationTo2.createOmemoTables(db.writableDatabase)
+            OmemoDBCreate.createOmemoTables(db.writableDatabase)
 
             // start to regenerate all Omemo data for registered accounts - has exception
             // SQLiteOmemoStore.loadOmemoSignedPreKey().371 There is no SignedPreKeyRecord for: 0
@@ -295,7 +292,7 @@ class ServerPersistentStoresRefreshDialog : OSGiFragment() {
         fun purgeDebugLog() {
             val logDir: File?
             try {
-                logDir = LibJitsi.fileAccessService!!.getPrivatePersistentDirectory(LogsCollector.LOGGING_DIR_NAME, FileCategory.LOG)
+                logDir = LibJitsi.fileAccessService.getPrivatePersistentDirectory(LogsCollector.LOGGING_DIR_NAME, FileCategory.LOG)
                 if (logDir != null && logDir.exists()) {
                     val files = logDir.listFiles()!!
                     for (file in files) {

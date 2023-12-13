@@ -25,6 +25,10 @@
 
 <resources>
     <string name="accept_call_video">用视频接听电话</string>
+    <string name="account_delete_on_server">删除服务器上的帐户</string>
+    <string name="account_delete_on_server_unregistered">在服务器上删除帐户失败，用户未注册！</string>
+    <string name="account_delete_on_server_failed">在服务器上删除帐户失败：\n%1$s</string>
+    <string name="account_delete_on_server_successful">在服务器上删除帐户成功：\n%1$s</string>
     <string name="account_setup_basics_show_password">显示密码</string>
     <string name="account_override_server">覆盖服务器设置</string>
     <string name="account_registration">在服务器上注册新账号</string>
@@ -47,6 +51,8 @@
     <string name="notification_setting">通知设置&#8230;</string>
     <string name="no_application_found_to_open_file">没有找到打开文件的应用程序</string>
     <string name="password">密码</string>
+    <string name="password_change_on_server_failed">服务器上的密码更改失败:\n%1$s</string>
+    <string name="password_change_on_server_successful">服务器密码修改成功！</string>
     <string name="service_gui_PASSWORD">密码：</string>
     <string name="send_process_signal">发送过程信号</string>
     <string name="show_call_info">通话信息</string>

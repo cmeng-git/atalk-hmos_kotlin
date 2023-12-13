@@ -14,16 +14,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.atalk.persistance.migrations
+package org.atalk.impl.appupdate
 
-import android.database.sqlite.SQLiteDatabase
+import net.java.sip.communicator.service.update.UpdateService
+import net.java.sip.communicator.util.SimpleServiceActivator
 
-object Migrations {
-    fun upgradeDatabase(db: SQLiteDatabase, migrationsHelper: MigrationsHelper?) {
-        when (db.version) {
-            1 -> {
-                // MigrationTo2.createOmemoTables(db)
-            }
-        }
+/**
+ * Android dummy update service activator for aTalk release version.
+ *
+ * @author Eng Chong Meng
+ */
+class UpdateActivator
+/**
+ * Creates new instance of `UpdateActivator`.
+ */
+    : SimpleServiceActivator<UpdateService?>(UpdateService::class.java, "Android dummy update service") {
+    /**
+     * {@inheritDoc}
+     */
+    override fun createServiceImpl(): UpdateService {
+        return UpdateServiceImpl()
     }
 }

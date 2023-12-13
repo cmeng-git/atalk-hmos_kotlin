@@ -59,7 +59,7 @@ configurations.all {
     it.resolutionStrategy {
         eachDependency { details ->
             // multiple actions can be specified
-            if (details.requested.group == "org.igniterealtime.smack" && ['smack-core', 'smack-experimental', 'smack-extensions', 'smack-omemo'].contains(details.requested.name)) {
+            if (details.requested.group == "org.igniterealtime.smack" && ['smack-experimental', 'smack-extensions', 'smack-omemo'].contains(details.requested.name)) {
                 //changing the name reference to smack libraries to its individual jar
                 // details.useTarget group: details.requested.group, name: "${details.requested.name}-jarjar", version: details.requested.version
                 details.useTarget group: details.requested.group, name: "${details.requested.name}-jarjar", version: details.requested.version
@@ -87,6 +87,18 @@ android {
     }
     compileSdkVersion rootProject.compileSdk
     buildToolsVersion rootProject.buildTools
+
+//    buildFeatures {
+//        compose true
+//    }
+//
+//    composeOptions {
+//        kotlinCompilerExtensionVersion = "1.5.6"
+//    }
+//
+//    kotlinOptions {
+//        jvmTarget = "19"
+//    }
 
     defaultConfig {
         applicationId "org.atalk.hmos"
@@ -210,7 +222,7 @@ android {
 ext {
     // for official maven release
     // smackVersion = '4.5.0-alpha1'
-    smackVersion = '4.4.6'
+    smackVersion = '4.4.7'
 
     // May need manual cleanup for new SNAPSHOT update if same name with date change only:
     // ~\.gradle\caches\modules-2\files-2.1\org.igniterealtime.smack

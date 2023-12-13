@@ -26,6 +26,10 @@
 
 <resources>
     <string name="accept_call_video">Atender ligação de vídeo</string>
+    <string name="account_delete_on_server">Excluir conta no servidor</string>
+    <string name="account_delete_on_server_unregistered">Falha ao excluir conta no servidor, usuário não registrado!</string>
+    <string name="account_delete_on_server_failed">Falha ao excluir conta no servidor:\n%1$s</string>
+    <string name="account_delete_on_server_successful">Excluir conta no servidor com sucesso:\n%1$s</string>
     <string name="account_setup_basics_show_password">Mostrar senha</string>
     <string name="account_override_server">Substituir a configuração do servidor</string>
     <string name="account_registration">Registrar nova conta no servidor</string>
@@ -48,6 +52,8 @@
     <string name="notification_setting">Configurações de notificação&#8230;</string>
     <string name="no_application_found_to_open_file">Nenhum app encontrado para abrir o arquivo</string>
     <string name="password">senha</string>
+    <string name="password_change_on_server_failed">Falha na alteração da senha no servidor:\n%1$s</string>
+    <string name="password_change_on_server_successful">Alteração de senha no servidor com sucesso!</string>
     <string name="service_gui_PASSWORD">Senha:</string>
     <string name="send_process_signal">Enviar sinal de processo</string>
     <string name="show_call_info">Detalhes da ligação</string>

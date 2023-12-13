@@ -1163,7 +1163,7 @@ class DatabaseBackend private constructor(context: Context) : SQLiteOpenHelper(c
          * Increment DATABASE_VERSION when there is a change in database records
          */
         const val DATABASE_NAME = "dbRecords.db"
-        private const val DATABASE_VERSION = 6
+        private const val DATABASE_VERSION = 1
         private var instance: DatabaseBackend? = null
 
         // Create preKeys table

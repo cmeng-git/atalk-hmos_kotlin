@@ -26,6 +26,10 @@
 
 <resources>
     <string name="accept_call_video">Jawab panggilan dengan video</string>
+    <string name="account_delete_on_server">Hapus akun di server</string>
+    <string name="account_delete_on_server_unregistered">Gagal menghapus akun di server, pengguna tidak terdaftar!</string>
+    <string name="account_delete_on_server_failed">Gagal menghapus akun di server:\n%1$s</string>
+    <string name="account_delete_on_server_successful">Hapus akun di server berhasil:\n%1$s</string>
     <string name="account_setup_basics_show_password">Tampilkan kata sandi</string>
     <string name="account_override_server">Ganti pengaturan server</string>
     <string name="account_registration">Daftarkan akun baru di server</string>
@@ -48,6 +52,8 @@
     <string name="notification_setting">Pengaturan pemberitahuan&#8230;</string>
     <string name="no_application_found_to_open_file">Tidak ada yang menambahkan aplikasi untuk perangkat lunak untuk arsip</string>
     <string name="password">kata sandi</string>
+    <string name="password_change_on_server_failed">Perubahan kata sandi di server gagal:\n%1$s</string>
+    <string name="password_change_on_server_successful">Perubahan kata sandi di server berhasil!</string>
     <string name="service_gui_PASSWORD">Kata Sandi:</string>
     <string name="send_process_signal">Kirim Sinyal Proses</string>
     <string name="show_call_info">Info panggilan</string>

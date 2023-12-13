@@ -1,5 +1,5 @@
 --- /home/cmeng/source/smack/Smack-4.4.0-beta1/org/jivesoftware/smackx/httpfileupload/HttpFileUploadManager.java	2020-05-31 19:46:44.000000000 
-+++ /home/cmeng/workspace/android/atalk-hmos/aTalk/src/main/java/org/jivesoftware/smackx/httpfileupload/HttpFileUploadManager.java	2020-07-01 11:28:11.000000000
++++ /home/cmeng/workspace/android/atalk-hmos_kotlin/aTalk/src/main/java/org/jivesoftware/smackx/httpfileupload/HttpFileUploadManager.java	2020-07-01 11:28:11.000000000
 @@ -22,20 +22,25 @@
  import java.io.FileNotFoundException;
  import java.io.IOException;

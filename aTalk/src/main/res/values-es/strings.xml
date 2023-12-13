@@ -29,6 +29,10 @@
 
 <resources>
     <string name="accept_call_video">Contestar a la llamada con vídeo</string>
+    <string name="account_delete_on_server_successful">Eliminar cuenta en el servidor exitosamente:\n%1$s</string>
+    <string name="account_delete_on_server_unregistered">Error al eliminar la cuenta en el servidor, ¡usuario no registrado!</string>
+    <string name="account_delete_on_server_failed">Error al eliminar la cuenta en el servidor:\n%1$s</string>
+    <string name="account_delete_on_server">Eliminar cuenta en el servidor</string>
     <string name="account_setup_basics_show_password">Mostrar contraseña</string>
     <string name="account_override_server">Sobrescribir la configuración del servidor</string>
     <string name="account_registration">Registrar una cuenta nueva en el servidor</string>
@@ -51,6 +55,8 @@
     <string name="notification_setting">Configuración de notificaciones&#8230;</string>
     <string name="no_application_found_to_open_file">No se ha encontrado ninguna aplicación para abrir el archivo</string>
     <string name="password">contraseña</string>
+    <string name="password_change_on_server_failed">Error al cambiar la contraseña en el servidor:\n%1$s</string>
+    <string name="password_change_on_server_successful">¡El cambio de contraseña en el servidor fue exitoso!</string>
     <string name="service_gui_PASSWORD">Contraseña:</string>
     <string name="send_process_signal">Enviar señal de proceso</string>
     <string name="show_call_info">Información de la llamada</string>

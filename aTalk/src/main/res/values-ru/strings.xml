@@ -26,6 +26,10 @@
 
 <resources>
     <string name="accept_call_video">Ответить на вызов с видео</string>
+    <string name="account_delete_on_server">Удалить аккаунт на сервере</string>
+    <string name="account_delete_on_server_unregistered">Удалить аккаунт на сервере не удалось, пользователь не зарегистрирован!</string>
+    <string name="account_delete_on_server_failed">Удалить учетную запись на сервере не удалось:\n%1$s</string>
+    <string name="account_delete_on_server_successful">Удаление учетной записи на сервере успешно:\n%1$s</string>
     <string name="account_setup_basics_show_password">Показать пароль</string>
     <string name="account_override_server">Отменить настройку сервера</string>
     <string name="account_registration">Зарегистрировать новую учетную запись на сервере</string>
@@ -48,6 +52,8 @@
     <string name="notification_setting">Настройки уведомлений&#8230;</string>
     <string name="no_application_found_to_open_file">Не найдено приложения для открытия файла</string>
     <string name="password">Пароль</string>
+    <string name="password_change_on_server_failed">Смена пароля на сервере не удалась:\n%1$s</string>
+    <string name="password_change_on_server_successful">Смена пароля на сервере прошла успешно!</string>
     <string name="service_gui_PASSWORD">Пароль:</string>
     <string name="send_process_signal">Отправить сигнал процесса</string>
     <string name="show_call_info">Информация о вызове</string>

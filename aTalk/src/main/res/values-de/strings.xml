@@ -26,6 +26,10 @@
 
 <resources>
     <string name="accept_call_video">Per Video annehmen</string>
+    <string name="account_delete_on_server">Konto auf dem Server löschen</string>
+    <string name="account_delete_on_server_unregistered">Das Löschen des Kontos auf dem Server ist fehlgeschlagen, der Benutzer ist nicht registriert!</string>
+    <string name="account_delete_on_server_failed">Das Löschen des Kontos auf dem Server ist fehlgeschlagen:\n%1$s</string>
+    <string name="account_delete_on_server_successful">Konto auf Server löschen erfolgreich:\n%1$s</string>
     <string name="account_setup_basics_show_password">Passwort anzeigen</string>
     <string name="account_override_server">Servereinstellungen setzen</string>
     <string name="account_registration">Neues Konto auf Server anlegen</string>
@@ -48,6 +52,8 @@
     <string name="notification_setting">Benachrichtigungseinstellungen&#8230;</string>
     <string name="no_application_found_to_open_file">Keine Anwendung zum Öffnen der Datei gefunden</string>
     <string name="password">Passwort</string>
+    <string name="password_change_on_server_failed">Passwortänderung auf Server fehlgeschlagen:\n%1$s</string>
+    <string name="password_change_on_server_successful">Passwortänderung auf dem Server erfolgreich!</string>
     <string name="service_gui_PASSWORD">Passwort:</string>
     <string name="send_process_signal">Sende Prozess-Signal</string>
     <string name="show_call_info">Anruf Info</string>

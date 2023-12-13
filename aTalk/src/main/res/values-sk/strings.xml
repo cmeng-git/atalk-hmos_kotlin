@@ -26,6 +26,10 @@
 
 <resources>
     <string name="accept_call_video">Prijmite hovor s videom</string>
+    <string name="account_delete_on_server">Odstrániť účet na serveri</string>
+    <string name="account_delete_on_server_unregistered">Odstránenie účtu na serveri zlyhalo, používateľ nie je zaregistrovaný!</string>
+    <string name="account_delete_on_server_failed">Odstránenie účtu na serveri zlyhalo:\n%1$s</string>
+    <string name="account_delete_on_server_successful">Úspešné odstránenie účtu na serveri:\n%1$s</string>
     <string name="account_setup_basics_show_password">Ukázať heslo</string>
     <string name="account_override_server">Prestaviť pripojenie servera</string>
     <string name="account_registration">Zaregistrujte nový účet na serveri</string>
@@ -48,6 +52,8 @@
     <string name="notification_setting">Nastavenia upozornení&#8230;</string>
     <string name="no_application_found_to_open_file">Nenašli sa žiadne aplikácie na otvorenie súboru</string>
     <string name="password">heslo</string>
+    <string name="password_change_on_server_failed">Zmena hesla na serveri zlyhala:\n%1$s</string>
+    <string name="password_change_on_server_successful">Zmena hesla na serveri úspešná!</string>
     <string name="service_gui_PASSWORD">Heslo:</string>
     <string name="send_process_signal">Poslať procesný signál</string>
     <string name="show_call_info">Informácie o hovore</string>

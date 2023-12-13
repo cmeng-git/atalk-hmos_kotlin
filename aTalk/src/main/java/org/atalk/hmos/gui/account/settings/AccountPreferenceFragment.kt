@@ -6,22 +6,20 @@
 package org.atalk.hmos.gui.account.settings
 
 import android.app.ProgressDialog
-import android.content.Context
 import android.content.SharedPreferences
+import android.content.SharedPreferences.Editor
 import android.os.Bundle
 import android.os.Handler
 import androidx.preference.ListPreference
 import net.java.sip.communicator.service.gui.AccountRegistrationWizard
 import net.java.sip.communicator.service.protocol.AccountID
 import net.java.sip.communicator.service.protocol.EncodingsRegistrationUtil
-import net.java.sip.communicator.service.protocol.ProtocolProviderService
 import net.java.sip.communicator.service.protocol.SecurityAccountRegistration
 import net.java.sip.communicator.util.account.AccountUtils
 import org.atalk.hmos.R
 import org.atalk.hmos.gui.AndroidGUIActivator
 import org.atalk.hmos.gui.settings.util.SummaryMapper
 import org.atalk.service.osgi.OSGiPreferenceFragment
-import org.osgi.framework.BundleContext
 import org.osgi.framework.InvalidSyntaxException
 import org.osgi.framework.ServiceReference
 import timber.log.Timber
@@ -39,11 +37,12 @@ abstract class AccountPreferenceFragment
  *
  * @param preferencesResourceId the ID of preferences xml file for current protocol
  */
-(
+    (
         /**
          * The ID of protocol preferences xml file passed in constructor
          */
-        private val preferencesResourceId: Int) : OSGiPreferenceFragment(), SharedPreferences.OnSharedPreferenceChangeListener {
+        private val preferencesResourceId: Int,
+) : OSGiPreferenceFragment(), SharedPreferences.OnSharedPreferenceChangeListener {
     /**
      * Utility that maps current preference value to summary
      */
@@ -74,7 +73,7 @@ abstract class AccountPreferenceFragment
     /**
      * We load values only once into shared preferences to not reset values on screen rotated event.
      */
-    protected var isInitialized = false
+    private var isInitialized = false
         private set
 
     /**
@@ -89,6 +88,8 @@ abstract class AccountPreferenceFragment
      */
     protected lateinit var mActivity: AccountPreferenceActivity
     protected lateinit var shPrefs: SharedPreferences
+    protected lateinit var mEditor: Editor
+
 
     /**
      * Method should return `EncodingsRegistrationUtil` if it supported by impl fragment.
@@ -129,8 +130,7 @@ abstract class AccountPreferenceFragment
             return
         }
         shPrefs = preferenceManager.sharedPreferences!!
-        shPrefs.registerOnSharedPreferenceChangeListener(this)
-        shPrefs.registerOnSharedPreferenceChangeListener(summaryMapper)
+        mEditor = shPrefs.edit()
 
         /*
          * Workaround for de-synchronization problem when account was created for the first time.
@@ -147,6 +147,12 @@ abstract class AccountPreferenceFragment
 
         // Preferences summaries mapping
         mapSummaries(summaryMapper)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        shPrefs.registerOnSharedPreferenceChangeListener(this)
+        shPrefs.registerOnSharedPreferenceChangeListener(summaryMapper)
     }
 
     /**

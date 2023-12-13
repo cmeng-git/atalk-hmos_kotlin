@@ -27,9 +27,11 @@ import org.atalk.crypto.omemo.AndroidOmemoService
 import org.atalk.hmos.BuildConfig
 import org.atalk.hmos.R
 import org.atalk.hmos.aTalkApp
+import org.atalk.hmos.aTalkApp.Companion.getResString
 import org.atalk.hmos.gui.account.settings.BoshProxyDialog
 import org.atalk.hmos.gui.call.JingleMessageSessionImpl
 import org.atalk.hmos.gui.dialogs.DialogActivity
+import org.atalk.hmos.gui.dialogs.DialogActivity.Companion.showDialog
 import org.atalk.hmos.gui.dialogs.DialogActivity.DialogListener
 import org.atalk.hmos.gui.login.LoginSynchronizationPoint
 import org.atalk.hmos.gui.menu.MainMenuActivity
@@ -45,7 +47,11 @@ import org.jivesoftware.smack.XMPPException.StreamErrorException
 import org.jivesoftware.smack.XMPPException.XMPPErrorException
 import org.jivesoftware.smack.bosh.BOSHConfiguration
 import org.jivesoftware.smack.bosh.XMPPBOSHConnection
-import org.jivesoftware.smack.packet.*
+import org.jivesoftware.smack.packet.ExtensionElement
+import org.jivesoftware.smack.packet.Presence
+import org.jivesoftware.smack.packet.StanzaError
+import org.jivesoftware.smack.packet.StanzaError.Condition
+import org.jivesoftware.smack.packet.StreamError
 import org.jivesoftware.smack.provider.ExtensionElementProvider
 import org.jivesoftware.smack.provider.ProviderManager
 import org.jivesoftware.smack.proxy.ProxyInfo
@@ -101,6 +107,7 @@ import org.jivesoftware.smackx.httpauthorizationrequest.provider.ConfirmIQProvid
 import org.jivesoftware.smackx.inputevt.InputEvtIQ
 import org.jivesoftware.smackx.inputevt.InputEvtIQProvider
 import org.jivesoftware.smackx.iqlast.LastActivityManager
+import org.jivesoftware.smackx.iqregisterx.AccountManager
 import org.jivesoftware.smackx.iqregisterx.packet.Registration
 import org.jivesoftware.smackx.iqregisterx.provider.RegistrationProvider
 import org.jivesoftware.smackx.iqregisterx.provider.RegistrationStreamFeatureProvider
@@ -161,6 +168,7 @@ import java.util.*
 import javax.net.SocketFactory
 import javax.net.ssl.*
 
+
 /**
  * An implementation of the protocol provider service over the Jabber protocol
  *
@@ -201,6 +209,11 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
     private val initializationLock = Any()
 
     /**
+     * Account on server deleted
+     */
+    private var onAccountDeleted = false
+
+    /**
      * The identifier of the account that this provider represents.
      */
     override lateinit var accountID: JabberAccountID
@@ -215,8 +228,6 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
      * The resource we will use when connecting during this run.
      */
     private var mResource: Resourcepart? = null
-
-    private val isDesktopSharingEnable = false
 
     /**
      * Persistent Storage for Roster Versioning support.
@@ -768,7 +779,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
                         .setPort(port)
             } catch (e: URISyntaxException) {
                 Timber.e("Fail setting bosh URL in XMPPBOSHConnection configuration: %s", e.message)
-                val stanzaError = StanzaError.getBuilder(StanzaError.Condition.unexpected_request).build()
+                val stanzaError = StanzaError.getBuilder(Condition.unexpected_request).build()
                 throw XMPPErrorException(null, stanzaError)
             }
         }
@@ -908,7 +919,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
         } catch (ex: IllegalStateException) {
             // Cannot use a custom SSL context with DNSSEC enabled
             val errMsg = "${ex.message}\nPlease change DNSSEC security option accordingly."
-            val stanzaError = StanzaError.from(StanzaError.Condition.not_allowed, errMsg).build()
+            val stanzaError = StanzaError.from(Condition.not_allowed, errMsg).build()
             throw XMPPErrorException(null, stanzaError)
         }
 
@@ -930,31 +941,31 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
             var errMsg = ex.message
             if (StringUtils.isEmpty(errMsg)) errMsg = ex.streamError.descriptiveText
             Timber.e("Encounter problem during XMPPConnection: %s", errMsg)
-            val stanzaError = StanzaError.from(StanzaError.Condition.policy_violation, errMsg).build()
+            val stanzaError = StanzaError.from(Condition.policy_violation, errMsg).build()
             throw XMPPErrorException(null, stanzaError)
             // } catch (DnssecValidationFailedException | IllegalArgumentException ex) {
         } catch (ex: DnssecValidationFailedException) {
             val errMsg = ex.message
-            val stanzaError = StanzaError.from(StanzaError.Condition.not_authorized, errMsg).build()
+            val stanzaError = StanzaError.from(Condition.not_authorized, errMsg).build()
             throw XMPPErrorException(null, stanzaError)
         } catch (ex: SecurityRequiredByServerException) {
             // "SSL/TLS required by server but disabled in client"
             val errMsg = ex.message
-            val stanzaError = StanzaError.from(StanzaError.Condition.not_allowed, errMsg).build()
+            val stanzaError = StanzaError.from(Condition.not_allowed, errMsg).build()
             throw XMPPErrorException(null, stanzaError)
         } catch (ex: SecurityRequiredByClientException) {
             // "SSL/TLS required by client but not supported by server"
             val errMsg = ex.message
-            val stanzaError = StanzaError.from(StanzaError.Condition.service_unavailable, errMsg).build()
+            val stanzaError = StanzaError.from(Condition.service_unavailable, errMsg).build()
             throw XMPPErrorException(null, stanzaError)
         } catch (ex: Exception) {
             // XMPPException | SmackException | IOException | InterruptedException | NullPointerException
             // if (ex.cause is SSLHandshakeException) {
             //    Timber.e(ex.cause);
             // }
-            val errMsg = aTalkApp.getResString(R.string.service_gui_XMPP_EXCEPTION, ex.message)
+            val errMsg = getResString(R.string.service_gui_XMPP_EXCEPTION, ex.message)
             Timber.e("%s", errMsg)
-            val stanzaError = StanzaError.from(StanzaError.Condition.remote_server_timeout, errMsg).build()
+            val stanzaError = StanzaError.from(Condition.remote_server_timeout, errMsg).build()
             throw XMPPErrorException(null, stanzaError)
         }
 
@@ -997,7 +1008,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
         } catch (ex: StreamErrorException) {
             val errMsg = ex.streamError.descriptiveText
             Timber.e("Encounter problem during XMPPConnection: %s", errMsg)
-            val stanzaError = StanzaError.from(StanzaError.Condition.policy_violation, errMsg).build()
+            val stanzaError = StanzaError.from(Condition.policy_violation, errMsg).build()
             throw XMPPErrorException(null, stanzaError)
         } catch (el: Exception) {
             var errMsg = el.message
@@ -1024,7 +1035,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
                     } catch (ex: StreamErrorException) {
                         errMsg = ex.streamError.descriptiveText
                         Timber.e("Encounter problem during XMPPConnection: %s", errMsg)
-                        val stanzaError = StanzaError.from(StanzaError.Condition.policy_violation, errMsg).build()
+                        val stanzaError = StanzaError.from(Condition.policy_violation, errMsg).build()
                         throw XMPPErrorException(null, stanzaError)
                     } catch (err: Exception) {
                         // SmackException | XMPPException | InterruptedException | IOException | NullPointerExceptio
@@ -1036,14 +1047,14 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
 
                         errMsg = err.message
                         if (StringUtils.isNotEmpty(errMsg) && !errMsg!!.contains("registration-required")) {
-                            errMsg = aTalkApp.getResString(R.string.service_gui_REGISTRATION_REQUIRED, errMsg)
+                            errMsg = getResString(R.string.service_gui_REGISTRATION_REQUIRED, errMsg)
                             Timber.e("%s", errMsg)
-                            val stanzaError = StanzaError.from(StanzaError.Condition.forbidden, errMsg).build()
+                            val stanzaError = StanzaError.from(Condition.forbidden, errMsg).build()
                             throw XMPPErrorException(null, stanzaError)
                         }
                         else {
                             Timber.e("%s", errMsg)
-                            val stanzaError = StanzaError.from(StanzaError.Condition.registration_required,
+                            val stanzaError = StanzaError.from(Condition.registration_required,
                                 errMsg).build()
                             throw XMPPErrorException(null, stanzaError)
                         }
@@ -1053,8 +1064,8 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
                     if (el is SASLErrorException) {
                         errMsg += ": " + el.saslFailure.descriptiveText
                     }
-                    errMsg = aTalkApp.getResString(R.string.service_gui_NOT_AUTHORIZED_HINT, errMsg)
-                    val stanzaError = StanzaError.from(StanzaError.Condition.not_authorized, errMsg).build()
+                    errMsg = getResString(R.string.service_gui_NOT_AUTHORIZED_HINT, errMsg)
+                    val stanzaError = StanzaError.from(Condition.not_authorized, errMsg).build()
                     throw XMPPErrorException(null, stanzaError)
                 }
             }
@@ -1096,7 +1107,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
          */
         override fun connectionClosed() {
             val errMsg = "Stream closed!"
-            val stanzaError = StanzaError.from(StanzaError.Condition.remote_server_timeout, errMsg).build()
+            val stanzaError = StanzaError.from(Condition.remote_server_timeout, errMsg).build()
             val xmppException = XMPPErrorException(null, stanzaError)
             xmppConnected!!.reportFailure(xmppException)
             if (reconnectionManager != null) reconnectionManager!!.disableAutomaticReconnection()
@@ -1130,7 +1141,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
         override fun connectionClosedOnError(exception: Exception) {
             var errMsg = exception.message
             var regEvent = RegistrationStateChangeEvent.REASON_NOT_SPECIFIED
-            var seCondition = StanzaError.Condition.remote_server_not_found
+            var seCondition = Condition.remote_server_not_found
             Timber.e("### Connection closed on error (StreamErrorException: %s) during XMPPConnection: %s",
                 exception is StreamErrorException, errMsg)
             if (exception is SSLException) {
@@ -1141,19 +1152,23 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
                 val condition = err.condition
                 errMsg = err.descriptiveText
                 if (condition == StreamError.Condition.conflict) {
-                    seCondition = StanzaError.Condition.conflict
+                    seCondition = Condition.conflict
                     regEvent = RegistrationStateChangeEvent.REASON_MULTIPLE_LOGIN
                     if (errMsg.contains("removed")) {
+                        if (onAccountDeleted) {
+                            onAccountDeleted = false
+                            return
+                        }
                         regEvent = RegistrationStateChangeEvent.REASON_NON_EXISTING_USER_ID
                     }
                 }
                 else if (condition == StreamError.Condition.policy_violation) {
-                    seCondition = StanzaError.Condition.policy_violation
+                    seCondition = Condition.policy_violation
                     regEvent = RegistrationStateChangeEvent.REASON_POLICY_VIOLATION
                 }
             }
             else if (exception is XmlPullParserException) {
-                seCondition = StanzaError.Condition.unexpected_request
+                seCondition = Condition.unexpected_request
                 regEvent = RegistrationStateChangeEvent.REASON_AUTHENTICATION_FAILED
             }
 
@@ -1174,7 +1189,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
             }
 
             // if ((seCondition == Condition.conflict) || (seCondition == Condition.policy_violation)) {
-            if (seCondition == StanzaError.Condition.conflict) {
+            if (seCondition == Condition.conflict) {
                 // launch re-login prompt with reason for disconnect "replace with new connection"
                 fireRegistrationStateChanged(exception)
             }
@@ -1458,6 +1473,58 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
     }
 
     /**
+     * Delete account on server
+     */
+    fun deleteAccountOnServer() {
+        var msg = getResString(R.string.account_delete_on_server_unregistered)
+        if (isRegistered) {
+            val accountManager = AccountManager.getInstance(connection)
+            try {
+                accountManager.deleteAccount()
+                onAccountDeleted = true
+                msg = getResString(R.string.account_delete_on_server_successful, accountID.accountJid)
+            } catch (e: NoResponseException) {
+                msg = getResString(R.string.account_delete_on_server_failed, e.message)
+            } catch (e: XMPPErrorException) {
+                msg = getResString(R.string.account_delete_on_server_failed, e.message)
+            } catch (e: NotConnectedException) {
+                msg = getResString(R.string.account_delete_on_server_failed, e.message)
+            } catch (e: InterruptedException) {
+                msg = getResString(R.string.account_delete_on_server_failed, e.message)
+            }
+        }
+        showDialog(aTalkApp.instance, getResString(R.string.account_delete_on_server), msg)
+    }
+
+    /**
+     * Proceed to change account password on server if the user is registered while password is changed.
+     */
+    fun changePasswordOnServer(pwd: String?): Boolean {
+        var passwordChange = true
+        if (isRegistered && !TextUtils.isEmpty(pwd)) {
+            var msg = getResString(R.string.password_change_on_server_successful)
+            val accountManager = AccountManager.getInstance(connection)
+            try {
+                accountManager.changePassword(pwd)
+            } catch (e: NoResponseException) {
+                msg = getResString(R.string.password_change_on_server_failed, e.message)
+                passwordChange = false
+            } catch (e: XMPPErrorException) {
+                msg = getResString(R.string.password_change_on_server_failed, e.message)
+                passwordChange = false
+            } catch (e: NotConnectedException) {
+                msg = getResString(R.string.password_change_on_server_failed, e.message)
+                passwordChange = false
+            } catch (e: InterruptedException) {
+                msg = getResString(R.string.password_change_on_server_failed, e.message)
+                passwordChange = false
+            }
+            showDialog(aTalkApp.instance, getResString(R.string.service_gui_PASSWORD), msg)
+        }
+        return passwordChange
+    }
+
+    /**
      * Returns the short name of the protocol that the implementation of this provider is based
      * upon (like SIP, Jabber, ICQ/AIM, or others for example).
      *
@@ -1609,13 +1676,6 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
             if (!isVideoCallingDisabledForAccount) {
                 // XEP-0180: Jingle Video via RTP
                 supportedFeatures.add(URN_XMPP_JINGLE_RTP_VIDEO)
-                if (isDesktopSharingEnable) {
-                    // Adds extension to support remote control as a sharing server (sharer).
-                    supportedFeatures.add(InputEvtIQ.NAMESPACE_SERVER)
-
-                    // Adds extension to support remote control as a sharing client (sharer).
-                    supportedFeatures.add(InputEvtIQ.NAMESPACE_CLIENT)
-                }
             }
 
             /*
@@ -1773,7 +1833,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
          * The CapsExtension reply to be included in the caps <Identity/>
          */
         val category = "client"
-        val appName = aTalkApp.getResString(R.string.APPLICATION_NAME)
+        val appName = getResString(R.string.APPLICATION_NAME)
         val type = "android"
         val identity = DiscoverInfo.Identity(category, appName, type)
         ServiceDiscoveryManager.setDefaultIdentity(identity)
@@ -2100,11 +2160,11 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
         var iContactId = contactId
         requireNotNull(result) { "result must be an empty list" }
         result.clear()
-        val b = try {
+        try {
             iContactId = iContactId!!.trim { it <= ' ' }
             // no suggestion for an empty id
             if (iContactId.isEmpty()) {
-                result.add(aTalkApp.getResString(R.string.service_gui_INVALID_ADDRESS, iContactId))
+                result.add(getResString(R.string.service_gui_INVALID_ADDRESS, iContactId))
                 return false
             }
             var user = iContactId
@@ -2130,13 +2190,13 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
                 }
             }
             if (!valid) {
-                result.add(aTalkApp.getResString(R.string.service_gui_INVALID_ADDRESS, iContactId))
+                result.add(getResString(R.string.service_gui_INVALID_ADDRESS, iContactId))
                 result.add(suggestion.toString() + remainder)
                 return false
             }
             return true
         } catch (ex: Exception) {
-            result.add(aTalkApp.getResString(R.string.service_gui_INVALID_ADDRESS, iContactId))
+            result.add(getResString(R.string.service_gui_INVALID_ADDRESS, iContactId))
         }
         return false
     }
@@ -2255,10 +2315,13 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
         fireRegistrationStateChanged(registrationState, regState, reasonCode, reason!!)
 
         // Show error and abort further attempt for unknown or specified exceptions; others proceed to retry
-        if (failMode == SecurityAuthority.REASON_UNKNOWN || failMode == SecurityAuthority.SASL_ERROR_EXTERNAL || failMode == SecurityAuthority.SECURITY_EXCEPTION || failMode == SecurityAuthority.POLICY_VIOLATION) {
+        if (failMode == SecurityAuthority.REASON_UNKNOWN
+                || failMode == SecurityAuthority.SASL_ERROR_EXTERNAL
+                || failMode == SecurityAuthority.SECURITY_EXCEPTION
+                || failMode == SecurityAuthority.POLICY_VIOLATION) {
             if (TextUtils.isEmpty(reason) && ex.cause != null) reason = ex.cause!!.message
-            DialogActivity.showDialog(aTalkApp.globalContext,
-                aTalkApp.getResString(R.string.service_gui_ERROR), reason)
+            showDialog(aTalkApp.globalContext,
+                getResString(R.string.service_gui_ERROR), reason)
         }
         else {
             // Try re-register and ask user for new credentials giving detail reason description.
@@ -2328,7 +2391,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
      *
      * @return the jid of the specified contact or bareJid if the provider is not yet connected;
      */
-    fun getFullJidIfPossible(jid_: Jid): Jid {
+    private fun getFullJidIfPossible(jid_: Jid): Jid {
         // when we are not connected there is no full jid
         var jid = jid_
         if (connection != null && connection!!.isConnected) {
@@ -2343,6 +2406,7 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
      * Note: X509ExtendedTrustManager required API-24
      */
     private inner class HostTrustManager
+
     /**
      * Creates the custom trust manager.
      *
@@ -2616,18 +2680,18 @@ class ProtocolProviderServiceJabberImpl : AbstractProtocolProviderService(), Pin
         var iInstruction = instruction
         val authId = confirmExt.id
         if (StringUtils.isEmpty(iInstruction)) {
-            iInstruction = aTalkApp.getResString(R.string.service_gui_HTTP_REQUEST_INSTRUCTION,
+            iInstruction = getResString(R.string.service_gui_HTTP_REQUEST_INSTRUCTION,
                 confirmExt.method, confirmExt.url, authId, accountID.accountJid)
 
             // Show an headsUp notification for incoming IQ auth request when device is in locked state to alert user
             if (aTalkApp.isDeviceLocked) {
                 NotificationManager.fireChatNotification(from, NotificationManager.INCOMING_MESSAGE,
-                    aTalkApp.getResString(R.string.service_gui_HTTP_REQUEST_TITLE), iInstruction, null)
+                    getResString(R.string.service_gui_HTTP_REQUEST_TITLE), iInstruction, null)
             }
         }
         val listenerId = DialogActivity.showConfirmDialog(aTalkApp.globalContext,
-            aTalkApp.getResString(R.string.service_gui_HTTP_REQUEST_TITLE), iInstruction,
-            aTalkApp.getResString(R.string.service_gui_ACCEPT),
+            getResString(R.string.service_gui_HTTP_REQUEST_TITLE), iInstruction,
+            getResString(R.string.service_gui_ACCEPT),
             object : DialogListener {
                 override fun onConfirmClicked(dialog: DialogActivity): Boolean {
                     val id = dialog.listenerID

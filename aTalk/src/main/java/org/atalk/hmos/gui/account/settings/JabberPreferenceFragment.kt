@@ -8,14 +8,12 @@ package org.atalk.hmos.gui.account.settings
 import android.app.Activity
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.SharedPreferences.Editor
 import android.text.TextUtils
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.preference.CheckBoxPreference
 import androidx.preference.Preference
 import net.java.sip.communicator.impl.msghistory.MessageHistoryActivator
-import net.java.sip.communicator.impl.msghistory.MessageHistoryServiceImpl
+import net.java.sip.communicator.impl.protocol.jabber.ProtocolProviderServiceJabberImpl
 import net.java.sip.communicator.plugin.jabberaccregwizz.AccountRegistrationImpl
 import net.java.sip.communicator.service.protocol.EncodingsRegistrationUtil
 import net.java.sip.communicator.service.protocol.OperationFailedException
@@ -87,16 +85,15 @@ class JabberPreferenceFragment
     override fun onInitPreferences() {
         // val wizard = getJbrWizard()
         jbrReg = getJbrWizard().accountRegistration
-        val editor = shPrefs.edit()
 
         // User name and password
         userNameEdited = jbrReg.mUserID
         userNameLastEdited = userNameEdited
-        editor.putString(P_KEY_USER_ID, userNameEdited)
-        editor.putString(P_KEY_PASSWORD, jbrReg.password)
-        editor.putBoolean(P_KEY_STORE_PASSWORD, jbrReg.isRememberPassword())
-        editor.putString(P_KEY_DNSSEC_MODE, jbrReg.dnssMode)
-        editor.apply()
+        mEditor.putString(P_KEY_USER_ID, userNameEdited)
+        mEditor.putString(P_KEY_PASSWORD, jbrReg.password)
+        mEditor.putBoolean(P_KEY_STORE_PASSWORD, jbrReg.isRememberPassword())
+        mEditor.putString(P_KEY_DNSSEC_MODE, jbrReg.dnssMode)
+        mEditor.apply()
     }
 
     /**
@@ -105,10 +102,10 @@ class JabberPreferenceFragment
     override fun onPreferencesCreated() {
         dnssecModeLP = findPreference(P_KEY_DNSSEC_MODE)
         if (MainMenuActivity.disableMediaServiceOnFault) {
-            (findPreference(P_KEY_CALL_ENCRYPT) as CheckBoxPreference?)!!.isEnabled = false
-            (findPreference(P_KEY_TELEPHONY) as CheckBoxPreference?)!!.isEnabled = false
-            (findPreference(P_KEY_AUDIO_ENC) as CheckBoxPreference?)!!.isEnabled = false
-            (findPreference(P_KEY_VIDEO_ENC) as CheckBoxPreference?)!!.isEnabled = false
+            findPreference<CheckBoxPreference>(P_KEY_CALL_ENCRYPT)?.isEnabled = false
+            findPreference<CheckBoxPreference>(P_KEY_TELEPHONY)?.isEnabled = false
+            findPreference<CheckBoxPreference>(P_KEY_AUDIO_ENC)?.isEnabled = false
+            findPreference<CheckBoxPreference>(P_KEY_VIDEO_ENC)?.isEnabled = false
         } else {
             // Audio,video and security are optional and should be present in settings XML to be handled
             val audioEncPreference = findPreference<Preference>(P_KEY_AUDIO_ENC)
@@ -244,13 +241,31 @@ class JabberPreferenceFragment
             P_KEY_USER_ID -> {
                 getUserConfirmation(shPrefs)
             }
+
             P_KEY_PASSWORD -> {
-                // seems the encrypted password is not save to DB but work?- need further investigation in signin if have problem
-                jbrReg.password = shPrefs.getString(P_KEY_PASSWORD, null)
+                val password = shPrefs.getString(P_KEY_PASSWORD, null)
+                // Timber.d("Change password: %s <= %s", password, jbrReg.getPassword());
+                if (password == jbrReg.password) {
+                    return
+                }
+
+                // Change password if user is registered.
+                val pps = accountID!!.protocolProvider as ProtocolProviderServiceJabberImpl?
+                if (pps!!.changePasswordOnServer(password)) {
+                    jbrReg.password = password
+                }
+                // Reset to old valid password if online change password failed;
+                // so actual valid login password is shown in next 'Account setting...' edit.
+                else {
+                    mEditor.putString(P_KEY_PASSWORD, jbrReg.password)
+                    mEditor.apply()
+                }
             }
+
             P_KEY_STORE_PASSWORD -> {
                 jbrReg.setRememberPassword(shPrefs.getBoolean(P_KEY_STORE_PASSWORD, false))
             }
+
             P_KEY_DNSSEC_MODE -> {
                 val dnssecMode = shPrefs.getString(P_KEY_DNSSEC_MODE,
                         resources.getStringArray(R.array.dnssec_Mode_value)[0])
@@ -290,9 +305,8 @@ class JabberPreferenceFragment
                         override fun onDialogCancelled(dialog: DialogActivity) {
                             jbrReg.mUserID = userNameEdited
                             userNameLastEdited = userNameEdited
-                            val editor = shPrefs.edit()
-                            editor.putString(P_KEY_USER_ID, jbrReg.mUserID)
-                            editor.apply()
+                            mEditor.putString(P_KEY_USER_ID, jbrReg.mUserID)
+                            mEditor.apply()
                         }
                     })
                 } else {
